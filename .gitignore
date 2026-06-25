@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+data/
+outputs/
+runs/
+*.egg-info/
+Part2_Scanner.exe
+Configuration.ini
+Scan_Raw.bin
+Final_Metrics_Report.csv
