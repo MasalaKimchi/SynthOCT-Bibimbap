@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 from skimage import io
 
-from synthoct.baselines import pretrained_cnn_baseline
+from synthoct.baselines import physics_guided_baseline, pretrained_cnn_baseline
 from synthoct.cnn import cnn_embedding
 
 
@@ -27,3 +27,15 @@ def test_pretrained_cnn_baseline_outputs_valid_phantom(tmp_path):
     assert data.shape == (128, 4)
     assert data[:, 3].min() >= 0
     assert data[:, 3].max() <= 100
+
+
+def test_physics_guided_baseline_outputs_valid_phantom(tmp_path):
+    img = np.tile(np.linspace(20, 220, 64, dtype=np.uint8), (64, 1)).T
+    scan = tmp_path / "scan.png"
+    phantom = tmp_path / "physics.txt"
+    io.imsave(scan, img)
+    physics_guided_baseline(scan, phantom, scatterers_count=128, lateral_bins=8, depth_bins=8)
+    data = np.loadtxt(phantom)
+    assert data.shape == (128, 4)
+    assert data[:, 0].min() >= -1536
+    assert data[:, 2].max() <= 1536

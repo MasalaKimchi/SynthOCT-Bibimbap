@@ -7,12 +7,13 @@ import time
 from pathlib import Path
 
 from . import __version__
-from .baselines import heuristic_baseline, official_baseline, parameter_search_baseline, pretrained_cnn_baseline
+from .baselines import heuristic_baseline, official_baseline, parameter_search_baseline, physics_guided_baseline, pretrained_cnn_baseline
 from .dataset import iter_records, prepare_dataset
 from .metrics import calculate_metrics
 from .processor import generate_maps
 from .scanner import run_scanner
 from .train import train_hybrid
+from .validation import METHODS, plot_hypothesis_progress, run_internal_validation
 
 
 def _add_common_baseline_args(parser: argparse.ArgumentParser) -> None:
@@ -51,6 +52,11 @@ def build_parser() -> argparse.ArgumentParser:
     cnn.add_argument("--backbone", choices=["resnet50", "efficientnet_b0", "convnext_tiny"], default="resnet50")
     cnn.add_argument("--no-pretrained", action="store_true", help="Avoid downloading ImageNet weights.")
     _add_common_baseline_args(cnn)
+    physics = base_sub.add_parser("physics-guided")
+    physics.add_argument("--input", required=True)
+    physics.add_argument("--lateral-bins", type=int, default=64)
+    physics.add_argument("--depth-bins", type=int, default=64)
+    _add_common_baseline_args(physics)
 
     train = sub.add_parser("train")
     train_sub = train.add_subparsers(dest="train_command", required=True)
@@ -75,6 +81,18 @@ def build_parser() -> argparse.ArgumentParser:
     bench = sub.add_parser("benchmark")
     bench.add_argument("--command", dest="bench_command", nargs=argparse.REMAINDER, required=True)
     bench.add_argument("--limit-seconds", type=float, default=600.0)
+
+    validate = sub.add_parser("validate-internal")
+    validate.add_argument("--zip", required=True, dest="zip_path")
+    validate.add_argument("--out", default="outputs/internal_validation")
+    validate.add_argument("--methods", nargs="+", choices=METHODS, default=list(METHODS))
+    validate.add_argument("--folds", type=int, default=3)
+    validate.add_argument("--max-per-fold", type=int, default=4)
+    validate.add_argument("--scatterers-count", type=int, default=20_000)
+    validate.add_argument("--no-maps", action="store_true")
+    validate.add_argument("--include-lpips", action="store_true")
+    validate.add_argument("--seed", type=int, default=7)
+    validate.add_argument("--plot", help="Optional path for H0-H10 progression figure.")
     return parser
 
 
@@ -97,7 +115,7 @@ def main(argv: list[str] | None = None) -> int:
             path = heuristic_baseline(args.input, args.out, seed=args.seed, scatterers_count=args.scatterers_count)
         elif args.baseline_command == "parameter-search":
             path = parameter_search_baseline(args.input, args.out, seed=args.seed, scatterers_count=args.scatterers_count)
-        else:
+        elif args.baseline_command == "pretrained-cnn":
             path = pretrained_cnn_baseline(
                 args.input,
                 args.out,
@@ -105,6 +123,15 @@ def main(argv: list[str] | None = None) -> int:
                 seed=args.seed,
                 scatterers_count=args.scatterers_count,
                 pretrained=not args.no_pretrained,
+            )
+        else:
+            path = physics_guided_baseline(
+                args.input,
+                args.out,
+                seed=args.seed,
+                scatterers_count=args.scatterers_count,
+                lateral_bins=args.lateral_bins,
+                depth_bins=args.depth_bins,
             )
         print(path)
         return 0
@@ -145,6 +172,24 @@ def main(argv: list[str] | None = None) -> int:
         elapsed = time.perf_counter() - start
         print(json.dumps({"elapsed_seconds": elapsed, "limit_seconds": args.limit_seconds, "within_limit": elapsed <= args.limit_seconds}))
         return result.returncode
+
+    if args.command == "validate-internal":
+        detail, summary = run_internal_validation(
+            args.zip_path,
+            args.out,
+            methods=args.methods,
+            folds=args.folds,
+            max_per_fold=args.max_per_fold,
+            scatterers_count=args.scatterers_count,
+            include_maps=not args.no_maps,
+            include_lpips=args.include_lpips,
+            seed=args.seed,
+        )
+        result = {"detail": str(detail), "summary": str(summary)}
+        if args.plot:
+            result["plot"] = str(plot_hypothesis_progress(summary, args.plot))
+        print(json.dumps(result, sort_keys=True))
+        return 0
 
     return 1
 

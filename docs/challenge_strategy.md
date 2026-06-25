@@ -29,3 +29,33 @@ The best route is probably hybrid:
 - generate many synthetic phantoms, scan them on Windows, and train a CNN to map real scans to those parameters;
 - refine each sample with a short local search using MS-SSIM and LPIPS where scanner access is available;
 - keep hard validation on runtime, bounds, and scanner compatibility.
+
+## Internal Validation Protocol
+
+Use `synthoct validate-internal` as the private leaderboard before submitting. It creates grouped folds from the Zenodo archive, generates phantoms for each method, renders deterministic surrogate scans on macOS, and reports structural plus physics-map metrics.
+
+Recommended fast loop:
+
+```bash
+PYTHONPATH=src python -m synthoct.cli validate-internal \
+  --zip 18095266.zip \
+  --out outputs/internal_validation_quick \
+  --folds 3 \
+  --max-per-fold 2 \
+  --scatterers-count 8000 \
+  --no-maps
+```
+
+Recommended physics-map loop:
+
+```bash
+PYTHONPATH=src python -m synthoct.cli validate-internal \
+  --zip 18095266.zip \
+  --out outputs/internal_validation_maps \
+  --methods official heuristic physics-guided \
+  --folds 3 \
+  --max-per-fold 1 \
+  --scatterers-count 6000
+```
+
+Treat this as a ranking proxy, not a challenge score. A method should only be promoted when it improves across folds, not just on one scan. The most important proxy signals are Composite, OAC/RSC SSIM, depth-profile correlation, OAC-profile correlation, and generation time. Final confirmation still requires the official Windows scanner.

@@ -61,6 +61,24 @@ synthoct evaluate --ref reference.png --pred outputs/stub_scan.png --maps --metr
 
 The metric stack reports MSE, PSNR, SSIM, MS-SSIM, VIF, and LPIPS where optional dependencies are available.
 
+## Internal Validation Loop
+
+Run a private multi-fold leaderboard without submitting:
+
+```bash
+PYTHONPATH=src python -m synthoct.cli validate-internal \
+  --zip 18095266.zip \
+  --out outputs/internal_validation_quick \
+  --folds 3 \
+  --max-per-fold 2 \
+  --scatterers-count 8000 \
+  --no-maps
+```
+
+For a slower physics-focused pass, omit `--no-maps` and compare OAC/SC/RSC scores. This uses a deterministic surrogate scanner on macOS, so it is for iteration only; final ranking still needs the official Windows scanner.
+
 ## Research Notes
 
 See [docs/challenge_strategy.md](docs/challenge_strategy.md) for the baseline ladder and competition strategy.
+
+The current H0-H10 experiment report is in [docs/hypothesis_progress.md](docs/hypothesis_progress.md), with the generated figure at `outputs/hypothesis_progress/hypothesis_progress.png`.

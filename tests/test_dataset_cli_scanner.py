@@ -8,6 +8,7 @@ from skimage import io as skio
 
 from synthoct.cli import main
 from synthoct.dataset import iter_records, prepare_dataset
+from synthoct.validation import run_internal_validation
 
 
 def _make_nested_dataset(path):
@@ -39,3 +40,23 @@ def test_cli_official_and_stub_scan(tmp_path):
     assert phantom.exists()
     assert main(["scan", "--phantom", str(phantom), "--out", str(scan), "--mode", "stub"]) == 0
     assert scan.exists()
+
+
+def test_internal_validation_writes_summary(tmp_path):
+    archive = tmp_path / "dataset.zip"
+    _make_nested_dataset(archive)
+    detail, summary = run_internal_validation(
+        archive,
+        tmp_path / "validation",
+        methods=["official", "physics-guided"],
+        folds=2,
+        max_per_fold=1,
+        scatterers_count=128,
+        include_maps=False,
+        include_lpips=False,
+    )
+    assert detail.exists()
+    assert summary.exists()
+    text = summary.read_text()
+    assert "physics-guided" in text
+    assert "official" in text

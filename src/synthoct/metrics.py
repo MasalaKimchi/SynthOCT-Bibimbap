@@ -31,10 +31,11 @@ def calculate_metrics(ref_path: str | Path, pred_path: str | Path, include_lpips
         results["MS-SSIM"] = float(np.real(msssim(ref_u8, pred_u8)))
         results["VIF"] = float(vifp(ref_u8, pred_u8))
     except Exception:
-        results["MS-SSIM"] = float("nan")
+        results["MS-SSIM"] = multiscale_ssim_fallback(ref, pred)
         results["VIF"] = float("nan")
 
     results["LPIPS"] = float("nan")
+    results["LPIPS_PROXY"] = lpips_proxy(ref, pred)
     if include_lpips:
         try:
             import lpips
@@ -51,3 +52,34 @@ def calculate_metrics(ref_path: str | Path, pred_path: str | Path, include_lpips
         except Exception:
             pass
     return results
+
+
+def multiscale_ssim_fallback(ref: np.ndarray, pred: np.ndarray) -> float:
+    values = []
+    weights = np.array([0.15, 0.25, 0.30, 0.30], dtype=float)
+    cur_ref = ref
+    cur_pred = pred
+    for _ in range(len(weights)):
+        if min(cur_ref.shape) < 8:
+            break
+        values.append(structural_similarity(cur_ref, cur_pred, data_range=1.0))
+        if min(cur_ref.shape) < 16:
+            break
+        cur_ref = transform.resize(cur_ref, (cur_ref.shape[0] // 2, cur_ref.shape[1] // 2), anti_aliasing=True)
+        cur_pred = transform.resize(cur_pred, (cur_pred.shape[0] // 2, cur_pred.shape[1] // 2), anti_aliasing=True)
+    if not values:
+        return float("nan")
+    use_weights = weights[: len(values)]
+    use_weights = use_weights / use_weights.sum()
+    return float(np.average(values, weights=use_weights))
+
+
+def lpips_proxy(ref: np.ndarray, pred: np.ndarray) -> float:
+    """Cheap perceptual distance proxy used when LPIPS weights are unavailable."""
+    ref_gz, ref_gx = np.gradient(ref)
+    pred_gz, pred_gx = np.gradient(pred)
+    grad_err = np.mean(np.abs(ref_gz - pred_gz)) + np.mean(np.abs(ref_gx - pred_gx))
+    hist_ref, _ = np.histogram(ref, bins=32, range=(0, 1), density=True)
+    hist_pred, _ = np.histogram(pred, bins=32, range=(0, 1), density=True)
+    hist_err = np.mean(np.abs(hist_ref - hist_pred)) / 32.0
+    return float(np.clip(0.65 * grad_err + 0.35 * hist_err, 0.0, 1.0))
