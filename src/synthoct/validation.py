@@ -9,11 +9,19 @@ from pathlib import Path
 import numpy as np
 from skimage import io
 
-from .baselines import HYPOTHESIS_CONFIGS, HYPOTHESIS_WAVES, heuristic_baseline, hypothesis_baseline, official_baseline, physics_guided_baseline
+from .generators import (
+    HYPOTHESIS_CONFIGS,
+    HYPOTHESIS_WAVES,
+    heuristic_layer_phantom,
+    hypothesis_phantom,
+    official_baseline_phantom,
+    physics_guided_phantom,
+)
 from .dataset import ScanRecord, iter_records, load_scan_from_zip
-from .api import _to_gray_png, render_with_api, write_api_config
-from .metrics import calculate_metrics
-from .processor import calculate_oac, calculate_speckle_contrast_map, generate_maps, load_and_linearize_image, load_scan
+from .scanners import render_with_api, write_api_config
+from .submission.preliminary import _to_gray_png
+from .evaluation import calculate_metrics
+from .features import calculate_oac, calculate_speckle_contrast_map, generate_maps, load_and_linearize_image, load_scan
 
 HYPOTHESIS_METHODS = ("H0_official", *HYPOTHESIS_CONFIGS.keys())
 METHODS = (
@@ -54,13 +62,13 @@ def write_reference_scan(zip_path: str | Path, record: ScanRecord, out_path: Pat
 
 def run_method(method: str, ref_path: Path, phantom_path: Path, scatterers_count: int, seed: int) -> Path:
     if method in HYPOTHESIS_METHODS:
-        return hypothesis_baseline(ref_path, phantom_path, method, seed=seed, scatterers_count=scatterers_count)
+        return hypothesis_phantom(ref_path, phantom_path, method, seed=seed, scatterers_count=scatterers_count)
     if method == "official":
-        return official_baseline(phantom_path, seed=seed, scatterers_count=scatterers_count)
+        return official_baseline_phantom(phantom_path, seed=seed, scatterers_count=scatterers_count)
     if method == "heuristic":
-        return heuristic_baseline(ref_path, phantom_path, seed=seed, scatterers_count=scatterers_count)
+        return heuristic_layer_phantom(ref_path, phantom_path, seed=seed, scatterers_count=scatterers_count)
     if method == "physics-guided":
-        return physics_guided_baseline(ref_path, phantom_path, seed=seed, scatterers_count=scatterers_count)
+        return physics_guided_phantom(ref_path, phantom_path, seed=seed, scatterers_count=scatterers_count)
     raise ValueError(f"Unknown method: {method}")
 
 

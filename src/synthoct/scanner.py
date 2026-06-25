@@ -1,14 +1,10 @@
 from __future__ import annotations
 
 import shutil
-import subprocess
 from pathlib import Path
 
 from .phantom import ExperimentConfig
-
-
-class ScannerError(RuntimeError):
-    pass
+from .scanners import ScannerError, WindowsExecutableScanner, render_phantom
 
 
 def run_scanner(
@@ -29,18 +25,11 @@ def run_scanner(
         shutil.copyfile(precomputed_path, output_path)
         return output_path
     if mode == "real":
-        scanner_exe = Path(scanner_exe)
-        if not scanner_exe.exists():
-            raise ScannerError(f"Scanner executable not found: {scanner_exe}")
         ini_path = output_path.with_suffix(".ini")
-        config.write_ini(ini_path, phantom_path, output_path)
-        result = subprocess.run(
-            [str(scanner_exe), str(ini_path), str(phantom_path), str(output_path)],
-            check=False,
-            capture_output=True,
-            text=True,
+        return render_phantom(
+            phantom_path,
+            ini_path,
+            output_path,
+            backend=WindowsExecutableScanner(scanner_exe=scanner_exe, config=config),
         )
-        if result.returncode != 0:
-            raise ScannerError(result.stderr or result.stdout or "Scanner failed.")
-        return output_path
     raise ScannerError(f"Unknown scanner mode: {mode}")

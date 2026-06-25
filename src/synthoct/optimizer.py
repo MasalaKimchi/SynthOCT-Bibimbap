@@ -9,11 +9,12 @@ from pathlib import Path
 import numpy as np
 from skimage import io
 
-from .api import _to_gray_png, render_with_api, write_api_config
-from .baselines import HYPOTHESIS_CONFIGS, physics_guided_baseline
+from .scanners import render_with_api, write_api_config
+from .submission.preliminary import _to_gray_png
+from .generators import HYPOTHESIS_CONFIGS, physics_guided_phantom
 from .dataset import iter_records, load_scan_from_zip
-from .metrics import calculate_metrics
-from .processor import generate_maps
+from .evaluation import calculate_metrics
+from .features import generate_maps
 from .validation import competition_proxy_score, make_folds, profile_scores, summarize_rows, write_rows
 
 
@@ -114,7 +115,7 @@ def run_candidate_search(
                     api_scan_path = sample_dir / "api_scan.png"
                     pred_path = sample_dir / "api_scan_gray.png"
                     start = time.perf_counter()
-                    physics_guided_baseline(
+                    physics_guided_phantom(
                         ref_path,
                         phantom_path,
                         seed=seed + fold_idx * 100 + sample_idx,

@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from synthoct.phantom import ExperimentConfig, generate_two_layers, save_phantom, validate_phantom
+from synthoct.generators import FINAL_CONFIG_NAME, HYPOTHESIS_CONFIGS, final_phantom
+from synthoct.phantom import ExperimentConfig, generate_two_layers, load_phantom, save_phantom, validate_phantom
 
 
 def test_generate_and_save_valid_phantom(tmp_path):
@@ -27,3 +28,17 @@ def test_validate_rejects_bad_energy():
         assert "Energy" in str(exc)
     else:
         raise AssertionError("Expected invalid energy to fail")
+
+
+def test_final_generator_writes_four_column_phantom_from_reference_scan(tmp_path):
+    scan = tmp_path / "reference.npy"
+    phantom = tmp_path / "h61_phantom.txt"
+    np.save(scan, np.tile(np.linspace(0.0, 1.0, 24, dtype=np.float32), (24, 1)))
+
+    assert FINAL_CONFIG_NAME == "H61_api_low_depth_prelim"
+    assert HYPOTHESIS_CONFIGS[FINAL_CONFIG_NAME]["depth_compensation"] == -0.80
+
+    final_phantom(scan, phantom, seed=3, scatterers_count=96)
+    data = load_phantom(phantom)
+    assert data.shape == (96, 4)
+    assert data[:, 3].min() >= 0

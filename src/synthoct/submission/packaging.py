@@ -9,9 +9,9 @@ from pathlib import Path
 import numpy as np
 from skimage import io
 
-from .baselines import FINAL_CONFIG_NAME, final_baseline, hypothesis_baseline
-from .dataset import iter_records, load_scan_from_zip
-from .phantom import ExperimentConfig, load_phantom
+from synthoct.dataset import iter_records, load_scan_from_zip
+from synthoct.generators import FINAL_CONFIG_NAME, final_phantom, hypothesis_phantom
+from synthoct.phantom import ExperimentConfig, load_phantom
 
 
 SUBMISSION_METHOD_TAG = FINAL_CONFIG_NAME.split("_", 1)[0]
@@ -87,15 +87,15 @@ def write_submission_readme(out_dir: str | Path, scatterers_count: int = 300_000
             [
                 "# SynthOCT Bibimbap Submission Package",
                 "",
-                f"Primary method: `{method}`.",
+                f"Primary phantom generator: `{method}`.",
                 "",
                 "## Official Phantom Contract",
                 "",
-                "- Each phantom is a plain text scatterer table with exactly four columns: `X`, `Y`, `Z`, `Energy`.",
+                "- Each primary output is a plain text scatterer table with exactly four columns: `X`, `Y`, `Z`, `Energy`.",
                 "- Coordinates are in micrometers.",
                 "- `X` is bounded to `[-1536, 1536]`, `Z` is bounded to `[0, 1536]`, and `Energy` is bounded to `[0, 100]`.",
                 f"- Each generated package row uses `{scatterers_count}` scatterers unless a smoke-test count is explicitly supplied.",
-                "- The fixed SynthOCT Virtual Scanner, not this repository, renders final OCT B-scans for scoring.",
+                "- The SynthOCT scanner, not this repository, renders final OCT B-scans for scoring.",
                 "",
                 "## Included Files",
                 "",
@@ -104,7 +104,7 @@ def write_submission_readme(out_dir: str | Path, scatterers_count: int = 300_000
                 f"- `synthoct_{tag}_phantoms.zip`: challenge-format phantom archive.",
                 "- `synthoct_bibimbap_code_submission.zip`: source package for final code/model review.",
                 "",
-                "## Preliminary Evaluation",
+                "## Preliminary Portal PNG Pairs",
                 "",
                 "Use the hosted SynthOCT API key from the environment or a local, untracked key file to render phantoms:",
                 "",
@@ -115,7 +115,7 @@ def write_submission_readme(out_dir: str | Path, scatterers_count: int = 300_000
                 f"  --out outputs/api_preliminary_{tag}",
                 "```",
                 "",
-                "The render step writes `preliminary_upload_plan.csv`, which lists the synthetic/reference PNG pairs for the portal.",
+                "Then run `synthoct prepare-png-pairs` to copy rendered synthetic/reference PNG pairs for the preliminary portal.",
                 "",
             ]
         ),
@@ -163,9 +163,9 @@ def prepare_phantom_submission(
             io.imsave(ref_path, np.clip(arr, 0, 255).astype(np.uint8))
             phantom_path = phantom_dir / f"{safe_stem(record.archive_path)}__{tag.upper()}.txt"
             if method == FINAL_CONFIG_NAME:
-                final_baseline(ref_path, phantom_path, seed=seed + idx, scatterers_count=scatterers_count)
+                final_phantom(ref_path, phantom_path, seed=seed + idx, scatterers_count=scatterers_count)
             else:
-                hypothesis_baseline(ref_path, phantom_path, method, seed=seed + idx, scatterers_count=scatterers_count)
+                hypothesis_phantom(ref_path, phantom_path, method, seed=seed + idx, scatterers_count=scatterers_count)
             writer.writerow(
                 {
                     "source_archive_path": record.archive_path,

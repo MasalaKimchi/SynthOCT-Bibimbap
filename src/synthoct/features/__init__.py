@@ -1,9 +1,6 @@
-"""Backward-compatible feature extraction facade.
+"""Feature extraction from real OCT reference scans."""
 
-New code should import from :mod:`synthoct.features`.
-"""
-
-from .features import (
+from .extraction import (
     HPX,
     WINDOW_SIZE,
     calculate_oac,

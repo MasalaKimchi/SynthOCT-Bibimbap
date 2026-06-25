@@ -9,6 +9,7 @@ from skimage import io as skio
 import synthoct.validation as validation
 from synthoct.cli import main
 from synthoct.dataset import iter_records, prepare_dataset
+from synthoct.scanners import prepare_api_render_request, render_phantom, write_api_config, write_scanner_config
 from synthoct.validation import run_internal_validation
 
 
@@ -43,6 +44,37 @@ def test_cli_official_and_precomputed_scan(tmp_path):
     assert phantom.exists()
     assert main(["scan", "--phantom", str(phantom), "--out", str(scan), "--mode", "precomputed", "--precomputed", str(precomputed)]) == 0
     assert scan.exists()
+
+
+def test_scanner_config_generation_and_backend_interface(tmp_path):
+    phantom = tmp_path / "Scatterers.txt"
+    phantom.write_text("0 0 0 1\n", encoding="utf-8")
+    api_config = write_api_config(tmp_path / "Configuration_api.ini", scatterers_count=1)
+    windows_config = write_scanner_config(tmp_path / "Configuration_windows.ini", phantom, tmp_path / "scan.png")
+
+    assert "scatterers coordinates file = Scatterers.txt" in api_config.read_text(encoding="utf-8")
+    assert "Number of scatterers in B-scan = 300000" in windows_config.read_text(encoding="utf-8")
+
+    class FakeBackend:
+        def render(self, phantom_path, config_path, output_png):
+            output_png = tmp_path / "fake_scan.png"
+            output_png.write_bytes(b"png")
+            return output_png
+
+    rendered = render_phantom(phantom, api_config, tmp_path / "fake_scan.png", backend=FakeBackend())
+    assert rendered.read_bytes() == b"png"
+
+
+def test_api_request_preparation_redacts_secret(tmp_path):
+    phantom = tmp_path / "Scatterers.txt"
+    config = tmp_path / "Configuration.ini"
+    phantom.write_text("0 0 0 1\n", encoding="utf-8")
+    config.write_text("[Parameters]\n", encoding="utf-8")
+
+    request = prepare_api_render_request(phantom, config, api_key="super-secret")
+    assert request.headers["X-API-Key"] == "super-secret"
+    assert request.redacted_headers["X-API-Key"] == "<redacted>"
+    assert "super-secret" not in repr(request)
 
 
 def test_internal_validation_writes_summary(tmp_path, monkeypatch):

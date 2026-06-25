@@ -7,22 +7,27 @@ import time
 from pathlib import Path
 
 from . import __version__
-from .api import benchmark_submission_api, prepare_preliminary_png_pairs, write_preliminary_upload_plan
-from .baselines import (
+from .evaluation import calculate_metrics
+from .features import generate_maps
+from .generators import (
     FINAL_CONFIG_NAME,
     HYPOTHESIS_CONFIGS,
-    final_baseline,
-    heuristic_baseline,
-    hypothesis_baseline,
-    official_baseline,
-    physics_guided_baseline,
+    final_phantom,
+    heuristic_layer_phantom,
+    hypothesis_phantom,
+    official_baseline_phantom,
+    physics_guided_phantom,
 )
 from .dataset import iter_records, prepare_dataset
-from .metrics import calculate_metrics
 from .optimizer import run_candidate_search
-from .processor import generate_maps
 from .scanner import run_scanner
-from .submission import prepare_submission_bundle
+from .scanners import render_phantom, write_api_config
+from .submission import (
+    benchmark_submission_api,
+    prepare_preliminary_png_pairs,
+    prepare_submission_bundle,
+    write_preliminary_upload_plan,
+)
 from .validation import METHOD_WAVES, METHODS, plot_hypothesis_progress, resolve_method_wave, run_internal_validation
 
 
@@ -33,7 +38,7 @@ def _add_common_baseline_args(parser: argparse.ArgumentParser) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="synthoct", description="SynthOCT challenge baselines.")
+    parser = argparse.ArgumentParser(prog="synthoct", description="SynthOCT inverse-physics digital phantom toolkit.")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -46,7 +51,7 @@ def build_parser() -> argparse.ArgumentParser:
     data_list = data_sub.add_parser("list", help="Print dataset records as JSON lines.")
     data_list.add_argument("--zip", required=True, dest="zip_path")
 
-    baseline = sub.add_parser("baseline", help="Generate phantom baselines.")
+    baseline = sub.add_parser("baseline", help="Generate digital phantoms; legacy alias for phantom generators.")
     base_sub = baseline.add_subparsers(dest="baseline_command", required=True)
     official = base_sub.add_parser("official")
     _add_common_baseline_args(official)
@@ -75,12 +80,17 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate.add_argument("--out-csv")
     evaluate.add_argument("--no-lpips", action="store_true")
 
-    scan = sub.add_parser("scan")
+    scan = sub.add_parser("scan", help="Render a generated phantom into a synthetic OCT PNG.")
     scan.add_argument("--phantom", required=True)
     scan.add_argument("--out", required=True)
-    scan.add_argument("--mode", choices=["real", "precomputed"], default="real")
+    scan.add_argument("--mode", choices=["api", "windows", "real", "precomputed"], default="api")
+    scan.add_argument("--config", help="Scanner Configuration.ini path. API mode writes one if missing.")
     scan.add_argument("--scanner-exe", default="Part2_Scanner.exe")
     scan.add_argument("--precomputed")
+    scan.add_argument("--scatterers-count", type=int, default=300_000)
+    scan.add_argument("--api-key-file", help="Optional untracked file containing the hosted scanner API key.")
+    scan.add_argument("--poll-interval-seconds", type=float, default=10.0)
+    scan.add_argument("--max-polls", type=int, default=60)
 
     bench = sub.add_parser("benchmark")
     bench.add_argument("--command", dest="bench_command", nargs=argparse.REMAINDER, required=True)
@@ -163,11 +173,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "baseline":
         if args.baseline_command == "official":
-            path = official_baseline(args.out, method=args.method, seed=args.seed, scatterers_count=args.scatterers_count)
+            path = official_baseline_phantom(args.out, method=args.method, seed=args.seed, scatterers_count=args.scatterers_count)
         elif args.baseline_command == "heuristic":
-            path = heuristic_baseline(args.input, args.out, seed=args.seed, scatterers_count=args.scatterers_count)
+            path = heuristic_layer_phantom(args.input, args.out, seed=args.seed, scatterers_count=args.scatterers_count)
         elif args.baseline_command == "physics-guided":
-            path = physics_guided_baseline(
+            path = physics_guided_phantom(
                 args.input,
                 args.out,
                 seed=args.seed,
@@ -176,9 +186,9 @@ def main(argv: list[str] | None = None) -> int:
                 depth_bins=args.depth_bins,
             )
         elif args.baseline_command == "hypothesis":
-            path = hypothesis_baseline(args.input, args.out, args.name, seed=args.seed, scatterers_count=args.scatterers_count)
+            path = hypothesis_phantom(args.input, args.out, args.name, seed=args.seed, scatterers_count=args.scatterers_count)
         elif args.baseline_command == "final":
-            path = final_baseline(args.input, args.out, seed=args.seed, scatterers_count=args.scatterers_count)
+            path = final_phantom(args.input, args.out, seed=args.seed, scatterers_count=args.scatterers_count)
         else:
             raise ValueError(f"Unknown baseline command: {args.baseline_command}")
         print(path)
@@ -204,7 +214,24 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "scan":
-        path = run_scanner(args.phantom, args.out, mode=args.mode, scanner_exe=args.scanner_exe, precomputed_path=args.precomputed)
+        if args.mode == "precomputed":
+            path = run_scanner(args.phantom, args.out, mode="precomputed", precomputed_path=args.precomputed)
+        else:
+            config_path = Path(args.config) if args.config else Path(args.out).with_suffix(".ini")
+            if args.mode == "api":
+                if not config_path.exists():
+                    write_api_config(config_path, scatterers_count=args.scatterers_count)
+                path = render_phantom(
+                    args.phantom,
+                    config_path,
+                    args.out,
+                    backend="api",
+                    api_key_file=args.api_key_file,
+                    poll_interval_seconds=args.poll_interval_seconds,
+                    max_polls=args.max_polls,
+                )
+            else:
+                path = render_phantom(args.phantom, config_path, args.out, backend="windows", scanner_exe=args.scanner_exe)
         print(path)
         return 0
 
