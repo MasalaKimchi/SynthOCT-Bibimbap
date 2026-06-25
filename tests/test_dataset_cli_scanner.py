@@ -6,6 +6,7 @@ import zipfile
 import numpy as np
 from skimage import io as skio
 
+import synthoct.validation as validation
 from synthoct.cli import main
 from synthoct.dataset import iter_records, prepare_dataset
 from synthoct.validation import run_internal_validation
@@ -33,16 +34,24 @@ def test_dataset_manifest_from_nested_zip(tmp_path):
     assert manifest.read_text().count("\n") == 3
 
 
-def test_cli_official_and_stub_scan(tmp_path):
+def test_cli_official_and_precomputed_scan(tmp_path):
     phantom = tmp_path / "phantom.txt"
     scan = tmp_path / "scan.png"
+    precomputed = tmp_path / "precomputed.png"
+    skio.imsave(precomputed, np.ones((8, 8), dtype=np.uint8) * 64)
     assert main(["baseline", "official", "--out", str(phantom), "--scatterers-count", "256"]) == 0
     assert phantom.exists()
-    assert main(["scan", "--phantom", str(phantom), "--out", str(scan), "--mode", "stub"]) == 0
+    assert main(["scan", "--phantom", str(phantom), "--out", str(scan), "--mode", "precomputed", "--precomputed", str(precomputed)]) == 0
     assert scan.exists()
 
 
-def test_internal_validation_writes_summary(tmp_path):
+def test_internal_validation_writes_summary(tmp_path, monkeypatch):
+    def fake_render_with_api(phantom_path, config_path, out_png, **kwargs):
+        image = np.ones((256, 512), dtype=np.uint8) * 96
+        skio.imsave(out_png, image)
+        return "fake-request", out_png, 0.0, 0
+
+    monkeypatch.setattr(validation, "render_with_api", fake_render_with_api)
     archive = tmp_path / "dataset.zip"
     _make_nested_dataset(archive)
     detail, summary = run_internal_validation(
@@ -57,6 +66,8 @@ def test_internal_validation_writes_summary(tmp_path):
     )
     assert detail.exists()
     assert summary.exists()
+    assert (tmp_path / "validation" / "challenge_metrics_summary.csv").exists()
+    assert (tmp_path / "validation" / "hypothesis_wins.csv").exists()
     text = summary.read_text()
     assert "physics-guided" in text
     assert "official" in text

@@ -57,4 +57,4 @@ The challenge asks for a generator that maps a real OCT B-scan to a digital phan
 
 ## Current Decision
 
-H11 is the new base hypothesis. Its result suggests the original H1 was directionally right but too aggressive in depth compensation for the surrogate scanner and dataset distribution. The next mathematically clean move is not to add complexity; it is a local sweep around depth compensation `1.35-1.65`, OAC weight `1.9-2.4`, and density power `1.0-1.2`, with H29/H34/H17/H32 as interaction checks.
+H11 was the base hypothesis in the invalidated offline ranking. The next mathematically clean move is not to add complexity; it is hosted-API retesting around low or negative depth compensation, OAC weight, and density power, with H61/H67/H68 as current API-facing candidates.

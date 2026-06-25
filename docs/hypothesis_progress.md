@@ -1,8 +1,10 @@
-# H0-H10 Internal Validation Progress
+# Invalidated H0-H60 Offline Validation Notes
+
+The rankings below came from an offline renderer that has been removed from the codebase. Keep this file only as historical context for hypothesis names; do not use these numbers for submission decisions. Current validation must use hosted API or official Windows scanner renders.
 
 Official metric check: the SynthOCT baseline README states that leaderboard ranking uses **MS-SSIM** and **LPIPS**. The challenge page also emphasizes physical consistency via OAC and speckle statistics. Our internal y-axis therefore uses `CompetitionProxy`: structural MS-SSIM, LPIPS or LPIPS proxy, and physics-map MS-SSIM/SSIM.
 
-This is a macOS surrogate validation curve, not an official scanner score. Promote only hypotheses that survive cross-fold validation and later confirm on Windows with `Part2_Scanner.exe`.
+These are not official scanner scores. Promote only hypotheses that survive hosted API or Windows `Part2_Scanner.exe` validation.
 
 ## Current Results
 
@@ -31,7 +33,7 @@ PYTHONPATH=src python -m synthoct.cli validate-internal \
 - H5 boundary band: accepted as near-winner; strongest structural MS-SSIM/LPIPS proxy tradeoff.
 - H6 void inclusions: rejected for now; void prior likely needs learned placement.
 - H7 lateral coherence: neutral; smooths texture but does not beat H1.
-- H8 multilayer prior: rejected; too many priors degrade the surrogate score.
+- H8 multilayer prior: rejected in the invalidated offline run.
 - H9 log-energy compression: neutral; improves stability but loses structural MS-SSIM.
 - H10 refined attenuation band: rejected as a winner; confirms H1 is a cleaner current direction than H1 plus boundary prior.
 

@@ -1,4 +1,6 @@
-# Final Internal Benchmark
+# Invalidated Historical Benchmark
+
+This document records pre-API internal experiments that were invalidated by hosted scanner renders. Do not use these rankings for submission decisions. Current ranking must use `synthoct validate-internal` or `synthoct api-evaluate-submission`, both of which render through the hosted SynthOCT API.
 
 ## Groundbreaking Direction
 
@@ -10,7 +12,7 @@ The best next idea is not another hand-written layer rule. It is **physics-const
 4. Search physically meaningful knobs: depth compensation, OAC percentile, density exponent, energy mixing, texture variance, boundary boost, lateral smoothing.
 5. Select by cross-fold competition proxy: MS-SSIM up, LPIPS/proxy down, with OAC/SC/RSC as guardrails.
 
-This is a small, honest surrogate for a future scanner-in-the-loop optimizer.
+This was useful as brainstorming, but it is not a valid ranking signal.
 
 ## Optimizer Candidate
 
@@ -54,7 +56,7 @@ Improvement vs official baseline:
 
 Tradeoff:
 
-- H41 is best for the competition-weighted surrogate.
+- H41 was best under the invalidated offline renderer.
 - H11 remains the conservative physics candidate because it keeps better OAC and depth-profile agreement.
 
 ## Current Final Candidate
@@ -102,7 +104,7 @@ Decision: `synthoct baseline final` now uses H56. H41 remains the previous incum
 
 ## Next Groundbreaking Step
 
-Move from surrogate search to **official scanner-in-the-loop Bayesian optimization** on Windows:
+Move to **hosted API or official scanner-in-the-loop Bayesian optimization**:
 
 1. Use H41 and H11 as priors.
 2. Generate candidate phantoms.
@@ -110,4 +112,4 @@ Move from surrogate search to **official scanner-in-the-loop Bayesian optimizati
 4. Score real MS-SSIM/LPIPS on Struct/OAC/SC/RSC.
 5. Update the candidate distribution.
 
-That is the highest-leverage path because it optimizes the actual hidden objective rather than our macOS surrogate.
+That is the highest-leverage path because it optimizes the actual scanner output.

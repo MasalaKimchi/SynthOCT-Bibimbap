@@ -45,7 +45,7 @@ Core idea: approximate the scanner inverse. Undo log compression and attenuation
 
 Most promising future variant: alternating inverse rendering with the official Windows scanner in the loop.
 
-Current executable proxy, `agent_inverse_psf`, did not beat H41. Likely reason: the Mac surrogate PSF is too approximate, so deconvolution-style tuning does not transfer cleanly even internally.
+Current executable proxy, `agent_inverse_psf`, did not beat H41 in the invalidated offline run. The concept must be retested with hosted API renders.
 
 ### B. Speckle Statistics
 
@@ -77,7 +77,7 @@ The main nuisance is non-identifiability: many scatterer distributions can produ
 
 Other nuisance factors:
 
-- scanner mismatch between Mac surrogate and official `Part2_Scanner.exe`;
+- mismatch between any offline approximation and the official scanner;
 - unknown hidden-test distribution;
 - skin site and age/sex heterogeneity;
 - layer-boundary ambiguity in weak-contrast scans;

@@ -11,6 +11,7 @@ from skimage import io
 
 from .baselines import (
     HYPOTHESIS_CONFIGS,
+    HYPOTHESIS_WAVES,
     AGENT_METHOD_CONFIGS,
     agent_method_baseline,
     council_combo_baseline,
@@ -24,9 +25,9 @@ from .baselines import (
     pretrained_cnn_baseline,
 )
 from .dataset import ScanRecord, iter_records, load_scan_from_zip
+from .api import _to_gray_png, render_with_api, write_api_config
 from .metrics import calculate_metrics
 from .processor import calculate_oac, calculate_speckle_contrast_map, generate_maps, load_and_linearize_image, load_scan
-from .surrogate import phantom_to_surrogate_scan
 
 HYPOTHESIS_METHODS = ("H0_official", *HYPOTHESIS_CONFIGS.keys())
 AGENT_METHODS = tuple(AGENT_METHOD_CONFIGS.keys())
@@ -42,6 +43,15 @@ METHODS = (
     *HYPOTHESIS_METHODS,
     *AGENT_METHODS,
 )
+METHOD_WAVES = tuple(HYPOTHESIS_WAVES.keys())
+
+
+def resolve_method_wave(wave: str | None, methods: list[str] | None = None) -> list[str] | None:
+    if wave is None:
+        return methods
+    if methods is not None:
+        raise ValueError("Pass either explicit methods or a method wave, not both.")
+    return list(HYPOTHESIS_WAVES[wave])
 
 
 def make_folds(records: list[ScanRecord], folds: int = 3) -> dict[int, list[ScanRecord]]:
@@ -180,20 +190,40 @@ def competition_proxy_score(row: dict[str, float | str]) -> float:
     return float(0.45 * struct_ms + 0.35 * (1.0 - lpips) + 0.20 * map_score)
 
 
+def _challenge_lpips_key(row: dict[str, float | str], suffix: str = "") -> str:
+    lpips_key = f"Struct_LPIPS{suffix}"
+    proxy_key = f"Struct_LPIPS_PROXY{suffix}"
+    lpips_value = _finite_float(row.get(lpips_key), np.nan)
+    return lpips_key if np.isfinite(lpips_value) else proxy_key
+
+
+def _finite_float(value: float | str | None, default: float = np.nan) -> float:
+    try:
+        out = float(value) if value is not None else default
+    except (TypeError, ValueError):
+        return default
+    return out if np.isfinite(out) else default
+
+
 def run_internal_validation(
     zip_path: str | Path,
     out_dir: str | Path,
     methods: list[str] | None = None,
     folds: int = 3,
     max_per_fold: int = 4,
-    scatterers_count: int = 20_000,
+    scatterers_count: int = 300_000,
     include_maps: bool = True,
     include_lpips: bool = False,
     seed: int = 7,
+    api_key_file: str | Path | None = None,
+    poll_interval_seconds: float = 10.0,
+    max_polls: int = 60,
+    skip_existing: bool = True,
 ) -> tuple[Path, Path]:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     methods = methods or list(METHODS)
+    api_config_path = write_api_config(out_dir / "Configuration_api.ini", scatterers_count=scatterers_count)
 
     records = [r for r in iter_records(zip_path) if r.modality == "png"]
     folded = make_folds(records, folds=folds)
@@ -208,11 +238,27 @@ def run_internal_validation(
                 for method in methods:
                     sample_dir = work_root / f"fold_{fold_idx}" / f"sample_{sample_idx}" / method
                     phantom_path = sample_dir / "phantom.txt"
-                    pred_path = sample_dir / "surrogate.png"
+                    api_scan_path = sample_dir / "api_scan.png"
+                    pred_path = sample_dir / "api_scan_gray.png"
                     start = time.perf_counter()
                     run_method(method, ref_path, phantom_path, scatterers_count=scatterers_count, seed=seed + fold_idx * 100 + sample_idx)
                     generation_seconds = time.perf_counter() - start
-                    phantom_to_surrogate_scan(phantom_path, pred_path, seed=seed + sample_idx)
+                    if skip_existing and api_scan_path.exists() and pred_path.exists():
+                        request_id = "existing"
+                        render_seconds = 0.0
+                        poll_count = 0
+                    else:
+                        render_start = time.perf_counter()
+                        request_id, rendered_path, render_seconds, poll_count = render_with_api(
+                            phantom_path,
+                            api_config_path,
+                            api_scan_path,
+                            api_key_file=api_key_file,
+                            poll_interval_seconds=poll_interval_seconds,
+                            max_polls=max_polls,
+                        )
+                        render_seconds = time.perf_counter() - render_start if render_seconds == 0.0 else render_seconds
+                        _to_gray_png(rendered_path, pred_path)
 
                     row: dict[str, float | str] = {
                         "fold": fold_idx,
@@ -220,6 +266,9 @@ def run_internal_validation(
                         "method": method,
                         "archive_path": record.archive_path,
                         "generation_seconds": generation_seconds,
+                        "render_seconds": render_seconds,
+                        "poll_count": poll_count,
+                        "request_id": request_id,
                     }
                     for key, value in calculate_metrics(ref_path, pred_path, include_lpips=include_lpips).items():
                         row[f"Struct_{key}"] = value
@@ -237,8 +286,13 @@ def run_internal_validation(
 
     detail_path = out_dir / "internal_validation_detail.csv"
     summary_path = out_dir / "internal_validation_summary.csv"
+    challenge_summary_path = out_dir / "challenge_metrics_summary.csv"
+    wins_path = out_dir / "hypothesis_wins.csv"
     write_rows(detail_path, rows)
-    write_rows(summary_path, summarize_rows(rows))
+    summary_rows = summarize_rows(rows)
+    write_rows(summary_path, summary_rows)
+    write_rows(challenge_summary_path, summarize_challenge_metrics(rows))
+    write_rows(wins_path, summarize_sample_wins(rows, score_key="Struct_MS-SSIM"))
     return detail_path, summary_path
 
 
@@ -256,8 +310,94 @@ def summarize_rows(rows: list[dict[str, float | str]]) -> list[dict[str, float |
                 out[f"{key}_mean"] = float(values.mean())
                 out[f"{key}_std"] = float(values.std(ddof=0))
         summary.append(out)
-    summary.sort(key=lambda r: float(r.get("CompetitionProxy_mean", r.get("Composite_mean", -1))), reverse=True)
+    summary.sort(
+        key=lambda r: (
+            _finite_float(r.get("Struct_MS-SSIM_mean"), -1.0),
+            -_finite_float(r.get(_challenge_lpips_key(r, "_mean")), np.inf),
+        ),
+        reverse=True,
+    )
     return summary
+
+
+def summarize_challenge_metrics(rows: list[dict[str, float | str]]) -> list[dict[str, float | str]]:
+    by_method: dict[str, list[dict[str, float | str]]] = defaultdict(list)
+    by_sample: dict[tuple[str, str, str], list[dict[str, float | str]]] = defaultdict(list)
+    for row in rows:
+        by_method[str(row["method"])].append(row)
+        by_sample[(str(row["fold"]), str(row["sample"]), str(row["archive_path"]))].append(row)
+
+    ms_wins: dict[str, int] = defaultdict(int)
+    lpips_wins: dict[str, int] = defaultdict(int)
+    for sample_rows in by_sample.values():
+        ms_sorted = sorted(sample_rows, key=lambda row: _finite_float(row.get("Struct_MS-SSIM"), -1.0), reverse=True)
+        if ms_sorted:
+            ms_wins[str(ms_sorted[0]["method"])] += 1
+        lpips_sorted = sorted(sample_rows, key=lambda row: _finite_float(row.get(_challenge_lpips_key(row)), np.inf))
+        if lpips_sorted:
+            lpips_wins[str(lpips_sorted[0]["method"])] += 1
+
+    out: list[dict[str, float | str]] = []
+    for method, method_rows in by_method.items():
+        lpips_key = _challenge_lpips_key(method_rows[0])
+        ms_values = np.array([_finite_float(row.get("Struct_MS-SSIM")) for row in method_rows], dtype=float)
+        lpips_values = np.array([_finite_float(row.get(lpips_key)) for row in method_rows], dtype=float)
+        ms_values = ms_values[np.isfinite(ms_values)]
+        lpips_values = lpips_values[np.isfinite(lpips_values)]
+        row: dict[str, float | str] = {
+            "method": method,
+            "n": len(method_rows),
+            "MS-SSIM_mean": float(ms_values.mean()) if ms_values.size else np.nan,
+            "MS-SSIM_std": float(ms_values.std(ddof=0)) if ms_values.size else np.nan,
+            "LPIPS_metric": lpips_key.replace("Struct_", ""),
+            "LPIPS_or_proxy_mean": float(lpips_values.mean()) if lpips_values.size else np.nan,
+            "LPIPS_or_proxy_std": float(lpips_values.std(ddof=0)) if lpips_values.size else np.nan,
+            "MS-SSIM_wins": int(ms_wins[method]),
+            "LPIPS_wins": int(lpips_wins[method]),
+        }
+        out.append(row)
+    out.sort(key=lambda row: (_finite_float(row.get("MS-SSIM_mean"), -1.0), -_finite_float(row.get("LPIPS_or_proxy_mean"), np.inf)), reverse=True)
+    return out
+
+
+def summarize_sample_wins(rows: list[dict[str, float | str]], score_key: str = "Struct_MS-SSIM") -> list[dict[str, float | str]]:
+    by_sample: dict[tuple[str, str, str], list[dict[str, float | str]]] = defaultdict(list)
+    by_method: dict[str, list[float]] = defaultdict(list)
+    margins: dict[str, list[float]] = defaultdict(list)
+    wins: dict[str, int] = defaultdict(int)
+
+    for row in rows:
+        sample_key = (str(row["fold"]), str(row["sample"]), str(row["archive_path"]))
+        by_sample[sample_key].append(row)
+        by_method[str(row["method"])].append(float(row.get(score_key, row.get("Composite", 0.0))))
+
+    for sample_rows in by_sample.values():
+        scored = [(str(row["method"]), float(row.get(score_key, row.get("Composite", 0.0)))) for row in sample_rows]
+        if not scored:
+            continue
+        scored.sort(key=lambda item: item[1], reverse=True)
+        best_method, best_score = scored[0]
+        wins[best_method] += 1
+        for method, score in scored:
+            margins[method].append(score - best_score)
+
+    out: list[dict[str, float | str]] = []
+    sample_count = max(1, len(by_sample))
+    for method in sorted(by_method):
+        scores = np.array(by_method[method], dtype=float)
+        method_margins = np.array(margins[method], dtype=float)
+        out.append(
+            {
+                "method": method,
+                "n": int(scores.size),
+                "wins": int(wins[method]),
+                "win_rate": float(wins[method] / sample_count),
+                f"{score_key}_mean": float(scores.mean()),
+                "mean_margin_to_sample_best": float(method_margins.mean()) if method_margins.size else 0.0,
+            }
+        )
+    out.sort(key=lambda row: (int(row["wins"]), float(row[f"{score_key}_mean"])), reverse=True)
+    return out
 
 
 def plot_hypothesis_progress(summary_path: str | Path, output_path: str | Path) -> Path:
@@ -267,7 +407,7 @@ def plot_hypothesis_progress(summary_path: str | Path, output_path: str | Path) 
     h_rows = [r for r in rows if str(r["method"]).startswith("H")]
     h_rows.sort(key=lambda r: int(str(r["method"]).split("_", 1)[0][1:]))
     labels = [r["method"].split("_", 1)[0] for r in h_rows]
-    scores = [float(r.get("CompetitionProxy_mean") or r.get("Composite_mean")) for r in h_rows]
+    scores = [float(r.get("Struct_MS-SSIM_mean") or r.get("Struct_SSIM_mean")) for r in h_rows]
     names = [r["method"].split("_", 1)[1].replace("_", " ") for r in h_rows]
 
     output_path = Path(output_path)
@@ -278,7 +418,7 @@ def plot_hypothesis_progress(summary_path: str | Path, output_path: str | Path) 
     plt.scatter(labels, scores, s=88, c=colors, zorder=3)
     for label, score, name in zip(labels, scores, names):
         plt.text(label, score + 0.003, name[:18], ha="center", va="bottom", fontsize=8, rotation=20)
-    plt.ylabel("Competition proxy score (MS-SSIM up, LPIPS/proxy down)")
+    plt.ylabel("MS-SSIM")
     plt.xlabel("Hypothesis iteration")
     plt.title("SynthOCT Internal Validation Progression")
     plt.grid(axis="y", alpha=0.25)

@@ -9,11 +9,11 @@ from pathlib import Path
 import numpy as np
 from skimage import io
 
+from .api import _to_gray_png, render_with_api, write_api_config
 from .baselines import HYPOTHESIS_CONFIGS, physics_guided_baseline
 from .dataset import iter_records, load_scan_from_zip
 from .metrics import calculate_metrics
 from .processor import generate_maps
-from .surrogate import phantom_to_surrogate_scan
 from .validation import competition_proxy_score, make_folds, profile_scores, summarize_rows, write_rows
 
 
@@ -81,16 +81,21 @@ def run_candidate_search(
     out_dir: str | Path,
     folds: int = 3,
     max_per_fold: int = 1,
-    scatterers_count: int = 4_000,
+    scatterers_count: int = 300_000,
     random_count: int = 48,
     seed: int = 23,
     include_maps: bool = True,
+    api_key_file: str | Path | None = None,
+    poll_interval_seconds: float = 10.0,
+    max_polls: int = 60,
+    skip_existing: bool = True,
 ) -> tuple[Path, Path, Path]:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     candidates = generate_candidate_configs(seed=seed, random_count=random_count)
     candidate_map = {candidate.name: candidate.config for candidate in candidates}
     (out_dir / "candidate_configs.json").write_text(json.dumps(candidate_map, indent=2, sort_keys=True))
+    api_config_path = write_api_config(out_dir / "Configuration_api.ini", scatterers_count=scatterers_count)
 
     records = [r for r in iter_records(zip_path) if r.modality == "png"]
     folded = make_folds(records, folds=folds)
@@ -107,7 +112,8 @@ def run_candidate_search(
                 for candidate in candidates:
                     sample_dir = out_dir / "samples" / f"fold_{fold_idx}" / f"sample_{sample_idx}" / candidate.name
                     phantom_path = sample_dir / "phantom.txt"
-                    pred_path = sample_dir / "surrogate.png"
+                    api_scan_path = sample_dir / "api_scan.png"
+                    pred_path = sample_dir / "api_scan_gray.png"
                     start = time.perf_counter()
                     physics_guided_baseline(
                         ref_path,
@@ -117,7 +123,20 @@ def run_candidate_search(
                         **candidate.config,
                     )
                     generation_seconds = time.perf_counter() - start
-                    phantom_to_surrogate_scan(phantom_path, pred_path, seed=seed + sample_idx)
+                    if skip_existing and api_scan_path.exists() and pred_path.exists():
+                        request_id = "existing"
+                        render_seconds = 0.0
+                        poll_count = 0
+                    else:
+                        request_id, rendered_path, render_seconds, poll_count = render_with_api(
+                            phantom_path,
+                            api_config_path,
+                            api_scan_path,
+                            api_key_file=api_key_file,
+                            poll_interval_seconds=poll_interval_seconds,
+                            max_polls=max_polls,
+                        )
+                        _to_gray_png(rendered_path, pred_path)
 
                     row: dict[str, float | str] = {
                         "fold": fold_idx,
@@ -125,6 +144,9 @@ def run_candidate_search(
                         "method": candidate.name,
                         "archive_path": record.archive_path,
                         "generation_seconds": generation_seconds,
+                        "render_seconds": render_seconds,
+                        "poll_count": poll_count,
+                        "request_id": request_id,
                     }
                     for key, value in calculate_metrics(ref_path, pred_path, include_lpips=False).items():
                         row[f"Struct_{key}"] = value

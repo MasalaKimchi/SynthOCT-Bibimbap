@@ -358,6 +358,18 @@ HYPOTHESIS_CONFIGS = {
         "base_energy_mix": 0.7099850978498786,
         "texture_sigma_scale": 1.2453729328071115,
     },
+    "H61_api_low_depth_prelim": {
+        "density_power": 0.90,
+        "depth_compensation": -0.80,
+        "oac_weight": 1.20,
+        "texture_weight": 0.22,
+        "energy_oac_scale": 10.0,
+        "band_boost": 0.00,
+        "lateral_smooth": 0.90,
+        "oac_percentile": 70.0,
+        "base_energy_mix": 0.40,
+        "texture_sigma_scale": 0.70,
+    },
 }
 
 FINAL_CONFIG_NAME = "H56_h41_anti_anatomy"
@@ -548,6 +560,125 @@ COUNCIL_COMBO_CONFIGS = {
     ),
 }
 HYPOTHESIS_CONFIGS.update(COUNCIL_COMBO_CONFIGS)
+
+INVERSE_WAVE_CONFIGS = {
+    "H62_born_linearized": {
+        "density_power": 1.05,
+        "depth_compensation": 1.08,
+        "oac_weight": 2.55,
+        "texture_weight": 0.18,
+        "energy_oac_scale": 26.0,
+        "band_boost": 0.14,
+        "lateral_smooth": 0.42,
+        "oac_percentile": 84.0,
+        "base_energy_mix": 0.78,
+        "texture_sigma_scale": 0.62,
+    },
+    "H63_bayesian_oac_smooth": {
+        "density_power": 1.02,
+        "depth_compensation": 1.18,
+        "oac_weight": 2.35,
+        "texture_weight": 0.26,
+        "energy_oac_scale": 30.0,
+        "band_boost": 0.16,
+        "lateral_smooth": 0.95,
+        "oac_percentile": 76.0,
+        "base_energy_mix": 0.66,
+        "texture_sigma_scale": 0.82,
+    },
+    "H64_speckle_posterior": {
+        "density_power": 1.14,
+        "depth_compensation": 1.20,
+        "oac_weight": 2.05,
+        "texture_weight": 0.58,
+        "energy_oac_scale": 28.0,
+        "band_boost": 0.08,
+        "lateral_smooth": 0.50,
+        "oac_percentile": 72.0,
+        "base_energy_mix": 0.60,
+        "texture_sigma_scale": 1.58,
+    },
+    "H65_ot_depth_hist": {
+        "density_power": 0.92,
+        "depth_compensation": 1.00,
+        "oac_weight": 2.65,
+        "texture_weight": 0.34,
+        "energy_oac_scale": 24.0,
+        "band_boost": 0.02,
+        "lateral_smooth": 0.70,
+        "oac_percentile": 86.0,
+        "base_energy_mix": 0.72,
+        "texture_sigma_scale": 1.05,
+    },
+    "H66_patch_retrieval_proxy": {
+        "density_power": 1.24,
+        "depth_compensation": 1.26,
+        "oac_weight": 2.18,
+        "texture_weight": 0.46,
+        "energy_oac_scale": 29.5,
+        "band_boost": 0.22,
+        "lateral_smooth": 0.34,
+        "oac_percentile": 80.0,
+        "base_energy_mix": 0.70,
+        "texture_sigma_scale": 1.28,
+    },
+    "H67_coarse_to_fine_crisp": {
+        "density_power": 1.32,
+        "depth_compensation": 1.16,
+        "oac_weight": 2.28,
+        "texture_weight": 0.32,
+        "energy_oac_scale": 27.0,
+        "band_boost": 0.26,
+        "lateral_smooth": 0.28,
+        "oac_percentile": 82.0,
+        "base_energy_mix": 0.76,
+        "texture_sigma_scale": 1.10,
+    },
+    "H68_layer_map_prior": {
+        "density_power": 1.08,
+        "depth_compensation": 1.34,
+        "oac_weight": 2.05,
+        "texture_weight": 0.30,
+        "energy_oac_scale": 34.0,
+        "band_boost": 0.48,
+        "lateral_smooth": 0.82,
+        "oac_percentile": 74.0,
+        "base_energy_mix": 0.58,
+        "texture_sigma_scale": 0.90,
+        "multi_layer": True,
+    },
+    "H69_h56_anti_smooth": _extrapolate_config(
+        HYPOTHESIS_CONFIGS["H56_h41_anti_anatomy"],
+        HYPOTHESIS_CONFIGS["H37_multi_layer_smooth"],
+        0.05,
+    ),
+    "H70_h56_born_microblend": _blend_configs(
+        (0.86, HYPOTHESIS_CONFIGS["H56_h41_anti_anatomy"]),
+        (0.14, {
+            "density_power": 1.05,
+            "depth_compensation": 1.08,
+            "oac_weight": 2.55,
+            "texture_weight": 0.18,
+            "energy_oac_scale": 26.0,
+            "band_boost": 0.14,
+            "lateral_smooth": 0.42,
+            "oac_percentile": 84.0,
+            "base_energy_mix": 0.78,
+            "texture_sigma_scale": 0.62,
+        }),
+    ),
+}
+HYPOTHESIS_CONFIGS.update(INVERSE_WAVE_CONFIGS)
+
+HYPOTHESIS_WAVES = {
+    "inverse-wave-1": (
+        "H41_final_optimized",
+        "H56_h41_anti_anatomy",
+        "H59_h41_anti_oac_guard",
+        "portfolio",
+        *INVERSE_WAVE_CONFIGS.keys(),
+    ),
+}
 
 
 def official_baseline(

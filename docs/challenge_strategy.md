@@ -30,20 +30,20 @@ The best route is probably hybrid:
 - refine each sample with a short local search using MS-SSIM and LPIPS where scanner access is available;
 - keep hard validation on runtime, bounds, and scanner compatibility.
 
-## Internal Validation Protocol
+## Hosted API Validation Protocol
 
-Use `synthoct validate-internal` as the private leaderboard before submitting. It creates grouped folds from the Zenodo archive, generates phantoms for each method, renders deterministic surrogate scans on macOS, and reports structural plus physics-map metrics.
+Use `synthoct validate-internal` as the private leaderboard before submitting. It creates grouped folds from the Zenodo archive, generates phantoms for each method, renders each phantom with the hosted SynthOCT scanner API, and reports structural plus physics-map metrics.
 
-Recommended fast loop:
+Recommended small API loop:
 
 ```bash
 PYTHONPATH=src python -m synthoct.cli validate-internal \
   --zip 18095266.zip \
-  --out outputs/internal_validation_quick \
+  --out outputs/api_validation_quick \
+  --methods H61_api_low_depth_prelim H67_coarse_to_fine_crisp H68_layer_map_prior \
   --folds 3 \
-  --max-per-fold 2 \
-  --scatterers-count 8000 \
-  --no-maps
+  --max-per-fold 1 \
+  --api-key-file ~/.config/synthoct/api_key
 ```
 
 Recommended physics-map loop:
@@ -51,11 +51,11 @@ Recommended physics-map loop:
 ```bash
 PYTHONPATH=src python -m synthoct.cli validate-internal \
   --zip 18095266.zip \
-  --out outputs/internal_validation_maps \
-  --methods official heuristic physics-guided \
+  --out outputs/api_validation_maps \
+  --methods H61_api_low_depth_prelim H67_coarse_to_fine_crisp H68_layer_map_prior \
   --folds 3 \
   --max-per-fold 1 \
-  --scatterers-count 6000
+  --api-key-file ~/.config/synthoct/api_key
 ```
 
-Treat this as a ranking proxy, not a challenge score. A method should only be promoted when it improves across folds, not just on one scan. The most important proxy signals are Composite, OAC/RSC SSIM, depth-profile correlation, OAC-profile correlation, and generation time. Final confirmation still requires the official Windows scanner.
+Treat single-sample results as unstable. A method should only be promoted when hosted API renders improve across folds, not just on one scan. The most important signals are MS-SSIM, LPIPS/LPIPS_PROXY, OAC/RSC agreement, depth-profile correlation, OAC-profile correlation, generation time, and rendered visual sanity.

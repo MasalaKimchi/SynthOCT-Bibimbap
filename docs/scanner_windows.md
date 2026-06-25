@@ -1,6 +1,6 @@
 # Windows Scanner Validation
 
-The official `Part2_Scanner.exe` is a Windows executable. This repository is Mac-first, so local development uses `synthoct scan --mode stub` or `--mode precomputed`.
+The official `Part2_Scanner.exe` is a Windows executable. On macOS, use the hosted SynthOCT API for challenge-like rendering; local `scan` supports only `--mode real` with the Windows executable or `--mode precomputed` for already-rendered scans.
 
 For challenge-like validation:
 

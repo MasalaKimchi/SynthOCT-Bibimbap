@@ -1,10 +1,12 @@
 # H41 Council Combination Study
 
+This study is historical and was invalidated by hosted API renders. Do not use these rankings for submission decisions; rerender candidates through the hosted SynthOCT API or official Windows scanner.
+
 ## Objective
 
 H41 was the strongest internal method after broad physics optimization. The agent council suggested several orthogonal directions: inverse PSF physics, speckle moment matching, anatomical layer priors, perceptual retrieval, and robust method selection. This study tested whether those directions should be combined with H41 rather than only compared against it.
 
-Validation used the same macOS surrogate as prior experiments. The target score is `CompetitionProxy`, a leaderboard-oriented internal proxy that weights structural MS-SSIM, LPIPS proxy, and physics-map agreement.
+Validation used an offline renderer that has been removed from the codebase. The target score was `CompetitionProxy`, a leaderboard-oriented internal proxy that weights structural MS-SSIM, LPIPS proxy, and physics-map agreement.
 
 ## Combination Wave 1: Direct Blends
 
@@ -93,7 +95,7 @@ The new `synthoct baseline final` command now emits H56 phantoms.
 
 ## Caveat
 
-This is still a macOS surrogate result. Because H56's margin over H41 is small, the Windows `Part2_Scanner.exe` should decide whether H56 or H41 is the true submission winner.
+This result is invalidated for ranking. Hosted API or Windows `Part2_Scanner.exe` renders should decide any submission candidate.
 
 Artifacts:
 

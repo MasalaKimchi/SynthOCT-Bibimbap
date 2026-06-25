@@ -7,8 +7,10 @@ import time
 from pathlib import Path
 
 from . import __version__
-from .api import benchmark_submission_api
+from .api import benchmark_submission_api, prepare_preliminary_png_pairs, write_preliminary_upload_plan
 from .baselines import (
+    FINAL_CONFIG_NAME,
+    HYPOTHESIS_CONFIGS,
     council_combo_baseline,
     council_combo_conservative_baseline,
     final_baseline,
@@ -24,9 +26,9 @@ from .metrics import calculate_metrics
 from .optimizer import run_candidate_search
 from .processor import generate_maps
 from .scanner import run_scanner
-from .submission import prepare_code_submission, prepare_phantom_submission
+from .submission import prepare_submission_bundle
 from .train import train_hybrid
-from .validation import METHODS, plot_hypothesis_progress, run_internal_validation
+from .validation import METHOD_WAVES, METHODS, plot_hypothesis_progress, resolve_method_wave, run_internal_validation
 
 
 def _add_common_baseline_args(parser: argparse.ArgumentParser) -> None:
@@ -97,7 +99,7 @@ def build_parser() -> argparse.ArgumentParser:
     scan = sub.add_parser("scan")
     scan.add_argument("--phantom", required=True)
     scan.add_argument("--out", required=True)
-    scan.add_argument("--mode", choices=["stub", "real", "precomputed"], default="stub")
+    scan.add_argument("--mode", choices=["real", "precomputed"], default="real")
     scan.add_argument("--scanner-exe", default="Part2_Scanner.exe")
     scan.add_argument("--precomputed")
 
@@ -105,27 +107,36 @@ def build_parser() -> argparse.ArgumentParser:
     bench.add_argument("--command", dest="bench_command", nargs=argparse.REMAINDER, required=True)
     bench.add_argument("--limit-seconds", type=float, default=600.0)
 
-    validate = sub.add_parser("validate-internal")
+    validate = sub.add_parser("validate-internal", help="Hosted-API validation against Zenodo reference scans.")
     validate.add_argument("--zip", required=True, dest="zip_path")
     validate.add_argument("--out", default="outputs/internal_validation")
-    validate.add_argument("--methods", nargs="+", choices=METHODS, default=list(METHODS))
+    validate.add_argument("--methods", nargs="+", choices=METHODS)
+    validate.add_argument("--wave", choices=METHOD_WAVES, help="Named method set for staged hypothesis triage.")
     validate.add_argument("--folds", type=int, default=3)
     validate.add_argument("--max-per-fold", type=int, default=4)
-    validate.add_argument("--scatterers-count", type=int, default=20_000)
+    validate.add_argument("--scatterers-count", type=int, default=300_000)
     validate.add_argument("--no-maps", action="store_true")
     validate.add_argument("--include-lpips", action="store_true")
     validate.add_argument("--seed", type=int, default=7)
     validate.add_argument("--plot", help="Optional path for H0-H10 progression figure.")
+    validate.add_argument("--api-key-file", help="Optional untracked file containing the hosted scanner API key.")
+    validate.add_argument("--poll-interval-seconds", type=float, default=10.0)
+    validate.add_argument("--max-polls", type=int, default=60)
+    validate.add_argument("--rerun-existing", action="store_true")
 
-    optimize = sub.add_parser("optimize-physics")
+    optimize = sub.add_parser("optimize-physics", help="Hosted-API candidate search; expensive because each candidate is rendered by the challenge scanner.")
     optimize.add_argument("--zip", required=True, dest="zip_path")
     optimize.add_argument("--out", default="outputs/optimizer")
     optimize.add_argument("--folds", type=int, default=3)
     optimize.add_argument("--max-per-fold", type=int, default=1)
-    optimize.add_argument("--scatterers-count", type=int, default=4_000)
+    optimize.add_argument("--scatterers-count", type=int, default=300_000)
     optimize.add_argument("--random-count", type=int, default=48)
     optimize.add_argument("--seed", type=int, default=23)
     optimize.add_argument("--no-maps", action="store_true")
+    optimize.add_argument("--api-key-file", help="Optional untracked file containing the hosted scanner API key.")
+    optimize.add_argument("--poll-interval-seconds", type=float, default=10.0)
+    optimize.add_argument("--max-polls", type=int, default=60)
+    optimize.add_argument("--rerun-existing", action="store_true")
 
     submit = sub.add_parser("prepare-submission")
     submit.add_argument("--zip", required=True, dest="zip_path")
@@ -133,6 +144,7 @@ def build_parser() -> argparse.ArgumentParser:
     submit.add_argument("--scatterers-count", type=int, default=300_000)
     submit.add_argument("--limit", type=int, help="Limit number of PNG B-scans for smoke packaging.")
     submit.add_argument("--seed", type=int, default=7)
+    submit.add_argument("--method", choices=tuple(HYPOTHESIS_CONFIGS.keys()), help="Hypothesis method to package.")
 
     api_eval = sub.add_parser("api-evaluate-submission", help="Render submission phantoms with the hosted SynthOCT API.")
     api_eval.add_argument("--zip", required=True, dest="zip_path")
@@ -144,6 +156,17 @@ def build_parser() -> argparse.ArgumentParser:
     api_eval.add_argument("--poll-interval-seconds", type=float, default=10.0)
     api_eval.add_argument("--max-polls", type=int, default=60)
     api_eval.add_argument("--rerun-existing", action="store_true")
+    api_eval.add_argument("--api-key-file", help="Optional untracked file containing the hosted scanner API key.")
+
+    upload_plan = sub.add_parser("prepare-upload-plan", help="Rank rendered PNG pairs for preliminary portal upload.")
+    upload_plan.add_argument("--api-results", required=True, help="Path to api_metrics.csv from api-evaluate-submission.")
+    upload_plan.add_argument("--out", required=True, help="Output upload plan CSV.")
+    upload_plan.add_argument("--limit", type=int, help="Keep only the top N ranked pairs.")
+
+    png_pairs = sub.add_parser("prepare-png-pairs", help="Copy rendered synthetic/reference PNGs into a clean preliminary-upload folder.")
+    png_pairs.add_argument("--upload-plan", required=True, help="Path to preliminary_upload_plan.csv.")
+    png_pairs.add_argument("--out", required=True, help="Output directory with synthetic_scans/ and real_reference_scans/.")
+    png_pairs.add_argument("--limit", type=int, help="Copy only the top N pairs from the upload plan.")
     return parser
 
 
@@ -232,18 +255,28 @@ def main(argv: list[str] | None = None) -> int:
         return result.returncode
 
     if args.command == "validate-internal":
+        methods = resolve_method_wave(args.wave, args.methods)
         detail, summary = run_internal_validation(
             args.zip_path,
             args.out,
-            methods=args.methods,
+            methods=methods,
             folds=args.folds,
             max_per_fold=args.max_per_fold,
             scatterers_count=args.scatterers_count,
             include_maps=not args.no_maps,
             include_lpips=args.include_lpips,
             seed=args.seed,
+            api_key_file=args.api_key_file,
+            poll_interval_seconds=args.poll_interval_seconds,
+            max_polls=args.max_polls,
+            skip_existing=not args.rerun_existing,
         )
-        result = {"detail": str(detail), "summary": str(summary)}
+        result = {
+            "challenge_metrics": str(Path(args.out).resolve() / "challenge_metrics_summary.csv"),
+            "detail": str(detail),
+            "summary": str(summary),
+            "wins": str(Path(args.out).resolve() / "hypothesis_wins.csv"),
+        }
         if args.plot:
             result["plot"] = str(plot_hypothesis_progress(summary, args.plot))
         print(json.dumps(result, sort_keys=True))
@@ -259,20 +292,25 @@ def main(argv: list[str] | None = None) -> int:
             random_count=args.random_count,
             seed=args.seed,
             include_maps=not args.no_maps,
+            api_key_file=args.api_key_file,
+            poll_interval_seconds=args.poll_interval_seconds,
+            max_polls=args.max_polls,
+            skip_existing=not args.rerun_existing,
         )
         print(json.dumps({"detail": str(detail), "summary": str(summary), "best_config": str(best_config)}, sort_keys=True))
         return 0
 
     if args.command == "prepare-submission":
-        manifest, phantom_zip = prepare_phantom_submission(
+        bundle = prepare_submission_bundle(
             args.zip_path,
+            Path.cwd(),
             args.out,
             scatterers_count=args.scatterers_count,
             limit=args.limit,
             seed=args.seed,
+            method=args.method or FINAL_CONFIG_NAME,
         )
-        code_zip = prepare_code_submission(Path.cwd(), args.out)
-        print(json.dumps({"manifest": str(manifest), "phantom_zip": str(phantom_zip), "code_zip": str(code_zip)}, sort_keys=True))
+        print(json.dumps({k: str(v) for k, v in bundle.__dict__.items()}, sort_keys=True))
         return 0
 
     if args.command == "api-evaluate-submission":
@@ -286,8 +324,21 @@ def main(argv: list[str] | None = None) -> int:
             poll_interval_seconds=args.poll_interval_seconds,
             max_polls=args.max_polls,
             skip_existing=not args.rerun_existing,
+            progress=True,
+            api_key_file=args.api_key_file,
         )
-        print(json.dumps({"results_csv": str(results_csv), "config": str(config_path)}, sort_keys=True))
+        upload_plan = Path(args.out).resolve() / "preliminary_upload_plan.csv"
+        print(json.dumps({"results_csv": str(results_csv), "config": str(config_path), "upload_plan": str(upload_plan)}, sort_keys=True))
+        return 0
+
+    if args.command == "prepare-upload-plan":
+        path = write_preliminary_upload_plan(args.api_results, args.out, limit=args.limit)
+        print(path)
+        return 0
+
+    if args.command == "prepare-png-pairs":
+        manifest = prepare_preliminary_png_pairs(args.upload_plan, args.out, limit=args.limit)
+        print(manifest)
         return 0
 
     return 1

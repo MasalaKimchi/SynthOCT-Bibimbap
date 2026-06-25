@@ -4,10 +4,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-import numpy as np
-from skimage import io
-
-from .phantom import ExperimentConfig, load_phantom
+from .phantom import ExperimentConfig
 
 
 class ScannerError(RuntimeError):
@@ -17,7 +14,7 @@ class ScannerError(RuntimeError):
 def run_scanner(
     phantom_path: str | Path,
     output_path: str | Path,
-    mode: str = "stub",
+    mode: str = "real",
     scanner_exe: str | Path = "Part2_Scanner.exe",
     config: ExperimentConfig = ExperimentConfig(),
     precomputed_path: str | Path | None = None,
@@ -26,8 +23,6 @@ def run_scanner(
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    if mode == "stub":
-        return stub_scan(phantom_path, output_path, config=config)
     if mode == "precomputed":
         if precomputed_path is None:
             raise ScannerError("--precomputed is required when mode=precomputed.")
@@ -49,23 +44,3 @@ def run_scanner(
             raise ScannerError(result.stderr or result.stdout or "Scanner failed.")
         return output_path
     raise ScannerError(f"Unknown scanner mode: {mode}")
-
-
-def stub_scan(
-    phantom_path: str | Path,
-    output_path: str | Path,
-    config: ExperimentConfig = ExperimentConfig(),
-) -> Path:
-    data = load_phantom(phantom_path)
-    image = np.zeros((config.n_depth, config.n_lateral), dtype=np.float64)
-    x_idx = np.clip(((data[:, 0] + config.x_max / 2) / config.x_max * config.n_lateral).astype(int), 0, config.n_lateral - 1)
-    z_idx = np.clip((data[:, 2] / config.z_max * config.n_depth).astype(int), 0, config.n_depth - 1)
-    np.add.at(image, (z_idx, x_idx), np.sqrt(np.clip(data[:, 3], 0, 100) / 100.0))
-
-    # A tiny depth attenuation and log compression make the stub visually OCT-like.
-    attenuation = np.exp(-np.linspace(0, 4, config.n_depth))[:, None]
-    image = image * attenuation
-    image = np.log1p(image)
-    image = image / (image.max() + 1e-10)
-    io.imsave(output_path, (image * 255).astype(np.uint8))
-    return Path(output_path)

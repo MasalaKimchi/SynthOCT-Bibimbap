@@ -1,14 +1,50 @@
 # Submission Checklist
 
-## Prepared Artifacts
+## Preliminary Submission Artifacts
+
+The preliminary portal needs PNG pairs, not the full codebase:
+
+- Synthetic scan PNG: rendered by the hosted API or official Virtual Scanner from our generated phantom.
+- Real reference scan PNG: matching source scan from the Zenodo dataset.
+- Pair manifest: `png_pair_manifest.csv`.
+
+Use `prepare-png-pairs` after API rendering to produce the clean upload folder:
+
+```bash
+synthoct prepare-png-pairs \
+  --upload-plan outputs/api_preliminary_h56/preliminary_upload_plan.csv \
+  --out outputs/preliminary_png_pairs_h56
+```
+
+This writes:
+
+- `outputs/preliminary_png_pairs_h56/synthetic_scans/*.png`
+- `outputs/preliminary_png_pairs_h56/real_reference_scans/*.png`
+- `outputs/preliminary_png_pairs_h56/png_pair_manifest.csv`
+
+## Final/Reproducibility Artifacts
 
 - Code package: `synthoct_bibimbap_code_submission.zip`
 - Phantom package: `synthoct_h56_phantoms.zip`; older `synthoct_h41_phantoms.zip` packages are stale. This package is useful for reproducibility and batch API rendering, but the current preliminary evaluation form asks for rendered `.png` pairs, not this zip.
 - Manifest: `submission_manifest.csv`
+- Format validation: `submission_validation.csv`
+- Package notes: `SUBMISSION_README.md`
 
-## Smoke Package
+See [submission_flowchart.md](submission_flowchart.md) for the full hypothesis-development, verification, and submission pipeline.
 
-Use a small limit to verify upload formatting:
+## Official Format Gate
+
+Every generated phantom must match the official baseline's `Part1_Generator.py` contract:
+
+1. Plain text with four numeric columns: `X`, `Y`, `Z`, `Energy`.
+2. Coordinates in micrometers.
+3. `X` within `[-1536, 1536]`, `Z` within `[0, 1536]`.
+4. `Energy` within `[0, 100]`, interpreted by the scanner as reflection amplitude `sqrt(Energy / 100)`.
+5. Default row count: `300000` scatterers per B-scan.
+
+## Phantom Smoke Package
+
+Use a small limit to verify phantom generation and API rendering inputs:
 
 ```bash
 synthoct prepare-submission \
@@ -17,6 +53,8 @@ synthoct prepare-submission \
   --limit 3 \
   --scatterers-count 300000
 ```
+
+This writes a manifest, validation CSV, README, phantom zip, and code zip. For preliminary portal upload, follow this with API rendering and `prepare-png-pairs`; do not upload this zip unless the portal explicitly asks for phantoms.
 
 ## Full Local Phantom Package
 
@@ -43,7 +81,8 @@ synthoct api-evaluate-submission \
   --zip 18095266.zip \
   --submission-dir outputs/submission_ready_h56_full \
   --out outputs/api_preliminary_h56 \
-  --limit 5
+  --limit 5 \
+  --api-key-file ~/.config/synthoct/api_key
 ```
 
 Outputs:
@@ -51,21 +90,32 @@ Outputs:
 - `outputs/api_preliminary_h56/synthetic/*.png` for the form's synthetic scan field.
 - `outputs/api_preliminary_h56/references/*.png` for the form's real reference scan field.
 - `outputs/api_preliminary_h56/api_metrics.csv` with metrics and timing.
+- `outputs/api_preliminary_h56/preliminary_upload_plan.csv` ranked by MS-SSIM for portal upload triage.
 
 Omit `--limit` to render all 120 phantoms through the API, one request per B-scan.
+
+API keys are resolved from `SYNTHOCT_API_KEY`, `SYNTHOCT_CHALLENGE_API_KEY`, or an untracked file passed with `--api-key-file`. Do not commit key files or rendered portal credentials.
+
+Then copy only the PNGs into a clean portal-ready folder:
+
+```bash
+synthoct prepare-png-pairs \
+  --upload-plan outputs/api_preliminary_h56/preliminary_upload_plan.csv \
+  --out outputs/preliminary_png_pairs_h56
+```
 
 ## Before Upload
 
 1. For the preliminary form, upload one synthetic/reference `.png` pair at a time.
 2. Confirm whether repeated pair uploads are accumulated by the portal or whether the form is intended for spot checks only.
-3. Use API-rendered PNGs, not local surrogate PNGs, for preliminary form scoring.
+3. Use API-rendered PNGs for preliminary form scoring.
 4. If the portal provides hidden input scans, run `synthoct baseline final` or adapt `prepare-submission` to that input directory.
 5. Upload or link the code package for final code/model submission.
 
 ## Current Method
 
-Primary submission method: `H56_h41_anti_anatomy`.
+Primary preliminary API method: `H61_api_low_depth_prelim`.
 
-Previous incumbent: `H41_final_optimized`.
+Previous invalidated internal method: `H56_h41_anti_anatomy`.
 
-Conservative backup method: `H11_low_depth_comp`, which has better OAC/depth-profile agreement on the surrogate benchmark but lower competition proxy.
+Conservative backup method: rerender H67/H68/H11 candidates through the hosted API before upload; do not rank from offline scanner approximations.
