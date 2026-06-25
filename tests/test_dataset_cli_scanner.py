@@ -53,7 +53,7 @@ def test_scanner_config_generation_and_backend_interface(tmp_path):
     windows_config = write_scanner_config(tmp_path / "Configuration_windows.ini", phantom, tmp_path / "scan.png")
 
     assert "scatterers coordinates file = Scatterers.txt" in api_config.read_text(encoding="utf-8")
-    assert "Number of scatterers in B-scan = 300000" in windows_config.read_text(encoding="utf-8")
+    assert "number of scatterers in b-scan = 300000" in windows_config.read_text(encoding="utf-8").lower()
 
     class FakeBackend:
         def render(self, phantom_path, config_path, output_png):

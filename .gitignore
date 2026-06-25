@@ -6,8 +6,17 @@ __pycache__/
 data/
 outputs/
 runs/
+secrets/
+challenge_assets/
+*.env
+*.key
+*.zip
+*.tar
+*.tar.gz
 *.egg-info/
 Part2_Scanner.exe
+*.exe
+*.bin
 Configuration.ini
 Scan_Raw.bin
 Final_Metrics_Report.csv
