@@ -11,11 +11,16 @@ from skimage import io
 
 from .baselines import (
     HYPOTHESIS_CONFIGS,
+    AGENT_METHOD_CONFIGS,
+    agent_method_baseline,
+    council_combo_baseline,
+    council_combo_conservative_baseline,
     heuristic_baseline,
     hypothesis_baseline,
     official_baseline,
     parameter_search_baseline,
     physics_guided_baseline,
+    portfolio_baseline,
     pretrained_cnn_baseline,
 )
 from .dataset import ScanRecord, iter_records, load_scan_from_zip
@@ -24,7 +29,19 @@ from .processor import calculate_oac, calculate_speckle_contrast_map, generate_m
 from .surrogate import phantom_to_surrogate_scan
 
 HYPOTHESIS_METHODS = ("H0_official", *HYPOTHESIS_CONFIGS.keys())
-METHODS = ("official", "heuristic", "parameter-search", "pretrained-cnn", "physics-guided", *HYPOTHESIS_METHODS)
+AGENT_METHODS = tuple(AGENT_METHOD_CONFIGS.keys())
+COUNCIL_METHODS = ("council-combo", "council-combo-conservative")
+METHODS = (
+    "official",
+    "heuristic",
+    "parameter-search",
+    "pretrained-cnn",
+    "physics-guided",
+    "portfolio",
+    *COUNCIL_METHODS,
+    *HYPOTHESIS_METHODS,
+    *AGENT_METHODS,
+)
 
 
 def make_folds(records: list[ScanRecord], folds: int = 3) -> dict[int, list[ScanRecord]]:
@@ -49,6 +66,8 @@ def write_reference_scan(zip_path: str | Path, record: ScanRecord, out_path: Pat
 def run_method(method: str, ref_path: Path, phantom_path: Path, scatterers_count: int, seed: int) -> Path:
     if method in HYPOTHESIS_METHODS:
         return hypothesis_baseline(ref_path, phantom_path, method, seed=seed, scatterers_count=scatterers_count)
+    if method in AGENT_METHODS:
+        return agent_method_baseline(ref_path, phantom_path, method, seed=seed, scatterers_count=scatterers_count)
     if method == "official":
         return official_baseline(phantom_path, seed=seed, scatterers_count=scatterers_count)
     if method == "heuristic":
@@ -59,6 +78,12 @@ def run_method(method: str, ref_path: Path, phantom_path: Path, scatterers_count
         return pretrained_cnn_baseline(ref_path, phantom_path, seed=seed, scatterers_count=scatterers_count, pretrained=False)
     if method == "physics-guided":
         return physics_guided_baseline(ref_path, phantom_path, seed=seed, scatterers_count=scatterers_count)
+    if method == "portfolio":
+        return portfolio_baseline(ref_path, phantom_path, seed=seed, scatterers_count=scatterers_count)
+    if method == "council-combo":
+        return council_combo_baseline(ref_path, phantom_path, seed=seed, scatterers_count=scatterers_count)
+    if method == "council-combo-conservative":
+        return council_combo_conservative_baseline(ref_path, phantom_path, seed=seed, scatterers_count=scatterers_count)
     raise ValueError(f"Unknown method: {method}")
 
 

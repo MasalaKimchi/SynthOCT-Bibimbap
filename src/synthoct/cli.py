@@ -7,11 +7,23 @@ import time
 from pathlib import Path
 
 from . import __version__
-from .baselines import heuristic_baseline, official_baseline, parameter_search_baseline, physics_guided_baseline, pretrained_cnn_baseline
+from .baselines import (
+    council_combo_baseline,
+    council_combo_conservative_baseline,
+    final_baseline,
+    heuristic_baseline,
+    official_baseline,
+    parameter_search_baseline,
+    physics_guided_baseline,
+    portfolio_baseline,
+    pretrained_cnn_baseline,
+)
 from .dataset import iter_records, prepare_dataset
 from .metrics import calculate_metrics
+from .optimizer import run_candidate_search
 from .processor import generate_maps
 from .scanner import run_scanner
+from .submission import prepare_code_submission, prepare_phantom_submission
 from .train import train_hybrid
 from .validation import METHODS, plot_hypothesis_progress, run_internal_validation
 
@@ -57,6 +69,16 @@ def build_parser() -> argparse.ArgumentParser:
     physics.add_argument("--lateral-bins", type=int, default=64)
     physics.add_argument("--depth-bins", type=int, default=64)
     _add_common_baseline_args(physics)
+    final = base_sub.add_parser("final")
+    final.add_argument("--input", required=True)
+    _add_common_baseline_args(final)
+    portfolio = base_sub.add_parser("portfolio")
+    portfolio.add_argument("--input", required=True)
+    _add_common_baseline_args(portfolio)
+    council = base_sub.add_parser("council-combo")
+    council.add_argument("--input", required=True)
+    council.add_argument("--conservative", action="store_true", help="Use the lower-variance council blend.")
+    _add_common_baseline_args(council)
 
     train = sub.add_parser("train")
     train_sub = train.add_subparsers(dest="train_command", required=True)
@@ -93,6 +115,23 @@ def build_parser() -> argparse.ArgumentParser:
     validate.add_argument("--include-lpips", action="store_true")
     validate.add_argument("--seed", type=int, default=7)
     validate.add_argument("--plot", help="Optional path for H0-H10 progression figure.")
+
+    optimize = sub.add_parser("optimize-physics")
+    optimize.add_argument("--zip", required=True, dest="zip_path")
+    optimize.add_argument("--out", default="outputs/optimizer")
+    optimize.add_argument("--folds", type=int, default=3)
+    optimize.add_argument("--max-per-fold", type=int, default=1)
+    optimize.add_argument("--scatterers-count", type=int, default=4_000)
+    optimize.add_argument("--random-count", type=int, default=48)
+    optimize.add_argument("--seed", type=int, default=23)
+    optimize.add_argument("--no-maps", action="store_true")
+
+    submit = sub.add_parser("prepare-submission")
+    submit.add_argument("--zip", required=True, dest="zip_path")
+    submit.add_argument("--out", default="outputs/submission_ready")
+    submit.add_argument("--scatterers-count", type=int, default=300_000)
+    submit.add_argument("--limit", type=int, help="Limit number of PNG B-scans for smoke packaging.")
+    submit.add_argument("--seed", type=int, default=7)
     return parser
 
 
@@ -124,7 +163,7 @@ def main(argv: list[str] | None = None) -> int:
                 scatterers_count=args.scatterers_count,
                 pretrained=not args.no_pretrained,
             )
-        else:
+        elif args.baseline_command == "physics-guided":
             path = physics_guided_baseline(
                 args.input,
                 args.out,
@@ -133,6 +172,13 @@ def main(argv: list[str] | None = None) -> int:
                 lateral_bins=args.lateral_bins,
                 depth_bins=args.depth_bins,
             )
+        elif args.baseline_command == "final":
+            path = final_baseline(args.input, args.out, seed=args.seed, scatterers_count=args.scatterers_count)
+        elif args.baseline_command == "portfolio":
+            path = portfolio_baseline(args.input, args.out, seed=args.seed, scatterers_count=args.scatterers_count)
+        else:
+            fn = council_combo_conservative_baseline if args.conservative else council_combo_baseline
+            path = fn(args.input, args.out, seed=args.seed, scatterers_count=args.scatterers_count)
         print(path)
         return 0
 
@@ -189,6 +235,32 @@ def main(argv: list[str] | None = None) -> int:
         if args.plot:
             result["plot"] = str(plot_hypothesis_progress(summary, args.plot))
         print(json.dumps(result, sort_keys=True))
+        return 0
+
+    if args.command == "optimize-physics":
+        detail, summary, best_config = run_candidate_search(
+            args.zip_path,
+            args.out,
+            folds=args.folds,
+            max_per_fold=args.max_per_fold,
+            scatterers_count=args.scatterers_count,
+            random_count=args.random_count,
+            seed=args.seed,
+            include_maps=not args.no_maps,
+        )
+        print(json.dumps({"detail": str(detail), "summary": str(summary), "best_config": str(best_config)}, sort_keys=True))
+        return 0
+
+    if args.command == "prepare-submission":
+        manifest, phantom_zip = prepare_phantom_submission(
+            args.zip_path,
+            args.out,
+            scatterers_count=args.scatterers_count,
+            limit=args.limit,
+            seed=args.seed,
+        )
+        code_zip = prepare_code_submission(Path.cwd(), args.out)
+        print(json.dumps({"manifest": str(manifest), "phantom_zip": str(phantom_zip), "code_zip": str(code_zip)}, sort_keys=True))
         return 0
 
     return 1

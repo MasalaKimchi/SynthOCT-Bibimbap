@@ -45,3 +45,41 @@ Start from H1, not H10. Sweep only one axis at a time:
 4. Optional weak boundary band around `0.0-0.25`.
 
 Then confirm the top two with the official Windows scanner.
+
+## H11-H40 Expansion
+
+A second theory-driven screen added 30 hypotheses, documented in [theory_context.md](theory_context.md). The broad screen used 3 folds x 1 sample/fold, then the top candidates were confirmed on 3 folds x 2 samples/fold.
+
+Confirmatory ranking:
+
+```text
+H11_low_depth_comp               proxy=0.4158
+H34_epidermal_emphasis           proxy=0.4129
+H29_low_depth_high_oac           proxy=0.4126
+H17_superlinear_density          proxy=0.4120
+H32_superlinear_boundary         proxy=0.4109
+H40_conservative_winner          proxy=0.4109
+H12_mid_depth_comp               proxy=0.4107
+H37_multi_layer_smooth           proxy=0.4100
+H36_multi_layer_light            proxy=0.4084
+H1_attenuation_density           proxy=0.4073
+H0_official                      proxy=0.3198
+```
+
+Decision: H11 replaces H1 as the current base. The accepted theory is lower Beer-Lambert depth compensation with OAC-guided inhomogeneous point-process sampling. The rejected theory is that added layer/void/multilayer complexity automatically improves the competition proxy.
+
+## H41-H60 Council Combination Update
+
+H41 later replaced H11 after broad random/local optimization. A follow-up council study tested direct H41 blends with inverse-physics, speckle, anatomy, perceptual, and portfolio hypotheses. Direct blends H42-H50 did not beat H41; they generally diluted the structural metric gains.
+
+The successful refinement was H56, a small bounded extrapolation away from the anatomy-heavy council direction. On the 3 folds x 4 samples confirmation:
+
+```text
+H56_h41_anti_anatomy         proxy=0.4244
+H59_h41_anti_oac_guard       proxy=0.4237
+H58_h41_anti_inverse         proxy=0.4237
+H41_final_optimized          proxy=0.4230
+portfolio                    proxy=0.4223
+```
+
+Decision: promote `H56_h41_anti_anatomy` as the current internal final method, with H41 retained as the previous incumbent and Windows scanner confirmation still required.

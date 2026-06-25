@@ -60,3 +60,12 @@ def test_internal_validation_writes_summary(tmp_path):
     text = summary.read_text()
     assert "physics-guided" in text
     assert "official" in text
+
+
+def test_cli_final_baseline(tmp_path):
+    img = np.tile(np.linspace(0, 255, 32, dtype=np.uint8), (32, 1))
+    scan = tmp_path / "scan.png"
+    phantom = tmp_path / "final.txt"
+    skio.imsave(scan, img)
+    assert main(["baseline", "final", "--input", str(scan), "--out", str(phantom), "--scatterers-count", "128"]) == 0
+    assert phantom.exists()

@@ -81,4 +81,15 @@ For a slower physics-focused pass, omit `--no-maps` and compare OAC/SC/RSC score
 
 See [docs/challenge_strategy.md](docs/challenge_strategy.md) for the baseline ladder and competition strategy.
 
-The current H0-H10 experiment report is in [docs/hypothesis_progress.md](docs/hypothesis_progress.md), with the generated figure at `outputs/hypothesis_progress/hypothesis_progress.png`.
+The current hypothesis experiment report is in [docs/hypothesis_progress.md](docs/hypothesis_progress.md), with the theory context in [docs/theory_context.md](docs/theory_context.md). The latest confirmatory figure is at `outputs/hypothesis_progress_confirm/hypothesis_progress_confirm.png`.
+
+The latest compiled internal winner is documented in [docs/final_benchmark.md](docs/final_benchmark.md). Generate it with:
+
+```bash
+synthoct baseline final --input reference.png --out outputs/Scatterers_H56_Final.txt
+```
+
+Submission packaging instructions are in [docs/submission_checklist.md](docs/submission_checklist.md).
+
+The multi-agent comparison and synthesis is in [docs/subagent_synthesis.md](docs/subagent_synthesis.md).
+The latest H41-plus-council combination study is in [docs/council_combinations.md](docs/council_combinations.md); it promotes `H56_h41_anti_anatomy` as the current internal final method while keeping H41 as the previous incumbent.
