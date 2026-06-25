@@ -27,11 +27,10 @@ def generate_candidate_configs(seed: int = 0, random_count: int = 48) -> list[Ca
     rng = np.random.default_rng(seed)
     candidates: list[Candidate] = []
     anchors = {
+        "H61": HYPOTHESIS_CONFIGS["H61_api_low_depth_prelim"],
+        "H67": HYPOTHESIS_CONFIGS["H67_coarse_to_fine_crisp"],
+        "H68": HYPOTHESIS_CONFIGS["H68_layer_map_prior"],
         "H11": HYPOTHESIS_CONFIGS["H11_low_depth_comp"],
-        "H29": HYPOTHESIS_CONFIGS["H29_low_depth_high_oac"],
-        "H34": HYPOTHESIS_CONFIGS["H34_epidermal_emphasis"],
-        "H17": HYPOTHESIS_CONFIGS["H17_superlinear_density"],
-        "H40": HYPOTHESIS_CONFIGS["H40_conservative_winner"],
     }
     for anchor_name, cfg in anchors.items():
         tuned = dict(cfg)
@@ -41,17 +40,17 @@ def generate_candidate_configs(seed: int = 0, random_count: int = 48) -> list[Ca
         tuned.setdefault("lateral_smooth", 0.8)
         candidates.append(Candidate(f"O_anchor_{anchor_name}", tuned))
 
-    base = dict(HYPOTHESIS_CONFIGS["H11_low_depth_comp"])
-    base.update({"oac_percentile": 70.0, "base_energy_mix": 0.55, "texture_sigma_scale": 1.0, "lateral_smooth": 0.8})
+    base = dict(HYPOTHESIS_CONFIGS["H61_api_low_depth_prelim"])
     grid = [
-        ("depth", "depth_compensation", [1.20, 1.30, 1.40, 1.50, 1.60]),
-        ("oac", "oac_weight", [1.75, 1.95, 2.15, 2.35, 2.55]),
-        ("density", "density_power", [0.90, 1.00, 1.08, 1.16, 1.24]),
-        ("percentile", "oac_percentile", [60.0, 65.0, 70.0, 75.0, 80.0]),
-        ("mix", "base_energy_mix", [0.45, 0.55, 0.65, 0.75]),
-        ("texture", "texture_sigma_scale", [0.70, 0.90, 1.10, 1.30]),
-        ("smooth", "lateral_smooth", [0.55, 0.80, 1.05, 1.30]),
-        ("band", "band_boost", [0.0, 0.08, 0.18, 0.30]),
+        ("depth", "depth_compensation", [-1.40, -1.10, -0.80, -0.50, 0.00, 0.60]),
+        ("oac", "oac_weight", [0.80, 1.00, 1.20, 1.60, 2.00, 2.40]),
+        ("density", "density_power", [0.75, 0.90, 1.05, 1.20, 1.35]),
+        ("energy", "energy_oac_scale", [6.0, 10.0, 16.0, 24.0, 34.0]),
+        ("percentile", "oac_percentile", [58.0, 65.0, 70.0, 78.0, 84.0]),
+        ("mix", "base_energy_mix", [0.30, 0.40, 0.55, 0.70]),
+        ("texture", "texture_sigma_scale", [0.55, 0.70, 0.90, 1.15]),
+        ("smooth", "lateral_smooth", [0.28, 0.55, 0.90, 1.20]),
+        ("band", "band_boost", [0.0, 0.12, 0.30, 0.50]),
     ]
     for label, key, values in grid:
         for value in values:
@@ -61,16 +60,16 @@ def generate_candidate_configs(seed: int = 0, random_count: int = 48) -> list[Ca
 
     for idx in range(random_count):
         cfg = {
-            "density_power": float(rng.uniform(0.88, 1.24)),
-            "depth_compensation": float(rng.uniform(1.15, 1.75)),
-            "oac_weight": float(rng.uniform(1.75, 2.65)),
-            "texture_weight": float(rng.uniform(0.18, 0.50)),
-            "energy_oac_scale": float(rng.uniform(28.0, 46.0)),
-            "band_boost": float(rng.choice([0.0, rng.uniform(0.04, 0.35)])),
-            "lateral_smooth": float(rng.uniform(0.45, 1.45)),
-            "oac_percentile": float(rng.uniform(58.0, 82.0)),
-            "base_energy_mix": float(rng.uniform(0.42, 0.78)),
-            "texture_sigma_scale": float(rng.uniform(0.65, 1.35)),
+            "density_power": float(rng.uniform(0.72, 1.38)),
+            "depth_compensation": float(rng.uniform(-1.50, 1.40)),
+            "oac_weight": float(rng.uniform(0.70, 2.60)),
+            "texture_weight": float(rng.uniform(0.12, 0.42)),
+            "energy_oac_scale": float(rng.uniform(5.0, 38.0)),
+            "band_boost": float(rng.choice([0.0, rng.uniform(0.04, 0.55)])),
+            "lateral_smooth": float(rng.uniform(0.25, 1.35)),
+            "oac_percentile": float(rng.uniform(55.0, 86.0)),
+            "base_energy_mix": float(rng.uniform(0.25, 0.80)),
+            "texture_sigma_scale": float(rng.uniform(0.50, 1.25)),
         }
         candidates.append(Candidate(f"O_random_{idx:02d}", cfg))
     return candidates

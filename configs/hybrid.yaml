@@ -1,9 +1,0 @@
-seed: 7
-backbone: resnet50
-pretrained: true
-scatterers_count: 300000
-epochs: 5
-batch_size: 8
-learning_rate: 0.0003
-train_manifest: data/manifest.csv
-output_dir: runs/hybrid

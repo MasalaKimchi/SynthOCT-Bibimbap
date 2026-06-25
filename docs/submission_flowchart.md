@@ -22,7 +22,7 @@ flowchart TD
     K --> L["Methodic Verification\nMS-SSIM up, LPIPS down, physics maps as guardrails"]
     L --> M{"Promote Hypothesis?"}
     M -- "no" --> C
-    M -- "yes" --> N["Current Final\nH56_h41_anti_anatomy"]
+    M -- "yes" --> N["Current Final\nH61_api_low_depth_prelim"]
     N --> O["prepare-submission\nmanifest + phantom zip + code zip + validation CSV"]
     O --> P["api-evaluate-submission\nuses SYNTHOCT_API_KEY or local key file"]
     P --> Q["preliminary_upload_plan.csv\nranked synthetic/reference PNG pairs"]
@@ -43,20 +43,20 @@ flowchart TD
 ```bash
 synthoct prepare-submission \
   --zip 18095266.zip \
-  --out outputs/submission_ready_h56_full \
+  --out outputs/submission_ready_h61_full \
   --scatterers-count 300000
 ```
 
 ```bash
 synthoct api-evaluate-submission \
   --zip 18095266.zip \
-  --submission-dir outputs/submission_ready_h56_full \
-  --out outputs/api_preliminary_h56 \
+  --submission-dir outputs/submission_ready_h61_full \
+  --out outputs/api_preliminary_h61 \
   --api-key-file ~/.config/synthoct/api_key
 ```
 
 ```bash
 synthoct prepare-upload-plan \
-  --api-results outputs/api_preliminary_h56/api_metrics.csv \
-  --out outputs/api_preliminary_h56/preliminary_upload_plan.csv
+  --api-results outputs/api_preliminary_h61/api_metrics.csv \
+  --out outputs/api_preliminary_h61/preliminary_upload_plan.csv
 ```

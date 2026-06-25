@@ -1,6 +1,5 @@
 name: synthoct-py312
 channels:
-  - pytorch
   - conda-forge
 dependencies:
   - python=3.12.12
@@ -9,12 +8,7 @@ dependencies:
   - scipy
   - matplotlib
   - scikit-image
-  - joblib
-  - numba
   - pytest
   - pip:
-      - torch==2.10.0
-      - torchvision==0.25.0
       - sewar>=0.4.6
-      - lpips>=0.1.4
       - -e .

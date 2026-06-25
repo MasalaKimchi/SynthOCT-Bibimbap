@@ -3,10 +3,5 @@ scipy>=1.12
 matplotlib>=3.8
 requests>=2.32
 scikit-image>=0.23
-joblib>=1.4
-numba>=0.60
 sewar>=0.4.6
-lpips>=0.1.4
-torch==2.10.0
-torchvision==0.25.0
 pytest>=8.0

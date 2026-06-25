@@ -11,15 +11,11 @@ from .api import benchmark_submission_api, prepare_preliminary_png_pairs, write_
 from .baselines import (
     FINAL_CONFIG_NAME,
     HYPOTHESIS_CONFIGS,
-    council_combo_baseline,
-    council_combo_conservative_baseline,
     final_baseline,
     heuristic_baseline,
+    hypothesis_baseline,
     official_baseline,
-    parameter_search_baseline,
     physics_guided_baseline,
-    portfolio_baseline,
-    pretrained_cnn_baseline,
 )
 from .dataset import iter_records, prepare_dataset
 from .metrics import calculate_metrics
@@ -27,7 +23,6 @@ from .optimizer import run_candidate_search
 from .processor import generate_maps
 from .scanner import run_scanner
 from .submission import prepare_submission_bundle
-from .train import train_hybrid
 from .validation import METHOD_WAVES, METHODS, plot_hypothesis_progress, resolve_method_wave, run_internal_validation
 
 
@@ -59,34 +54,18 @@ def build_parser() -> argparse.ArgumentParser:
     heuristic = base_sub.add_parser("heuristic")
     heuristic.add_argument("--input", required=True)
     _add_common_baseline_args(heuristic)
-    search = base_sub.add_parser("parameter-search")
-    search.add_argument("--input", required=True)
-    _add_common_baseline_args(search)
-    cnn = base_sub.add_parser("pretrained-cnn")
-    cnn.add_argument("--input", required=True)
-    cnn.add_argument("--backbone", choices=["resnet50", "efficientnet_b0", "convnext_tiny"], default="resnet50")
-    cnn.add_argument("--no-pretrained", action="store_true", help="Avoid downloading ImageNet weights.")
-    _add_common_baseline_args(cnn)
     physics = base_sub.add_parser("physics-guided")
     physics.add_argument("--input", required=True)
     physics.add_argument("--lateral-bins", type=int, default=64)
     physics.add_argument("--depth-bins", type=int, default=64)
     _add_common_baseline_args(physics)
+    hypothesis = base_sub.add_parser("hypothesis")
+    hypothesis.add_argument("--input", required=True)
+    hypothesis.add_argument("--name", choices=tuple(HYPOTHESIS_CONFIGS.keys()), default=FINAL_CONFIG_NAME)
+    _add_common_baseline_args(hypothesis)
     final = base_sub.add_parser("final")
     final.add_argument("--input", required=True)
     _add_common_baseline_args(final)
-    portfolio = base_sub.add_parser("portfolio")
-    portfolio.add_argument("--input", required=True)
-    _add_common_baseline_args(portfolio)
-    council = base_sub.add_parser("council-combo")
-    council.add_argument("--input", required=True)
-    council.add_argument("--conservative", action="store_true", help="Use the lower-variance council blend.")
-    _add_common_baseline_args(council)
-
-    train = sub.add_parser("train")
-    train_sub = train.add_subparsers(dest="train_command", required=True)
-    hybrid = train_sub.add_parser("hybrid")
-    hybrid.add_argument("--config", default="configs/hybrid.yaml")
 
     evaluate = sub.add_parser("evaluate")
     evaluate.add_argument("--ref", required=True)
@@ -118,7 +97,7 @@ def build_parser() -> argparse.ArgumentParser:
     validate.add_argument("--no-maps", action="store_true")
     validate.add_argument("--include-lpips", action="store_true")
     validate.add_argument("--seed", type=int, default=7)
-    validate.add_argument("--plot", help="Optional path for H0-H10 progression figure.")
+    validate.add_argument("--plot", help="Optional path for hypothesis progression figure.")
     validate.add_argument("--api-key-file", help="Optional untracked file containing the hosted scanner API key.")
     validate.add_argument("--poll-interval-seconds", type=float, default=10.0)
     validate.add_argument("--max-polls", type=int, default=60)
@@ -187,17 +166,6 @@ def main(argv: list[str] | None = None) -> int:
             path = official_baseline(args.out, method=args.method, seed=args.seed, scatterers_count=args.scatterers_count)
         elif args.baseline_command == "heuristic":
             path = heuristic_baseline(args.input, args.out, seed=args.seed, scatterers_count=args.scatterers_count)
-        elif args.baseline_command == "parameter-search":
-            path = parameter_search_baseline(args.input, args.out, seed=args.seed, scatterers_count=args.scatterers_count)
-        elif args.baseline_command == "pretrained-cnn":
-            path = pretrained_cnn_baseline(
-                args.input,
-                args.out,
-                backbone=args.backbone,
-                seed=args.seed,
-                scatterers_count=args.scatterers_count,
-                pretrained=not args.no_pretrained,
-            )
         elif args.baseline_command == "physics-guided":
             path = physics_guided_baseline(
                 args.input,
@@ -207,18 +175,13 @@ def main(argv: list[str] | None = None) -> int:
                 lateral_bins=args.lateral_bins,
                 depth_bins=args.depth_bins,
             )
+        elif args.baseline_command == "hypothesis":
+            path = hypothesis_baseline(args.input, args.out, args.name, seed=args.seed, scatterers_count=args.scatterers_count)
         elif args.baseline_command == "final":
             path = final_baseline(args.input, args.out, seed=args.seed, scatterers_count=args.scatterers_count)
-        elif args.baseline_command == "portfolio":
-            path = portfolio_baseline(args.input, args.out, seed=args.seed, scatterers_count=args.scatterers_count)
         else:
-            fn = council_combo_conservative_baseline if args.conservative else council_combo_baseline
-            path = fn(args.input, args.out, seed=args.seed, scatterers_count=args.scatterers_count)
+            raise ValueError(f"Unknown baseline command: {args.baseline_command}")
         print(path)
-        return 0
-
-    if args.command == "train":
-        print(train_hybrid(args.config))
         return 0
 
     if args.command == "evaluate":
