@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 
 from . import __version__
+from .api import benchmark_submission_api
 from .baselines import (
     council_combo_baseline,
     council_combo_conservative_baseline,
@@ -132,6 +133,17 @@ def build_parser() -> argparse.ArgumentParser:
     submit.add_argument("--scatterers-count", type=int, default=300_000)
     submit.add_argument("--limit", type=int, help="Limit number of PNG B-scans for smoke packaging.")
     submit.add_argument("--seed", type=int, default=7)
+
+    api_eval = sub.add_parser("api-evaluate-submission", help="Render submission phantoms with the hosted SynthOCT API.")
+    api_eval.add_argument("--zip", required=True, dest="zip_path")
+    api_eval.add_argument("--submission-dir", required=True)
+    api_eval.add_argument("--out", default="outputs/api_preliminary")
+    api_eval.add_argument("--limit", type=int, help="Limit number of manifest rows to render.")
+    api_eval.add_argument("--scatterers-count", type=int, default=300_000)
+    api_eval.add_argument("--include-lpips", action="store_true")
+    api_eval.add_argument("--poll-interval-seconds", type=float, default=10.0)
+    api_eval.add_argument("--max-polls", type=int, default=60)
+    api_eval.add_argument("--rerun-existing", action="store_true")
     return parser
 
 
@@ -261,6 +273,21 @@ def main(argv: list[str] | None = None) -> int:
         )
         code_zip = prepare_code_submission(Path.cwd(), args.out)
         print(json.dumps({"manifest": str(manifest), "phantom_zip": str(phantom_zip), "code_zip": str(code_zip)}, sort_keys=True))
+        return 0
+
+    if args.command == "api-evaluate-submission":
+        results_csv, config_path = benchmark_submission_api(
+            args.zip_path,
+            args.submission_dir,
+            args.out,
+            limit=args.limit,
+            scatterers_count=args.scatterers_count,
+            include_lpips=args.include_lpips,
+            poll_interval_seconds=args.poll_interval_seconds,
+            max_polls=args.max_polls,
+            skip_existing=not args.rerun_existing,
+        )
+        print(json.dumps({"results_csv": str(results_csv), "config": str(config_path)}, sort_keys=True))
         return 0
 
     return 1
