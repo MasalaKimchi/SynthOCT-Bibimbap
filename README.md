@@ -127,4 +127,4 @@ synthoct prepare-png-pairs \
   --out outputs/preliminary_png_pairs_h61
 ```
 
-Submission packaging details are in [docs/submission_checklist.md](docs/submission_checklist.md), and Windows scanner notes are in [docs/scanner_windows.md](docs/scanner_windows.md).
+Submission packaging details are in [docs/submission/guide.md](docs/submission/guide.md), scanner notes are in [docs/implementation/pipeline.md](docs/implementation/pipeline.md), and challenge strategy is in [docs/challenge/overview.md](docs/challenge/overview.md).
