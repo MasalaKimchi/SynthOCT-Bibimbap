@@ -40,7 +40,7 @@ Keep `data/`, `outputs/`, `secrets/`, scanner binaries, API keys, and downloaded
 - `synthoct.evaluation`: compute MS-SSIM, LPIPS/fallback metrics, and Struct/OAC/SC/RSC comparisons on rendered PNGs.
 - `synthoct.submission`: create manifest/phantom/code packages and preliminary portal PNG-pair folders.
 
-Historical modules such as `synthoct.baselines`, `synthoct.processor`, `synthoct.metrics`, and `synthoct.api` remain compatibility facades.
+Legacy direct-synthesis and facade modules were removed from source so the package surface mirrors the challenge stages.
 
 ## Workflow 1: Generate Digital Phantoms
 

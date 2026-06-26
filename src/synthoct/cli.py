@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import shutil
 import time
 from pathlib import Path
 
@@ -20,7 +21,6 @@ from .generators import (
 )
 from .dataset import iter_records, prepare_dataset
 from .optimizer import run_candidate_search
-from .scanner import run_scanner
 from .scanners import render_phantom, write_api_config
 from .submission import (
     benchmark_submission_api,
@@ -51,7 +51,7 @@ def build_parser() -> argparse.ArgumentParser:
     data_list = data_sub.add_parser("list", help="Print dataset records as JSON lines.")
     data_list.add_argument("--zip", required=True, dest="zip_path")
 
-    baseline = sub.add_parser("baseline", help="Generate digital phantoms; legacy alias for phantom generators.")
+    baseline = sub.add_parser("baseline", help="Generate digital phantoms from real OCT reference scans.")
     base_sub = baseline.add_subparsers(dest="baseline_command", required=True)
     official = base_sub.add_parser("official")
     _add_common_baseline_args(official)
@@ -83,7 +83,7 @@ def build_parser() -> argparse.ArgumentParser:
     scan = sub.add_parser("scan", help="Render a generated phantom into a synthetic OCT PNG.")
     scan.add_argument("--phantom", required=True)
     scan.add_argument("--out", required=True)
-    scan.add_argument("--mode", choices=["api", "windows", "real", "precomputed"], default="api")
+    scan.add_argument("--mode", choices=["api", "windows", "precomputed"], default="api")
     scan.add_argument("--config", help="Scanner Configuration.ini path. API mode writes one if missing.")
     scan.add_argument("--scanner-exe", default="Part2_Scanner.exe")
     scan.add_argument("--precomputed")
@@ -215,7 +215,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "scan":
         if args.mode == "precomputed":
-            path = run_scanner(args.phantom, args.out, mode="precomputed", precomputed_path=args.precomputed)
+            if args.precomputed is None:
+                raise ValueError("--precomputed is required when mode=precomputed.")
+            path = Path(args.out)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(args.precomputed, path)
         else:
             config_path = Path(args.config) if args.config else Path(args.out).with_suffix(".ini")
             if args.mode == "api":

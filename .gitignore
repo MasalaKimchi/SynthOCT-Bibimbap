@@ -1,5 +1,6 @@
 __pycache__/
 *.py[cod]
+.DS_Store
 .pytest_cache/
 .ruff_cache/
 .venv/
@@ -13,6 +14,7 @@ challenge_assets/
 *.zip
 *.tar
 *.tar.gz
+314-SynthOCT_2026_Digital_Phantoms_Simulation_for_Physics-Based_Scans_2026-04-22T16-37-10.pdf
 *.egg-info/
 Part2_Scanner.exe
 *.exe

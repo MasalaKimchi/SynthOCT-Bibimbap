@@ -12,7 +12,7 @@ flowchart TD
     A["Official SynthOCT Inputs\nZenodo real OCT B-scans"] --> B["Hypothesis Seed\ninverse physics, not GAN/diffusion image synthesis"]
     B --> C["Feature Extraction\nintensity profile + OAC + speckle contrast + refined speckle"]
     C --> D["Phantom Parameterization\ninhomogeneous scatterer point process"]
-    D --> E["Part1-Compatible Generator\nsrc/synthoct/baselines.py"]
+    D --> E["Part1-Compatible Generator\nsrc/synthoct/generators/"]
     E --> F["Official Format Gate\nN x 4 text: X, Y, Z, Energy"]
     F --> G{"Bounds and Schema OK?"}
     G -- "no" --> E
