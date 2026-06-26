@@ -1,8 +1,8 @@
 # Submission Checklist
 
-## Preliminary Submission Artifacts
+## Preliminary Portal Artifacts
 
-The preliminary portal needs PNG pairs, not the full codebase:
+The preliminary portal needs rendered PNG pairs, not raw phantom files and not the full codebase:
 
 - Synthetic scan PNG: rendered by the hosted API or official Virtual Scanner from our generated phantom.
 - Real reference scan PNG: matching source scan from the Zenodo dataset.
@@ -25,7 +25,7 @@ This writes:
 ## Final/Reproducibility Artifacts
 
 - Code package: `synthoct_bibimbap_code_submission.zip`
-- Phantom package: `synthoct_h61_phantoms.zip`. This package is useful for reproducibility and batch API rendering, but the current preliminary evaluation form asks for rendered `.png` pairs, not this zip.
+- Phantom package: `synthoct_h61_phantoms.zip`. This package is the challenge-contract artifact for scanner rendering and reproducibility, but the current preliminary evaluation form asks for rendered `.png` pairs, not this zip.
 - Manifest: `submission_manifest.csv`
 - Format validation: `submission_validation.csv`
 - Package notes: `SUBMISSION_README.md`

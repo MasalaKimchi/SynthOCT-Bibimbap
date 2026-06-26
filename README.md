@@ -1,6 +1,14 @@
 # SynthOCT-Bibimbap
 
-Mac-first baselines for the [SynthOCT Challenge 2026](https://synthoct.com/). The challenge output is a digital phantom: a text file of scatterers with columns `X, Y, Z, Energy`. The official Windows Virtual Scanner turns that phantom into an OCT B-scan for scoring.
+Inverse-physics digital phantom generation for the [SynthOCT Challenge 2026](https://synthoct.com/).
+
+This repo does **not** submit direct OCT image synthesis as its primary algorithmic output. The challenge contract is a scanner-compatible digital phantom: a plain text scatterer table with four columns:
+
+```text
+X Y Z Energy
+```
+
+The SynthOCT Virtual Scanner renders those phantoms into synthetic OCT PNGs for scoring.
 
 ## Setup
 
@@ -21,16 +29,29 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-## Dataset
+Keep `data/`, `outputs/`, `secrets/`, scanner binaries, API keys, and downloaded challenge assets out of git.
 
-The local `18095266.zip` is treated as the official Zenodo dataset archive.
+## Repository Stages
+
+- `synthoct.dataset`: load/list the Zenodo OCT reference scans.
+- `synthoct.features`: extract OAC, speckle contrast, depth profiles, and boundary estimates from real scans.
+- `synthoct.generators`: generate four-column phantom scatterer files from reference scans.
+- `synthoct.scanners`: render phantoms with the hosted SynthOCT API or Windows `Part2_Scanner.exe`.
+- `synthoct.evaluation`: compute MS-SSIM, LPIPS/fallback metrics, and Struct/OAC/SC/RSC comparisons on rendered PNGs.
+- `synthoct.submission`: create manifest/phantom/code packages and preliminary portal PNG-pair folders.
+
+Historical modules such as `synthoct.baselines`, `synthoct.processor`, `synthoct.metrics`, and `synthoct.api` remain compatibility facades.
+
+## Workflow 1: Generate Digital Phantoms
+
+Prepare or inspect the dataset:
 
 ```bash
 synthoct data prepare --zip 18095266.zip --out data
 synthoct data list --zip 18095266.zip | head
 ```
 
-## Baselines
+Generate scanner-compatible phantoms from real OCT reference scans:
 
 ```bash
 synthoct baseline official --out outputs/official.txt
@@ -39,52 +60,71 @@ synthoct baseline hypothesis --name H61_api_low_depth_prelim --input data/DATASE
 synthoct baseline final --input data/DATASET_PNG/Female/1950-1960/Cheek/l__shcheka_frame250.png --out outputs/final.txt
 ```
 
-All baselines emit valid four-column phantom files. Final ranking must use phantoms rendered through the hosted SynthOCT API or official Windows scanner.
+`baseline` is the legacy CLI name, but these commands generate phantoms, not final images. The current final method is still `H61_api_low_depth_prelim`, and H67/H68 remain available candidate phantom generators.
 
-## Scanner Modes
+## Workflow 2: Render Phantoms To Synthetic OCT PNGs
 
-All ranking renders must use the hosted SynthOCT API or the official Windows `Part2_Scanner.exe`:
-
-```bash
-synthoct scan --phantom outputs/official.txt --out outputs/real_scan.png --mode real --scanner-exe Part2_Scanner.exe
-```
-
-See [docs/scanner_windows.md](docs/scanner_windows.md) for Windows validation.
-
-## Evaluation
+macOS should use the hosted SynthOCT API by default because `Part2_Scanner.exe` is a Windows executable:
 
 ```bash
-synthoct evaluate --ref reference.png --pred outputs/real_scan.png --maps --metrics --out-csv outputs/metrics.csv
-```
-
-The metric stack reports MSE, PSNR, SSIM, MS-SSIM, VIF, and an LPIPS proxy. Install `.[lpips]` only when real LPIPS is needed locally.
-
-## Internal Validation Loop
-
-Run a private multi-fold leaderboard through the hosted scanner API:
-
-```bash
-PYTHONPATH=src python -m synthoct.cli validate-internal \
-  --zip 18095266.zip \
-  --out outputs/api_validation \
-  --methods H61_api_low_depth_prelim H67_coarse_to_fine_crisp H68_layer_map_prior \
-  --folds 3 \
-  --max-per-fold 1 \
+synthoct scan \
+  --phantom outputs/final.txt \
+  --out outputs/final_api_scan.png \
   --api-key-file ~/.config/synthoct/api_key
 ```
 
-This issues one hosted API render per method/sample. Use `--scatterers-count` below `300000` only for explicit smoke tests, not ranking.
-
-## Research Notes
-
-See [docs/challenge_strategy.md](docs/challenge_strategy.md) for the baseline ladder and competition strategy.
-
-The current API-first strategy is in [docs/challenge_strategy.md](docs/challenge_strategy.md), with the theory context in [docs/theory_context.md](docs/theory_context.md). Older offline-proxy notes are kept as historical context only and should not be used to claim challenge performance.
-
-The current API preliminary winner is `H61_api_low_depth_prelim`. Generate the default final phantom with:
+Windows official local validation remains available:
 
 ```bash
-synthoct baseline final --input reference.png --out outputs/Scatterers_H61_Final.txt
+synthoct scan \
+  --phantom outputs/final.txt \
+  --out outputs/final_windows_scan.png \
+  --mode windows \
+  --scanner-exe Part2_Scanner.exe
 ```
 
-Submission packaging instructions are in [docs/submission_checklist.md](docs/submission_checklist.md), and the end-to-end hypothesis/verification/submission flowchart is in [docs/submission_flowchart.md](docs/submission_flowchart.md).
+The shared code path is `synthoct.scanners.render_phantom(phantom_path, config_path, output_png, backend=...)`.
+
+Evaluate rendered PNGs against real references:
+
+```bash
+synthoct evaluate --ref reference.png --pred outputs/final_api_scan.png --maps --metrics --out-csv outputs/metrics.csv
+```
+
+## Workflow 3: Prepare Preliminary Portal PNG Pairs
+
+The preliminary portal asks for rendered PNG pairs:
+
+1. Synthetic OCT scan PNG rendered from the generated phantom.
+2. Matching real reference scan PNG from the Zenodo dataset.
+
+It does not ask for raw phantom files for this preliminary upload step.
+
+Create a phantom package and manifest:
+
+```bash
+synthoct prepare-submission \
+  --zip 18095266.zip \
+  --out outputs/submission_ready_h61 \
+  --scatterers-count 300000
+```
+
+Render those phantoms through the hosted API and rank the resulting pairs:
+
+```bash
+synthoct api-evaluate-submission \
+  --zip 18095266.zip \
+  --submission-dir outputs/submission_ready_h61 \
+  --out outputs/api_preliminary_h61 \
+  --api-key-file ~/.config/synthoct/api_key
+```
+
+Copy the selected PNG pairs into a clean upload folder:
+
+```bash
+synthoct prepare-png-pairs \
+  --upload-plan outputs/api_preliminary_h61/preliminary_upload_plan.csv \
+  --out outputs/preliminary_png_pairs_h61
+```
+
+Submission packaging details are in [docs/submission_checklist.md](docs/submission_checklist.md), and Windows scanner notes are in [docs/scanner_windows.md](docs/scanner_windows.md).
