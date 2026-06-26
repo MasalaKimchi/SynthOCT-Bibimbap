@@ -8,26 +8,42 @@ import time
 from pathlib import Path
 
 from . import __version__
+from .candidate_rendering import render_candidate_queue
+from .correction_refinement import (
+    DEFAULT_CORRECTION_EXPONENTS,
+    DEFAULT_RATIO_HIGHS,
+    run_density_correction_refinement,
+)
+from .direct_lattice import run_direct_lattice_refinement
+from .energy_ratio_refinement import DEFAULT_ENERGY_RATIO_EXPONENTS, run_energy_ratio_refinement
+from .empirical_basis import run_empirical_basis_refinement
 from .evaluation import calculate_metrics
 from .features import generate_maps
 from .generators import (
     FINAL_CONFIG_NAME,
     HYPOTHESIS_CONFIGS,
+    PROMISING_PIPELINE_CONFIGS,
+    VISUAL_PIPELINE_CONFIGS,
     final_phantom,
     heuristic_layer_phantom,
     hypothesis_phantom,
     official_baseline_phantom,
+    pipeline_phantom,
     physics_guided_phantom,
 )
+from .learned_surrogate import run_learned_surrogate_refinement
+from .patch_basis import run_patch_basis_refinement
 from .dataset import iter_records, prepare_dataset
 from .optimizer import run_candidate_search
 from .scanners import render_phantom, write_api_config
+from .seed_search import run_api_seed_search
 from .submission import (
     benchmark_submission_api,
     prepare_preliminary_png_pairs,
     prepare_submission_bundle,
     write_preliminary_upload_plan,
 )
+from .transfer_refinement import DEFAULT_TRANSFER_EXPONENTS, run_selective_transfer_refinement
 from .validation import METHOD_WAVES, METHODS, plot_hypothesis_progress, resolve_method_wave, run_internal_validation
 
 
@@ -68,6 +84,14 @@ def build_parser() -> argparse.ArgumentParser:
     hypothesis.add_argument("--input", required=True)
     hypothesis.add_argument("--name", choices=tuple(HYPOTHESIS_CONFIGS.keys()), default=FINAL_CONFIG_NAME)
     _add_common_baseline_args(hypothesis)
+    pipeline = base_sub.add_parser("pipeline")
+    pipeline.add_argument("--input", required=True)
+    pipeline.add_argument(
+        "--name",
+        choices=tuple(PROMISING_PIPELINE_CONFIGS.keys()) + tuple(VISUAL_PIPELINE_CONFIGS.keys()),
+        default="P06_visual_surface_dark_body",
+    )
+    _add_common_baseline_args(pipeline)
     final = base_sub.add_parser("final")
     final.add_argument("--input", required=True)
     _add_common_baseline_args(final)
@@ -127,13 +151,156 @@ def build_parser() -> argparse.ArgumentParser:
     optimize.add_argument("--max-polls", type=int, default=60)
     optimize.add_argument("--rerun-existing", action="store_true")
 
+    seed_search = sub.add_parser("optimize-seeds", help="Hosted-API seed search for one named method on one reference scan.")
+    seed_search.add_argument("--input", required=True, help="Reference B-scan PNG/NPY.")
+    seed_search.add_argument("--out", default="outputs/seed_search")
+    seed_search.add_argument("--method", choices=METHODS, required=True)
+    seed_search.add_argument("--seeds", nargs="+", type=int, required=True)
+    seed_search.add_argument("--scatterers-count", type=int, default=300_000)
+    seed_search.add_argument("--api-key-file", help="Optional untracked file containing the hosted scanner API key.")
+    seed_search.add_argument("--poll-interval-seconds", type=float, default=10.0)
+    seed_search.add_argument("--max-polls", type=int, default=60)
+    seed_search.add_argument("--rerun-existing", action="store_true")
+
+    correction = sub.add_parser(
+        "optimize-correction",
+        help="Hosted-API scanner-in-loop density correction for one reference scan.",
+    )
+    correction.add_argument("--input", required=True, help="Reference B-scan PNG/NPY.")
+    correction.add_argument("--out", default="outputs/correction_refinement")
+    correction.add_argument("--scatterers-count", type=int, default=900_000)
+    correction.add_argument("--seed", type=int, default=7)
+    correction.add_argument("--exponents", nargs="+", type=float, default=list(DEFAULT_CORRECTION_EXPONENTS))
+    correction.add_argument("--ratio-highs", nargs="+", type=float, default=list(DEFAULT_RATIO_HIGHS))
+    correction.add_argument("--api-key-file", help="Optional untracked file containing the hosted scanner API key.")
+    correction.add_argument("--poll-interval-seconds", type=float, default=10.0)
+    correction.add_argument("--max-polls", type=int, default=90)
+    correction.add_argument("--rerun-existing", action="store_true")
+
+    transfer = sub.add_parser(
+        "optimize-transfer",
+        help="Hosted-API selective energy transfer refinement from an existing phantom/render pair.",
+    )
+    transfer.add_argument("--ref", required=True, help="Reference B-scan PNG/NPY.")
+    transfer.add_argument("--phantom", required=True, help="Base phantom scatterer file.")
+    transfer.add_argument("--rendered-gray", required=True, help="Hosted-rendered grayscale PNG for the base phantom.")
+    transfer.add_argument("--out", default="outputs/transfer_refinement")
+    transfer.add_argument("--exponents", nargs="+", type=float, default=list(DEFAULT_TRANSFER_EXPONENTS))
+    transfer.add_argument("--percentile", type=float, default=85.0)
+    transfer.add_argument("--floor", type=float, default=0.025)
+    transfer.add_argument("--cap-high", type=float, default=1.25)
+    transfer.add_argument("--api-key-file", help="Optional untracked file containing the hosted scanner API key.")
+    transfer.add_argument("--poll-interval-seconds", type=float, default=10.0)
+    transfer.add_argument("--max-polls", type=int, default=90)
+    transfer.add_argument("--rerun-existing", action="store_true")
+
+    energy_ratio = sub.add_parser(
+        "optimize-energy-ratio",
+        help="Hosted-API coordinate-preserving energy-ratio refinement from an existing phantom/render pair.",
+    )
+    energy_ratio.add_argument("--ref", required=True, help="Reference B-scan PNG/NPY.")
+    energy_ratio.add_argument("--phantom", required=True, help="Base phantom scatterer file.")
+    energy_ratio.add_argument("--rendered-gray", required=True, help="Hosted-rendered grayscale PNG for the base phantom.")
+    energy_ratio.add_argument("--out", default="outputs/energy_ratio_refinement")
+    energy_ratio.add_argument("--exponents", nargs="+", type=float, default=list(DEFAULT_ENERGY_RATIO_EXPONENTS))
+    energy_ratio.add_argument("--api-key-file", help="Optional untracked file containing the hosted scanner API key.")
+    energy_ratio.add_argument("--poll-interval-seconds", type=float, default=10.0)
+    energy_ratio.add_argument("--max-polls", type=int, default=90)
+    energy_ratio.add_argument("--rerun-existing", action="store_true")
+    energy_ratio.add_argument("--stabilizer", type=float, default=0.025)
+    energy_ratio.add_argument("--sigma", type=float, default=2.0)
+    energy_ratio.add_argument("--ratio-low", type=float, default=0.65)
+    energy_ratio.add_argument("--ratio-high", type=float, default=1.32)
+    energy_ratio.add_argument("--clip-low", type=float, default=0.78)
+    energy_ratio.add_argument("--clip-high", type=float, default=1.22)
+    energy_ratio.add_argument("--air-boundary", type=float, default=28.0)
+    energy_ratio.add_argument("--no-match-total-energy", action="store_true")
+
+    learned = sub.add_parser(
+        "optimize-learned-surrogate",
+        help="Train a local CNN scanner surrogate from hosted renders and emit inverse candidates.",
+    )
+    learned.add_argument("--ref", required=True, help="Reference B-scan PNG/NPY.")
+    learned.add_argument("--out", default="outputs/learned_surrogate_refinement")
+    learned.add_argument("--outputs-dir", default="outputs")
+    learned.add_argument("--base-phantom", help="Optional base phantom to initialize inverse optimization.")
+    learned.add_argument("--base-rendered-gray", help="Optional base rendered gray PNG for documentation/continuity.")
+    learned.add_argument("--shape", nargs=2, type=int, default=[128, 256], metavar=("ROWS", "COLS"))
+    learned.add_argument("--train-limit", type=int, default=64)
+    learned.add_argument("--epochs", type=int, default=160)
+    learned.add_argument("--optimize-steps", type=int, default=220)
+    learned.add_argument("--scatterers-count", type=int, default=900_000)
+    learned.add_argument("--seed", type=int, default=23)
+    learned.add_argument("--energy-ratios", nargs="+", type=float, default=[0.78, 0.88, 1.0])
+    learned.add_argument("--texture-strengths", nargs="+", type=float, default=[0.0, 0.45])
+
+    empirical = sub.add_parser(
+        "optimize-empirical-basis",
+        help="Use existing hosted scanner renders as a nonnegative empirical inverse basis.",
+    )
+    empirical.add_argument("--ref", required=True, help="Reference B-scan PNG/NPY.")
+    empirical.add_argument("--out", default="outputs/empirical_basis_refinement")
+    empirical.add_argument("--outputs-dir", default="outputs")
+    empirical.add_argument("--shape", nargs=2, type=int, default=[128, 256], metavar=("ROWS", "COLS"))
+    empirical.add_argument("--pair-limit", type=int, default=64)
+    empirical.add_argument("--basis-count", type=int, default=24)
+    empirical.add_argument("--scatterers-count", type=int, default=900_000)
+    empirical.add_argument("--seed", type=int, default=71)
+    empirical.add_argument("--residual-exponents", nargs="+", type=float, default=[0.0, 0.18, 0.36])
+    empirical.add_argument("--energy-ratios", nargs="+", type=float, default=[0.82, 0.94, 1.06])
+    empirical.add_argument("--texture-strengths", nargs="+", type=float, default=[0.0, 0.25])
+
+    patch_basis = sub.add_parser(
+        "optimize-patch-basis",
+        help="Use local patchwise nonnegative mixtures of hosted scanner renders to emit inverse candidates.",
+    )
+    patch_basis.add_argument("--ref", required=True, help="Reference B-scan PNG/NPY.")
+    patch_basis.add_argument("--out", default="outputs/patch_basis_refinement")
+    patch_basis.add_argument("--outputs-dir", default="outputs")
+    patch_basis.add_argument("--shape", nargs=2, type=int, default=[128, 256], metavar=("ROWS", "COLS"))
+    patch_basis.add_argument("--basis-count", type=int, default=32)
+    patch_basis.add_argument("--tile-shape", nargs=2, type=int, default=[24, 32], metavar=("ROWS", "COLS"))
+    patch_basis.add_argument("--scatterers-count", type=int, default=900_000)
+    patch_basis.add_argument("--seed", type=int, default=101)
+    patch_basis.add_argument("--residual-exponents", nargs="+", type=float, default=[0.0, 0.18])
+    patch_basis.add_argument("--texture-strengths", nargs="+", type=float, default=[0.0, 0.25])
+    patch_basis.add_argument("--energy-ratios", nargs="+", type=float, default=[0.82, 0.94, 1.06])
+
+    lattice = sub.add_parser(
+        "optimize-direct-lattice",
+        help="Generate deterministic target-locked lattice phantoms from the reference B-scan.",
+    )
+    lattice.add_argument("--ref", required=True, help="Reference B-scan PNG/NPY.")
+    lattice.add_argument("--out", default="outputs/direct_lattice_refinement")
+    lattice.add_argument("--scatterers-count", type=int, default=900_000)
+    lattice.add_argument("--seed", type=int, default=131)
+    lattice.add_argument("--recipes", nargs="+", default=["sqrt_attn", "surface_locked", "speckle_microgrid"])
+    lattice.add_argument("--energy-scales", nargs="+", type=float, default=[0.026, 0.034, 0.044])
+
+    render_queue = sub.add_parser(
+        "render-candidate-queue",
+        help="Render a ranked phantom candidate queue through the hosted scanner.",
+    )
+    render_queue.add_argument("--queue", required=True, help="CSV with method and phantom_path columns.")
+    render_queue.add_argument("--ref", required=True, help="Reference B-scan PNG/NPY.")
+    render_queue.add_argument("--out", default="outputs/candidate_queue_render")
+    render_queue.add_argument("--api-key-file", help="Optional untracked file containing the hosted scanner API key.")
+    render_queue.add_argument("--poll-interval-seconds", type=float, default=10.0)
+    render_queue.add_argument("--max-polls", type=int, default=90)
+    render_queue.add_argument("--max-candidates", type=int)
+    render_queue.add_argument("--rerun-existing", action="store_true")
+
     submit = sub.add_parser("prepare-submission")
     submit.add_argument("--zip", required=True, dest="zip_path")
     submit.add_argument("--out", default="outputs/submission_ready")
     submit.add_argument("--scatterers-count", type=int, default=300_000)
     submit.add_argument("--limit", type=int, help="Limit number of PNG B-scans for smoke packaging.")
     submit.add_argument("--seed", type=int, default=7)
-    submit.add_argument("--method", choices=tuple(HYPOTHESIS_CONFIGS.keys()), help="Hypothesis method to package.")
+    submit.add_argument(
+        "--method",
+        choices=tuple(HYPOTHESIS_CONFIGS.keys()) + tuple(PROMISING_PIPELINE_CONFIGS.keys()) + tuple(VISUAL_PIPELINE_CONFIGS.keys()),
+        help="Named H- or P-series method to package.",
+    )
 
     api_eval = sub.add_parser("api-evaluate-submission", help="Render submission phantoms with the hosted SynthOCT API.")
     api_eval.add_argument("--zip", required=True, dest="zip_path")
@@ -187,6 +354,8 @@ def main(argv: list[str] | None = None) -> int:
             )
         elif args.baseline_command == "hypothesis":
             path = hypothesis_phantom(args.input, args.out, args.name, seed=args.seed, scatterers_count=args.scatterers_count)
+        elif args.baseline_command == "pipeline":
+            path = pipeline_phantom(args.input, args.out, args.name, seed=args.seed, scatterers_count=args.scatterers_count)
         elif args.baseline_command == "final":
             path = final_phantom(args.input, args.out, seed=args.seed, scatterers_count=args.scatterers_count)
         else:
@@ -292,6 +461,157 @@ def main(argv: list[str] | None = None) -> int:
             skip_existing=not args.rerun_existing,
         )
         print(json.dumps({"detail": str(detail), "summary": str(summary), "best_config": str(best_config)}, sort_keys=True))
+        return 0
+
+    if args.command == "optimize-seeds":
+        metrics_path = run_api_seed_search(
+            args.input,
+            args.out,
+            method=args.method,
+            seeds=args.seeds,
+            scatterers_count=args.scatterers_count,
+            api_key_file=args.api_key_file,
+            poll_interval_seconds=args.poll_interval_seconds,
+            max_polls=args.max_polls,
+            skip_existing=not args.rerun_existing,
+        )
+        print(metrics_path)
+        return 0
+
+    if args.command == "optimize-correction":
+        metrics_path = run_density_correction_refinement(
+            args.input,
+            args.out,
+            scatterers_count=args.scatterers_count,
+            seed=args.seed,
+            correction_exponents=args.exponents,
+            ratio_highs=args.ratio_highs,
+            api_key_file=args.api_key_file,
+            poll_interval_seconds=args.poll_interval_seconds,
+            max_polls=args.max_polls,
+            skip_existing=not args.rerun_existing,
+        )
+        print(metrics_path)
+        return 0
+
+    if args.command == "optimize-transfer":
+        metrics_path = run_selective_transfer_refinement(
+            args.ref,
+            args.phantom,
+            args.rendered_gray,
+            args.out,
+            exponents=args.exponents,
+            percentile=args.percentile,
+            floor=args.floor,
+            cap_high=args.cap_high,
+            api_key_file=args.api_key_file,
+            poll_interval_seconds=args.poll_interval_seconds,
+            max_polls=args.max_polls,
+            skip_existing=not args.rerun_existing,
+        )
+        print(metrics_path)
+        return 0
+
+    if args.command == "optimize-energy-ratio":
+        metrics_path = run_energy_ratio_refinement(
+            args.ref,
+            args.phantom,
+            args.rendered_gray,
+            args.out,
+            exponents=args.exponents,
+            api_key_file=args.api_key_file,
+            poll_interval_seconds=args.poll_interval_seconds,
+            max_polls=args.max_polls,
+            skip_existing=not args.rerun_existing,
+            stabilizer=args.stabilizer,
+            sigma=args.sigma,
+            ratio_low=args.ratio_low,
+            ratio_high=args.ratio_high,
+            clip_low=args.clip_low,
+            clip_high=args.clip_high,
+            air_boundary=args.air_boundary,
+            match_total_energy=not args.no_match_total_energy,
+        )
+        print(metrics_path)
+        return 0
+
+    if args.command == "optimize-learned-surrogate":
+        metrics_path = run_learned_surrogate_refinement(
+            args.ref,
+            args.out,
+            outputs_dir=args.outputs_dir,
+            base_phantom_path=args.base_phantom,
+            base_rendered_gray_path=args.base_rendered_gray,
+            shape=tuple(args.shape),
+            train_limit=args.train_limit,
+            epochs=args.epochs,
+            optimize_steps=args.optimize_steps,
+            seed=args.seed,
+            scatterers_count=args.scatterers_count,
+            energy_ratios=args.energy_ratios,
+            texture_strengths=args.texture_strengths,
+        )
+        print(metrics_path)
+        return 0
+
+    if args.command == "optimize-empirical-basis":
+        metrics_path = run_empirical_basis_refinement(
+            args.ref,
+            args.out,
+            outputs_dir=args.outputs_dir,
+            shape=tuple(args.shape),
+            pair_limit=args.pair_limit,
+            basis_count=args.basis_count,
+            scatterers_count=args.scatterers_count,
+            seed=args.seed,
+            residual_exponents=args.residual_exponents,
+            energy_ratios=args.energy_ratios,
+            texture_strengths=args.texture_strengths,
+        )
+        print(metrics_path)
+        return 0
+
+    if args.command == "optimize-patch-basis":
+        metrics_path = run_patch_basis_refinement(
+            args.ref,
+            args.out,
+            outputs_dir=args.outputs_dir,
+            shape=tuple(args.shape),
+            basis_count=args.basis_count,
+            tile_shape=tuple(args.tile_shape),
+            scatterers_count=args.scatterers_count,
+            seed=args.seed,
+            residual_exponents=args.residual_exponents,
+            texture_strengths=args.texture_strengths,
+            energy_ratios=args.energy_ratios,
+        )
+        print(metrics_path)
+        return 0
+
+    if args.command == "optimize-direct-lattice":
+        metrics_path = run_direct_lattice_refinement(
+            args.ref,
+            args.out,
+            scatterers_count=args.scatterers_count,
+            seed=args.seed,
+            recipes=args.recipes,
+            energy_scales=args.energy_scales,
+        )
+        print(metrics_path)
+        return 0
+
+    if args.command == "render-candidate-queue":
+        metrics_path = render_candidate_queue(
+            args.queue,
+            args.ref,
+            args.out,
+            api_key_file=args.api_key_file,
+            poll_interval_seconds=args.poll_interval_seconds,
+            max_polls=args.max_polls,
+            max_candidates=args.max_candidates,
+            skip_existing=not args.rerun_existing,
+        )
+        print(metrics_path)
         return 0
 
     if args.command == "prepare-submission":

@@ -42,6 +42,8 @@ class ApiRenderRequest:
 
 
 DEFAULT_API_KEY_ENVS = ("SYNTHOCT_API_KEY", "SYNTHOCT_CHALLENGE_API_KEY")
+DEFAULT_POST_TIMEOUT_SECONDS = (15, 180)
+DEFAULT_GET_TIMEOUT_SECONDS = (15, 120)
 
 
 def resolve_api_key(
@@ -85,11 +87,18 @@ def prepare_api_render_request(
     )
 
 
+RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
+
+
 def _request_with_retries(method: str, url: str, attempts: int = 3, **kwargs) -> requests.Response:
     last_error: Exception | None = None
     for attempt in range(1, attempts + 1):
         try:
-            return requests.request(method, url, **kwargs)
+            response = requests.request(method, url, **kwargs)
+            if response.status_code in RETRYABLE_STATUS_CODES and attempt < attempts:
+                time.sleep(2.0 * attempt)
+                continue
+            return response
         except requests.RequestException as exc:
             last_error = exc
             if attempt == attempts:
@@ -164,7 +173,7 @@ def render_with_api(
                 "config_file": ("Configuration.ini", config_f, "text/plain"),
                 "scatter_file": ("Scatterers.txt", phantom_f, "text/plain"),
             },
-            timeout=180,
+            timeout=DEFAULT_POST_TIMEOUT_SECONDS,
         )
     response.raise_for_status()
     payload = response.json()
@@ -175,7 +184,7 @@ def render_with_api(
     result_url = f"{result_base_url.rstrip('/')}/result_{request_id}.png"
     for poll_idx in range(1, max_polls + 1):
         time.sleep(poll_interval_seconds if poll_idx > 1 else 2.0)
-        result = _request_with_retries("GET", result_url, timeout=120)
+        result = _request_with_retries("GET", result_url, timeout=DEFAULT_GET_TIMEOUT_SECONDS)
         if result.status_code == 200 and result.content.startswith(b"\x89PNG"):
             out_png.write_bytes(result.content)
             elapsed = time.perf_counter() - start

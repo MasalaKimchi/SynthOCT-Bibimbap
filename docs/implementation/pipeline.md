@@ -36,12 +36,69 @@ synthoct baseline hypothesis \
   --input data/DATASET_PNG/Female/1950-1960/Cheek/l__shcheka_frame250.png \
   --out outputs/h61.txt
 
+synthoct baseline pipeline \
+  --name P06_visual_surface_dark_body \
+  --input data/DATASET_PNG/Female/1950-1960/Cheek/l__shcheka_frame250.png \
+  --out outputs/p06.txt
+
 synthoct baseline final \
   --input data/DATASET_PNG/Female/1950-1960/Cheek/l__shcheka_frame250.png \
   --out outputs/final.txt
 ```
 
 The CLI subcommand is still named `baseline` for compatibility, but these commands write phantom scatterer files, not final OCT images.
+
+The P-series promising pipelines translate the inverse-problem strategy review and scanner-in-the-loop sweeps into nine scanner-compatible phantom generators:
+
+- `P01_simulator_constrained_prior`: balanced simulator-constrained warm start with layer and feature-map priors.
+- `P02_unrolled_feature_consistency`: crisper multi-map consistency candidate with stronger OAC and boundary weighting.
+- `P03_speckle_preserving_texture`: texture-heavy candidate that preserves local speckle variation.
+- `P04_bayesian_posterior_sample`: stochastic posterior-style candidate with void sampling and compressed energies.
+- `P05_attenuation_layer_map`: attenuation-forward layer prior with high OAC and layer-band weighting.
+- `P06_visual_surface_dark_body`: hosted-scanner-calibrated broad superficial scattering with dark body preservation.
+- `P07_surface_cutoff_broad_mix`: explicit air/tissue cutoff with broad superficial scattering and faint body speckle.
+- `P08_sparse_top_texture_ssim`: sparse-top high-texture recipe tuned for plain SSIM; the current best single-scan setting uses `--scatterers-count 900000`.
+- `P09_gamma_sparse_lowfloor_ssim`: gamma-emulation recipe that suppresses low-intensity dots and adds a faint tissue floor; the current best single-scan setting uses `--scatterers-count 900000`.
+
+For scanner-in-loop refinement on one reference scan, use `optimize-correction`. It starts from the P09 density/energy field, renders through the hosted API, applies smoothed `reference / rendered` density corrections, and writes a ranked CSV so the best iteration can be selected:
+
+```bash
+synthoct optimize-correction \
+  --input data/DATASET_PNG/Female/1950-1960/Cheek/l__shcheka_frame250.png \
+  --out outputs/correction_refinement \
+  --scatterers-count 900000 \
+  --api-key-file ~/.config/synthoct/api_key
+```
+
+This command is intentionally separate from `baseline pipeline`: its method depends on the previous API render, so it is an optimizer rather than a pure one-shot generator.
+
+When a strong phantom/render pair already exists, `optimize-transfer` performs a second scanner-in-loop pass by using the rendered grayscale image to apply mild gamma-like energy shaping in phantom space:
+
+```bash
+synthoct optimize-transfer \
+  --ref outputs/api_all_methods_render/reference.png \
+  --phantom outputs/api_correction_iter4_sweep/phantoms/I4_03_density_r4_090.txt \
+  --rendered-gray outputs/api_correction_iter4_sweep/synthetic_gray/I4_03_density_r4_090_gray.png \
+  --out outputs/transfer_refinement \
+  --exponents 0.04 0.10 0.18 0.24 \
+  --api-key-file ~/.config/synthoct/api_key
+```
+
+The first successful transfer sweep used the current best density-corrected phantom and improved hosted-API SSIM from `0.2651` to `0.2724` at exponent `0.18`; a recursive micro-step from that result reached `0.2726` at exponent `0.04`. This remains far below the target, but it is the best verified scanner-rendered direction so far.
+
+The follow-on `optimize-energy-ratio` command preserves scatterer coordinates and applies smoothed `reference / rendered` energy feedback:
+
+```bash
+synthoct optimize-energy-ratio \
+  --ref outputs/api_all_methods_render/reference.png \
+  --phantom outputs/api_transfer_gen2_from_sgf02/phantoms/01_transfer_e0p040.txt \
+  --rendered-gray outputs/api_transfer_gen2_from_sgf02/synthetic_gray/01_transfer_e0p040_gray.png \
+  --out outputs/energy_ratio_refinement \
+  --exponents 0.008 0.012 0.024 0.04 0.08 \
+  --api-key-file ~/.config/synthoct/api_key
+```
+
+Seven recursive passes of this operator raised the first reference scan to hosted-API SSIM `0.2912`, the best verified scanner-rendered score so far. The next recursive pass generated valid phantom files, but the hosted API rejected those requests at POST with 500/400 responses, so they are not counted as scored candidates.
 
 ## Scanner Backends
 
@@ -103,7 +160,7 @@ Use hosted-API validation as the private leaderboard:
 synthoct validate-internal \
   --zip 18095266.zip \
   --out outputs/api_validation \
-  --methods H61_api_low_depth_prelim H67_coarse_to_fine_crisp H68_layer_map_prior \
+  --wave promising-pipelines \
   --folds 5 \
   --max-per-fold 2 \
   --include-lpips \

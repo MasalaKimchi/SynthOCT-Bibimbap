@@ -10,7 +10,7 @@ import numpy as np
 from skimage import io
 
 from synthoct.dataset import iter_records, load_scan_from_zip
-from synthoct.generators import FINAL_CONFIG_NAME, final_phantom, hypothesis_phantom
+from synthoct.generators import FINAL_CONFIG_NAME, PROMISING_PIPELINE_CONFIGS, VISUAL_PIPELINE_CONFIGS, final_phantom, hypothesis_phantom, pipeline_phantom
 from synthoct.phantom import ExperimentConfig, load_phantom
 
 
@@ -164,6 +164,8 @@ def prepare_phantom_submission(
             phantom_path = phantom_dir / f"{safe_stem(record.archive_path)}__{tag.upper()}.txt"
             if method == FINAL_CONFIG_NAME:
                 final_phantom(ref_path, phantom_path, seed=seed + idx, scatterers_count=scatterers_count)
+            elif method in PROMISING_PIPELINE_CONFIGS or method in VISUAL_PIPELINE_CONFIGS:
+                pipeline_phantom(ref_path, phantom_path, method, seed=seed + idx, scatterers_count=scatterers_count)
             else:
                 hypothesis_phantom(ref_path, phantom_path, method, seed=seed + idx, scatterers_count=scatterers_count)
             writer.writerow(

@@ -146,13 +146,21 @@ PROMISING_PIPELINE_CONFIGS: dict[str, PhantomConfig] = {
     },
 }
 
+VISUAL_PIPELINE_CONFIGS: dict[str, dict[str, str]] = {
+    "P06_visual_surface_dark_body": {"recipe": "broad_surface_dark_body"},
+    "P07_surface_cutoff_broad_mix": {"recipe": "surface_cutoff_broad_mix"},
+    "P08_sparse_top_texture_ssim": {"recipe": "sparse_top_texture_ssim"},
+    "P09_gamma_sparse_lowfloor_ssim": {"recipe": "gamma_sparse_lowfloor_ssim"},
+}
+
 PROMISING_PIPELINE_WAVES: dict[str, tuple[str, ...]] = {
-    "promising-pipelines": tuple(PROMISING_PIPELINE_CONFIGS.keys()),
+    "promising-pipelines": (*PROMISING_PIPELINE_CONFIGS.keys(), *VISUAL_PIPELINE_CONFIGS.keys()),
     "promising-fast-triad": (
         "P01_simulator_constrained_prior",
         "P03_speckle_preserving_texture",
         "P05_attenuation_layer_map",
     ),
+    "visual-pipelines": tuple(VISUAL_PIPELINE_CONFIGS.keys()),
 }
 
 
@@ -321,6 +329,111 @@ def hypothesis_phantom(
     )
 
 
+def _sample_density_energy_fields(
+    density: np.ndarray,
+    energy_map: np.ndarray,
+    output_path: str | Path,
+    seed: int,
+    scatterers_count: int,
+    energy_sigma: float = 0.16,
+) -> Path:
+    config = ExperimentConfig(scatterers_count=scatterers_count)
+    rng = np.random.default_rng(seed)
+    density = np.maximum(np.asarray(density, dtype=np.float64), 1e-12)
+    density = density / density.sum()
+    flat_choice = rng.choice(density.size, size=scatterers_count, replace=True, p=density.ravel())
+    z_bin, x_bin = np.divmod(flat_choice, density.shape[1])
+
+    xs = ((x_bin + rng.random(scatterers_count)) / density.shape[1] - 0.5) * config.x_max
+    ys = (rng.random(scatterers_count) - 0.5) * (2 * config.beam_radius)
+    zs = ((z_bin + rng.random(scatterers_count)) / density.shape[0]) * config.z_max
+
+    energy_map = np.broadcast_to(np.asarray(energy_map, dtype=np.float64), density.shape)
+    energies = energy_map[z_bin, x_bin] * rng.lognormal(mean=0.0, sigma=energy_sigma, size=scatterers_count)
+    data = np.column_stack((xs, ys, zs, np.clip(energies, 0.001, 100.0)))
+    return save_phantom(data, output_path, config=config)
+
+
+def visual_inversion_phantom(
+    input_path: str | Path,
+    output_path: str | Path,
+    recipe: str = "broad_surface_dark_body",
+    seed: int = 7,
+    scatterers_count: int = 300_000,
+) -> Path:
+    """Generate a scanner-calibrated visual inverse phantom from a reference B-scan.
+
+    These recipes came from hosted-scanner sweeps: they trade the earlier
+    physics-only priors for explicit control of the tissue surface, dark body,
+    and superficial scattering band that dominate the rendered PNG metrics.
+    """
+    config = ExperimentConfig(scatterers_count=scatterers_count)
+    target = load_scan(input_path)
+    target = np.asarray(resize(target, (config.n_depth, config.n_lateral), anti_aliasing=True, preserve_range=True), dtype=np.float64)
+    smooth = gaussian_filter(target, sigma=(1.5, 3.0))
+
+    if recipe == "broad_surface_dark_body":
+        z_norm = np.linspace(0.0, 1.0, config.n_depth, dtype=np.float64)[:, None]
+        hi = np.clip((smooth - 0.07) / 0.33, 0.0, 1.0)
+        mid = np.clip((smooth - 0.025) / 0.20, 0.0, 1.0)
+        gate = np.exp(-0.5 * ((np.arange(config.n_depth)[:, None] - 72.0) / 55.0) ** 2)
+        body_decay = np.exp(-3.0 * z_norm)
+        density = 0.0015 + 2.8 * hi * gate + 0.010 * mid * body_decay
+        energy = 0.035 + 0.050 * hi
+        return _sample_density_energy_fields(density, energy, output_path, seed=seed, scatterers_count=scatterers_count)
+
+    if recipe == "surface_cutoff_broad_mix":
+        rows = np.arange(config.n_depth, dtype=np.float64)[:, None]
+        surface_mask = smooth > 0.045
+        surface = np.argmax(surface_mask, axis=0)
+        surface[~surface_mask.any(axis=0)] = 24
+        surface = gaussian_filter(surface.astype(np.float64), sigma=5.0).astype(int)
+        rel_depth = rows - surface[None, :]
+        tissue = (rel_depth >= 2).astype(np.float64)
+        near = np.exp(-0.5 * ((rel_depth - 34.0) / 26.0) ** 2) * tissue
+        broad = np.exp(-0.5 * ((rel_depth - 52.0) / 44.0) ** 2) * tissue
+        body = np.exp(-np.maximum(rel_depth, 0.0) / 72.0) * tissue
+        hi = np.clip((smooth - 0.07) / 0.33, 0.0, 1.0) * tissue
+        density = 0.0005 * tissue + 1.2 * hi * near + 2.0 * hi * broad + 0.005 * body
+        energy = 0.022 + 0.052 * hi
+        return _sample_density_energy_fields(density, energy, output_path, seed=seed, scatterers_count=scatterers_count)
+
+    if recipe == "sparse_top_texture_ssim":
+        sparse = np.clip((target - 0.06) / 0.40, 0.0, 1.0)
+        gate = np.exp(-0.5 * ((np.arange(config.n_depth)[:, None] - 72.0) / 55.0) ** 2)
+        density = 0.0005 + 4.0 * sparse**1.1 * gate
+        energy_scale = min(1.0, 300_000.0 / max(1, scatterers_count))
+        energy = (0.040 + 0.060 * sparse) * energy_scale
+        energy_sigma = 0.06 if scatterers_count >= 600_000 else 0.14
+        return _sample_density_energy_fields(
+            density,
+            energy,
+            output_path,
+            seed=seed,
+            scatterers_count=scatterers_count,
+            energy_sigma=energy_sigma,
+        )
+
+    if recipe == "gamma_sparse_lowfloor_ssim":
+        z = np.arange(config.n_depth, dtype=np.float64)[:, None]
+        sparse = np.clip((target - 0.06) / 0.40, 0.0, 1.0)
+        gate = np.exp(-0.5 * ((z - 72.0) / 55.0) ** 2)
+        body_gate = np.exp(-np.maximum(z - 45.0, 0.0) / 95.0)
+        density = 0.00035 + 5.8 * sparse**2.0 * gate + 0.0006 * body_gate
+        energy = 0.010 + 0.035 * sparse**1.6
+        energy_sigma = 0.055 if scatterers_count >= 600_000 else 0.12
+        return _sample_density_energy_fields(
+            density,
+            energy,
+            output_path,
+            seed=seed,
+            scatterers_count=scatterers_count,
+            energy_sigma=energy_sigma,
+        )
+
+    raise ValueError(f"Unknown visual inversion recipe: {recipe}")
+
+
 def pipeline_phantom(
     input_path: str | Path,
     output_path: str | Path,
@@ -329,6 +442,14 @@ def pipeline_phantom(
     scatterers_count: int = 300_000,
 ) -> Path:
     """Generate one P-series promising pipeline phantom from a real reference scan."""
+    if name in VISUAL_PIPELINE_CONFIGS:
+        return visual_inversion_phantom(
+            input_path,
+            output_path,
+            recipe=VISUAL_PIPELINE_CONFIGS[name]["recipe"],
+            seed=seed,
+            scatterers_count=scatterers_count,
+        )
     if name not in PROMISING_PIPELINE_CONFIGS:
         raise ValueError(f"Unknown promising pipeline: {name}")
     return physics_guided_phantom(

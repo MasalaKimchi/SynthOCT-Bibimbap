@@ -57,10 +57,51 @@ Generate scanner-compatible phantoms from real OCT reference scans:
 synthoct baseline official --out outputs/official.txt
 synthoct baseline heuristic --input data/DATASET_PNG/Female/1950-1960/Cheek/l__shcheka_frame250.png --out outputs/heuristic.txt
 synthoct baseline hypothesis --name H61_api_low_depth_prelim --input data/DATASET_PNG/Female/1950-1960/Cheek/l__shcheka_frame250.png --out outputs/h61.txt
+synthoct baseline pipeline --name P06_visual_surface_dark_body --input data/DATASET_PNG/Female/1950-1960/Cheek/l__shcheka_frame250.png --out outputs/p06.txt
 synthoct baseline final --input data/DATASET_PNG/Female/1950-1960/Cheek/l__shcheka_frame250.png --out outputs/final.txt
 ```
 
 `baseline` is the legacy CLI name, but these commands generate phantoms, not final images. The current final method is still `H61_api_low_depth_prelim`, and H67/H68 remain available candidate phantom generators.
+
+Nine P-series promising pipelines are available for validation. `P01`-`P05` are literature-inspired physics priors; `P06_visual_surface_dark_body` and `P07_surface_cutoff_broad_mix` are scanner-calibrated visual inverse methods from hosted-API sweeps; `P08_sparse_top_texture_ssim` and `P09_gamma_sparse_lowfloor_ssim` target plain SSIM and can be tested with `--scatterers-count 900000`.
+
+For a single reference scan, the strongest current direction is scanner-in-loop density correction rather than another one-pass phantom. It renders a P09-like seed through the hosted API, computes smoothed reference/rendered correction fields, and emits ranked iterations:
+
+```bash
+synthoct optimize-correction \
+  --input data/DATASET_PNG/Female/1950-1960/Cheek/l__shcheka_frame250.png \
+  --out outputs/correction_refinement \
+  --scatterers-count 900000 \
+  --api-key-file ~/.config/synthoct/api_key
+```
+
+After a good rendered phantom exists, use selective transfer refinement to apply mild scanner-observed energy shaping and render the candidates back through the API:
+
+```bash
+synthoct optimize-transfer \
+  --ref outputs/api_all_methods_render/reference.png \
+  --phantom outputs/api_correction_iter4_sweep/phantoms/I4_03_density_r4_090.txt \
+  --rendered-gray outputs/api_correction_iter4_sweep/synthetic_gray/I4_03_density_r4_090_gray.png \
+  --out outputs/transfer_refinement \
+  --exponents 0.04 0.10 0.18 0.24 \
+  --api-key-file ~/.config/synthoct/api_key
+```
+
+On the first reference scan, selective transfer raised the best hosted-API SSIM from `0.2651` to `0.2724` with exponent `0.18`; a recursive micro-step from that result reached `0.2726` with exponent `0.04`.
+
+The current strongest refinement is coordinate-preserving energy-ratio feedback. Starting from the transfer result, it applies smoothed `reference / rendered` energy corrections while keeping every scatterer coordinate fixed:
+
+```bash
+synthoct optimize-energy-ratio \
+  --ref outputs/api_all_methods_render/reference.png \
+  --phantom outputs/api_transfer_gen2_from_sgf02/phantoms/01_transfer_e0p040.txt \
+  --rendered-gray outputs/api_transfer_gen2_from_sgf02/synthetic_gray/01_transfer_e0p040_gray.png \
+  --out outputs/energy_ratio_refinement \
+  --exponents 0.008 0.012 0.024 0.04 0.08 \
+  --api-key-file ~/.config/synthoct/api_key
+```
+
+Seven recursive energy-ratio passes improved the first reference scan to hosted-API SSIM `0.2912`. The next recursive pass generated valid phantoms but the hosted API rejected them at POST with 500/400 responses, so `0.2912` is the current verified scanner-rendered best.
 
 ## Workflow 2: Render Phantoms To Synthetic OCT PNGs
 
