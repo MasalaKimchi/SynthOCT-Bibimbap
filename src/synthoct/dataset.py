@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import io
 import zipfile
+from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -83,6 +84,17 @@ def load_scan_from_zip(zip_path: str | Path, archive_path: str) -> np.ndarray:
         zf.close()
         if backing is not None:
             backing.close()
+
+
+def make_grouped_folds(records: list[ScanRecord], folds: int = 3) -> dict[int, list[ScanRecord]]:
+    """Group OCT records by subject metadata, then distribute groups across folds."""
+    groups: dict[str, list[ScanRecord]] = defaultdict(list)
+    for record in records:
+        groups[f"{record.sex}/{record.age_band}/{record.body_site}/{record.subject_key}"].append(record)
+    folded: dict[int, list[ScanRecord]] = {i: [] for i in range(folds)}
+    for idx, key in enumerate(sorted(groups)):
+        folded[idx % folds].extend(groups[key])
+    return folded
 
 
 def prepare_dataset(zip_path: str | Path, out_dir: str | Path, extract: bool = True) -> Path:

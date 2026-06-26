@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 from skimage import io
 
-from synthoct.metrics import calculate_metrics
-from synthoct.processor import calculate_oac, calculate_speckle_contrast_map, generate_maps
+from synthoct.evaluation import calculate_metrics
+from synthoct.features import calculate_oac, calculate_speckle_contrast_map, generate_maps
 
 
 def test_processor_maps_and_metrics(tmp_path):

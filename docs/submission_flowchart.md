@@ -3,7 +3,7 @@
 This project stays aligned with the official `SynthOCTChallenge/SynthOCT_Baseline` contract:
 
 - `Part1_Generator.py` maps to `synthoct baseline final` and emits digital phantoms.
-- `Part2_Scanner.exe` maps to `synthoct scan --mode real` on Windows or the hosted scanner API.
+- `Part2_Scanner.exe` maps to `synthoct scan --mode windows` for local Windows validation; macOS should use the hosted scanner API by default.
 - `Part3_Processor.py` maps to `synthoct evaluate --maps --metrics` and the internal validation map stack.
 - The deliverable remains a four-column scatterer table: `X | Y | Z | Energy`.
 

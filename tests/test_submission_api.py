@@ -7,9 +7,9 @@ import zipfile
 import numpy as np
 from skimage import io as skio
 
-from synthoct.api import prepare_preliminary_png_pairs, resolve_api_key, write_preliminary_upload_plan
 from synthoct.cli import main
-from synthoct.submission import prepare_submission_bundle, validate_phantom_submission
+from synthoct.scanners import resolve_api_key
+from synthoct.submission import prepare_preliminary_png_pairs, prepare_submission_bundle, validate_phantom_submission, write_preliminary_upload_plan
 
 
 def _make_nested_png_dataset(path):

@@ -14,6 +14,7 @@ from .packaging import (
 from .preliminary import (
     benchmark_submission_api,
     prepare_preliminary_png_pairs,
+    to_gray_png,
     write_preliminary_upload_plan,
 )
 
@@ -27,6 +28,7 @@ __all__ = [
     "prepare_preliminary_png_pairs",
     "prepare_submission_bundle",
     "safe_stem",
+    "to_gray_png",
     "validate_phantom_submission",
     "write_preliminary_upload_plan",
     "write_submission_readme",

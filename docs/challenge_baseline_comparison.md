@@ -19,7 +19,7 @@ The baseline is not image-conditioned. It does not inspect the target OCT B-scan
 
 ## H67 Candidate
 
-`H67_coarse_to_fine_crisp` is image-conditioned. It reads the reference scan and derives a density/energy sampling field from:
+The current final method is `H61_api_low_depth_prelim`. `H67_coarse_to_fine_crisp` is an experimental image-conditioned candidate. It reads the reference scan and derives a density/energy sampling field from:
 
 - scan intensity;
 - optical attenuation coefficient estimate;
@@ -71,4 +71,4 @@ If real LPIPS is unavailable, label the fallback explicitly as `LPIPS_PROXY`.
 
 ## Current Interpretation
 
-Conceptually, H67 is a stronger approach than the official baseline because it conditions the phantom on the input scan and estimates latent tissue structure. Empirically, the repo still needs a matched hosted-API or Windows-scanner run of `official` versus `H67_coarse_to_fine_crisp` before claiming a challenge-metric win over the baseline.
+Conceptually, H67 is a stronger approach than the official baseline because it conditions the phantom on the input scan and estimates latent tissue structure. Operationally, H61 remains the final method. Empirically, the repo still needs a matched hosted-API or Windows-scanner run of `official` versus `H67_coarse_to_fine_crisp` before claiming a challenge-metric win over the baseline or promoting H67.

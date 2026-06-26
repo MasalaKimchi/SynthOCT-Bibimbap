@@ -2,7 +2,7 @@
 
 ## Setup
 
-H41 remains the incumbent. Five subagents attacked the challenge from different perspectives:
+This is a historical offline synthesis. H41 was the incumbent at the time; the current final method is `H61_api_low_depth_prelim`. Five subagents attacked the challenge from different perspectives:
 
 1. Inverse physics / OCT forward model.
 2. Statistical speckle / stochastic processes.
@@ -35,7 +35,7 @@ agent_speckle_moment         proxy=0.4073  MS=0.1544  LPIPS_PROXY=0.1204  OAC_MS
 H0_official                  proxy=0.3173  MS=-0.0035 LPIPS_PROXY=0.1471  OAC_MS=0.2266  DepthCorr=0.0683
 ```
 
-Decision: keep H41 as the current final submission method. Keep `portfolio` and `agent_anatomical_boundary` as serious backups because they are close to H41 and better on physical guardrails.
+Historical decision: keep H41 as the offline final submission method at that point. That decision is superseded by `H61_api_low_depth_prelim`; keep `portfolio` and `agent_anatomical_boundary` only as historical backup ideas unless rerendered through the hosted API or Windows scanner.
 
 ## Perspective Summaries
 
@@ -88,8 +88,8 @@ Other nuisance factors:
 
 ## Recommendations
 
-1. Submit H56 as current best after the council-combination update.
-2. Keep H41 as the previous incumbent and H11/anatomical-boundary as conservative physics backups.
+1. Submit `H61_api_low_depth_prelim` as the current preliminary API method unless a newer hosted-API or Windows-scanner run supersedes it.
+2. Treat H56, H41, H11, and anatomical-boundary as invalidated offline references, not upload choices.
 3. Next true breakthrough: official scanner-in-the-loop alternating inverse rendering.
 4. Next practical improvement: build a candidate library and per-scan retrieval/router, but train/select it with nested folds to avoid winner's curse.
 5. Add site-stratified reporting before trusting any anatomy-heavy method.
@@ -103,7 +103,7 @@ H56_h41_anti_anatomy         proxy=0.4244
 H41_final_optimized          proxy=0.4230
 ```
 
-Current final method: `H56_h41_anti_anatomy`. See `docs/council_combinations.md`.
+Historical offline winner: `H56_h41_anti_anatomy`. Current final method: `H61_api_low_depth_prelim`; see `docs/submission_checklist.md`.
 
 ## Artifacts
 

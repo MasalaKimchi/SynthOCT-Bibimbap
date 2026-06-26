@@ -1,6 +1,6 @@
 # H41 Council Combination Study
 
-This study is historical and was invalidated by hosted API renders. Do not use these rankings for submission decisions; rerender candidates through the hosted SynthOCT API or official Windows scanner.
+This study is historical and was invalidated by hosted API renders. Do not use these rankings for submission decisions; the current final method is `H61_api_low_depth_prelim`, and submission candidates must be rerendered through the hosted SynthOCT API or official Windows `Part2_Scanner.exe`.
 
 ## Objective
 
@@ -87,11 +87,11 @@ The surprising outcome is that the best council combination is an anti-blend, no
 
 H56 changes H41 only modestly. It slightly increases density power, reduces boundary boost, lowers lateral smoothing, raises OAC percentile, and nudges energy statistics away from the anatomy-heavy prior. The likely effect is crisper scanner-space structure with less over-smoothed boundary emphasis.
 
-## Decision
+## Historical Decision
 
-Promote `H56_h41_anti_anatomy` as the new final internal method. Keep H41 as the previous incumbent and keep `portfolio` as a conservative backup because it has better physical guardrails but lower competition proxy.
+At the time of this offline study, `H56_h41_anti_anatomy` replaced H41 as the best internal offline method, with `portfolio` kept as a conservative backup because it had better physical guardrails but lower competition proxy.
 
-The new `synthoct baseline final` command now emits H56 phantoms.
+That decision has since been superseded. `synthoct baseline final` now targets `H61_api_low_depth_prelim`, and preliminary portal upload should use rendered synthetic/reference PNG pairs, not raw phantom zips.
 
 ## Caveat
 

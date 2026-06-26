@@ -9,13 +9,11 @@ from pathlib import Path
 import numpy as np
 from skimage import io
 
+from .dataset import iter_records, load_scan_from_zip, make_grouped_folds
+from .evaluation import calculate_metrics, competition_proxy_score, evaluate_feature_map_metrics, profile_scores, summarize_rows, write_rows
 from .scanners import render_with_api, write_api_config
-from .submission.preliminary import _to_gray_png
+from .submission import to_gray_png
 from .generators import HYPOTHESIS_CONFIGS, physics_guided_phantom
-from .dataset import iter_records, load_scan_from_zip
-from .evaluation import calculate_metrics
-from .features import generate_maps
-from .validation import competition_proxy_score, make_folds, profile_scores, summarize_rows, write_rows
 
 
 @dataclass(frozen=True)
@@ -98,7 +96,7 @@ def run_candidate_search(
     api_config_path = write_api_config(out_dir / "Configuration_api.ini", scatterers_count=scatterers_count)
 
     records = [r for r in iter_records(zip_path) if r.modality == "png"]
-    folded = make_folds(records, folds=folds)
+    folded = make_grouped_folds(records, folds=folds)
     rows: list[dict[str, float | str]] = []
 
     with tempfile.TemporaryDirectory(prefix="synthoct-opt-") as tmp_name:
@@ -136,7 +134,7 @@ def run_candidate_search(
                             poll_interval_seconds=poll_interval_seconds,
                             max_polls=max_polls,
                         )
-                        _to_gray_png(rendered_path, pred_path)
+                        to_gray_png(rendered_path, pred_path)
 
                     row: dict[str, float | str] = {
                         "fold": fold_idx,
@@ -152,12 +150,7 @@ def run_candidate_search(
                         row[f"Struct_{key}"] = value
                     row.update(profile_scores(ref_path, pred_path))
                     if include_maps:
-                        ref_maps = generate_maps(ref_path, output_dir=sample_dir / "ref_maps")
-                        pred_maps = generate_maps(pred_path, output_dir=sample_dir / "pred_maps")
-                        for map_name in ("OAC", "SC", "RSC"):
-                            metrics = calculate_metrics(ref_maps[map_name], pred_maps[map_name], include_lpips=False)
-                            row[f"{map_name}_SSIM"] = metrics["SSIM"]
-                            row[f"{map_name}_MS-SSIM"] = metrics["MS-SSIM"]
+                        row.update(evaluate_feature_map_metrics(ref_path, pred_path, sample_dir / "ref_maps", sample_dir / "pred_maps"))
                     row["CompetitionProxy"] = competition_proxy_score(row)
                     rows.append(row)
 

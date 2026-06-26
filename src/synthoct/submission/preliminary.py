@@ -15,7 +15,8 @@ from synthoct.evaluation import calculate_metrics
 from synthoct.scanners import render_with_api, resolve_api_key, write_api_config
 
 
-def _to_gray_png(src: Path, dst: Path) -> Path:
+def to_gray_png(src: Path, dst: Path) -> Path:
+    """Convert a rendered scanner PNG to grayscale for metric and portal pairing."""
     img = io.imread(src)
     if img.ndim == 3:
         if img.shape[2] == 4:
@@ -24,6 +25,9 @@ def _to_gray_png(src: Path, dst: Path) -> Path:
     dst.parent.mkdir(parents=True, exist_ok=True)
     io.imsave(dst, np.clip(img, 0, 255).astype(np.uint8))
     return dst
+
+
+_to_gray_png = to_gray_png
 
 
 def _write_reference(zip_path: str | Path, archive_path: str, out_path: Path) -> Path:
@@ -118,7 +122,7 @@ def benchmark_submission_api(
                     poll_interval_seconds=poll_interval_seconds,
                     max_polls=max_polls,
                 )
-                _to_gray_png(synthetic_png, synthetic_gray_png)
+                to_gray_png(synthetic_png, synthetic_gray_png)
 
             metrics = calculate_metrics(reference_png, synthetic_gray_png, include_lpips=include_lpips)
             if progress:

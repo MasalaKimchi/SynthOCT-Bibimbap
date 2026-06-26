@@ -1,6 +1,6 @@
 # Invalidated Historical Benchmark
 
-This document records pre-API internal experiments that were invalidated by hosted scanner renders. Do not use these rankings for submission decisions. Current ranking must use `synthoct validate-internal` or `synthoct api-evaluate-submission`, both of which render through the hosted SynthOCT API.
+This document records pre-API internal experiments that were invalidated by hosted scanner renders. Do not use these rankings for submission decisions. The current final method is `H61_api_low_depth_prelim`, and current ranking must use `synthoct validate-internal` or `synthoct api-evaluate-submission`, both of which render through the hosted SynthOCT API.
 
 ## Groundbreaking Direction
 
@@ -59,9 +59,9 @@ Tradeoff:
 - H41 was best under the invalidated offline renderer.
 - H11 remains the conservative physics candidate because it keeps better OAC and depth-profile agreement.
 
-## Current Final Candidate
+## Historical H56 Candidate
 
-The council-combination pass promoted `H56_h41_anti_anatomy`, a small bounded extrapolation away from the anatomy-heavy council direction. This keeps H41's core physics while reducing the boundary/anatomy smoothing that hurt structural MS-SSIM.
+The council-combination pass promoted `H56_h41_anti_anatomy`, a small bounded extrapolation away from the anatomy-heavy council direction. This kept H41's core physics while reducing the boundary/anatomy smoothing that hurt structural MS-SSIM in the invalidated offline renderer.
 
 Configuration:
 
@@ -90,7 +90,7 @@ H41_final_optimized     proxy=0.4230  MS=0.1897  LPIPS_PROXY=0.1131  OAC_MS=0.46
 portfolio               proxy=0.4223  MS=0.1857  LPIPS_PROXY=0.1146  OAC_MS=0.4802  DepthCorr=0.8137
 ```
 
-Decision: `synthoct baseline final` now uses H56. H41 remains the previous incumbent and should still be checked on Windows because H56's margin is small.
+Historical decision: H56 replaced H41 in the offline benchmark. That decision is superseded by the current `H61_api_low_depth_prelim` contract; H56 and H41 should not be treated as final upload methods unless a fresh hosted-API or Windows `Part2_Scanner.exe` validation promotes them.
 
 ## Artifacts
 
@@ -106,7 +106,7 @@ Decision: `synthoct baseline final` now uses H56. H41 remains the previous incum
 
 Move to **hosted API or official scanner-in-the-loop Bayesian optimization**:
 
-1. Use H41 and H11 as priors.
+1. Use H61 as the current API-facing baseline, with H41/H11/H56 only as historical priors.
 2. Generate candidate phantoms.
 3. Run `Part2_Scanner.exe`.
 4. Score real MS-SSIM/LPIPS on Struct/OAC/SC/RSC.

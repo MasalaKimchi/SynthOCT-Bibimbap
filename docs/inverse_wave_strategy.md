@@ -33,8 +33,8 @@ Important outputs:
 
 Promote a candidate to a larger run when it has one of:
 
-- higher mean MS-SSIM than `H56_h41_anti_anatomy` without worse LPIPS;
-- lower mean LPIPS than `H56_h41_anti_anatomy` without worse MS-SSIM;
+- higher mean MS-SSIM than `H61_api_low_depth_prelim` without worse LPIPS;
+- lower mean LPIPS than `H61_api_low_depth_prelim` without worse MS-SSIM;
 - more per-sample wins on either MS-SSIM or LPIPS;
 - similar score but better physical guardrails;
 - strong wins on a coherent scan subset that could justify a router.
@@ -49,7 +49,7 @@ Use hosted API calls in successive stages:
 2. 25-50 samples for the top 2-4 survivors.
 3. largest feasible run for the final 1-2 candidates.
 
-The current inverse wave methods are H62-H70. They cover linearized Born-style inversion, Bayesian/OAC smoothing, posterior speckle calibration, depth-histogram matching, patch-retrieval proxy behavior, coarse-to-fine crispness, layer-map priors, and small H56-centered blends.
+The current inverse wave methods are H62-H70. They cover linearized Born-style inversion, Bayesian/OAC smoothing, posterior speckle calibration, depth-histogram matching, patch-retrieval proxy behavior, coarse-to-fine crispness, layer-map priors, and historical H56-centered blends.
 
 ## First Results
 
@@ -80,7 +80,7 @@ H56_h41_anti_anatomy      MS-SSIM=0.1789  LPIPS_PROXY=0.1068  OAC_MS=0.5030
 H64_speckle_posterior     MS-SSIM=0.1761  LPIPS_PROXY=0.1055  OAC_MS=0.5657
 ```
 
-Interpretation: promote `H67_coarse_to_fine_crisp` as the MS-SSIM candidate and `H68_layer_map_prior` as the physical-map candidate to hosted API / Windows scanner comparison. Do not replace `H56_h41_anti_anatomy` as the final default until the official scanner reports the real challenge metrics, especially actual LPIPS.
+Interpretation: keep `H61_api_low_depth_prelim` as the final default. Promote `H67_coarse_to_fine_crisp` as the MS-SSIM candidate and `H68_layer_map_prior` as the physical-map candidate only for hosted API / Windows scanner comparison. Do not replace H61 until official scanner renders report stronger challenge metrics, especially actual LPIPS.
 
 ## API Candidate Bundles
 

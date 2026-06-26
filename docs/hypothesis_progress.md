@@ -1,6 +1,6 @@
 # Invalidated H0-H60 Offline Validation Notes
 
-The rankings below came from an offline renderer that has been removed from the codebase. Keep this file only as historical context for hypothesis names; do not use these numbers for submission decisions. Current validation must use hosted API or official Windows scanner renders.
+The rankings below came from an offline renderer that has been removed from the codebase. Keep this file only as historical context for hypothesis names; do not use these numbers for submission decisions. The current final method is `H61_api_low_depth_prelim`, and current validation must use hosted API or official Windows scanner renders.
 
 Official metric check: the SynthOCT baseline README states that leaderboard ranking uses **MS-SSIM** and **LPIPS**. The challenge page also emphasizes physical consistency via OAC and speckle statistics. Our internal y-axis therefore uses `CompetitionProxy`: structural MS-SSIM, LPIPS or LPIPS proxy, and physics-map MS-SSIM/SSIM.
 
@@ -26,7 +26,7 @@ PYTHONPATH=src python -m synthoct.cli validate-internal \
 
 ## Hypothesis Decisions
 
-- H1 attenuation-density sampling: accepted as the current winner. It best preserves depth attenuation and OAC structure.
+- H1 attenuation-density sampling: accepted as the winner in this historical run. It best preserved depth attenuation and OAC structure.
 - H2 aggressive depth compensation: rejected; overcompensates depth and hurts MS-SSIM.
 - H3 speckle-matched texture: promising but behind H1; keep as a component.
 - H4 OAC-dominant sampling: promising, but too much OAC weighting reduces depth profile robustness.
@@ -68,7 +68,7 @@ H1_attenuation_density           proxy=0.4073
 H0_official                      proxy=0.3198
 ```
 
-Decision: H11 replaces H1 as the current base. The accepted theory is lower Beer-Lambert depth compensation with OAC-guided inhomogeneous point-process sampling. The rejected theory is that added layer/void/multilayer complexity automatically improves the competition proxy.
+Historical decision: H11 replaced H1 as the offline base. The accepted theory was lower Beer-Lambert depth compensation with OAC-guided inhomogeneous point-process sampling. The rejected theory was that added layer/void/multilayer complexity automatically improves the competition proxy.
 
 ## H41-H60 Council Combination Update
 
@@ -84,4 +84,4 @@ H41_final_optimized          proxy=0.4230
 portfolio                    proxy=0.4223
 ```
 
-Decision: promote `H56_h41_anti_anatomy` as the current internal final method, with H41 retained as the previous incumbent and Windows scanner confirmation still required.
+Historical decision: promote `H56_h41_anti_anatomy` as the internal offline final method, with H41 retained as the previous incumbent and Windows scanner confirmation still required. This has since been superseded by `H61_api_low_depth_prelim` as the current final method.
