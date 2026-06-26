@@ -77,6 +77,84 @@ HYPOTHESIS_WAVES: dict[str, tuple[str, ...]] = {
     "api-with-backup": ("H61_api_low_depth_prelim", "H67_coarse_to_fine_crisp", "H68_layer_map_prior", "H11_low_depth_comp"),
 }
 
+PROMISING_PIPELINE_CONFIGS: dict[str, PhantomConfig] = {
+    "P01_simulator_constrained_prior": {
+        "density_power": 0.95,
+        "depth_compensation": -0.65,
+        "oac_weight": 1.35,
+        "texture_weight": 0.26,
+        "energy_oac_scale": 13.0,
+        "band_boost": 0.12,
+        "lateral_smooth": 0.75,
+        "oac_percentile": 68.0,
+        "base_energy_mix": 0.44,
+        "texture_sigma_scale": 0.72,
+        "multi_layer": True,
+    },
+    "P02_unrolled_feature_consistency": {
+        "density_power": 1.18,
+        "depth_compensation": 0.55,
+        "oac_weight": 1.85,
+        "texture_weight": 0.30,
+        "energy_oac_scale": 22.0,
+        "band_boost": 0.34,
+        "lateral_smooth": 0.42,
+        "oac_percentile": 76.0,
+        "base_energy_mix": 0.58,
+        "texture_sigma_scale": 0.86,
+        "multi_layer": True,
+    },
+    "P03_speckle_preserving_texture": {
+        "density_power": 0.88,
+        "depth_compensation": -0.35,
+        "oac_weight": 0.95,
+        "texture_weight": 0.48,
+        "energy_oac_scale": 9.5,
+        "band_boost": 0.08,
+        "lateral_smooth": 0.26,
+        "oac_percentile": 62.0,
+        "base_energy_mix": 0.36,
+        "texture_sigma_scale": 0.52,
+    },
+    "P04_bayesian_posterior_sample": {
+        "density_power": 1.02,
+        "depth_compensation": 0.15,
+        "oac_weight": 1.45,
+        "texture_weight": 0.36,
+        "energy_oac_scale": 16.5,
+        "band_boost": 0.22,
+        "lateral_smooth": 0.68,
+        "oac_percentile": 70.0,
+        "base_energy_mix": 0.50,
+        "texture_sigma_scale": 1.05,
+        "void_fraction": 0.035,
+        "log_energy": True,
+        "multi_layer": True,
+    },
+    "P05_attenuation_layer_map": {
+        "density_power": 1.26,
+        "depth_compensation": 1.05,
+        "oac_weight": 2.35,
+        "texture_weight": 0.24,
+        "energy_oac_scale": 30.0,
+        "band_boost": 0.52,
+        "lateral_smooth": 0.96,
+        "oac_percentile": 80.0,
+        "base_energy_mix": 0.64,
+        "texture_sigma_scale": 0.92,
+        "multi_layer": True,
+    },
+}
+
+PROMISING_PIPELINE_WAVES: dict[str, tuple[str, ...]] = {
+    "promising-pipelines": tuple(PROMISING_PIPELINE_CONFIGS.keys()),
+    "promising-fast-triad": (
+        "P01_simulator_constrained_prior",
+        "P03_speckle_preserving_texture",
+        "P05_attenuation_layer_map",
+    ),
+}
+
 
 def official_baseline_phantom(
     output_path: str | Path,
@@ -240,6 +318,25 @@ def hypothesis_phantom(
         seed=seed,
         scatterers_count=scatterers_count,
         **HYPOTHESIS_CONFIGS[name],
+    )
+
+
+def pipeline_phantom(
+    input_path: str | Path,
+    output_path: str | Path,
+    name: str,
+    seed: int = 7,
+    scatterers_count: int = 300_000,
+) -> Path:
+    """Generate one P-series promising pipeline phantom from a real reference scan."""
+    if name not in PROMISING_PIPELINE_CONFIGS:
+        raise ValueError(f"Unknown promising pipeline: {name}")
+    return physics_guided_phantom(
+        input_path,
+        output_path,
+        seed=seed,
+        scatterers_count=scatterers_count,
+        **PROMISING_PIPELINE_CONFIGS[name],
     )
 
 
