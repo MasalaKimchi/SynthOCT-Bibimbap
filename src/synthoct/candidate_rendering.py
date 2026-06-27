@@ -93,7 +93,7 @@ def render_candidate_queue(
             }
         )
 
-    rows.sort(key=lambda item: float(item["SSIM"]) if str(item["SSIM"]) != "nan" else -1.0, reverse=True)
+    rows.sort(key=lambda item: float(item["MS-SSIM"]) if str(item["MS-SSIM"]) != "nan" else -1.0, reverse=True)
     metrics_path = out_dir / "candidate_queue_metrics.csv"
     with metrics_path.open("w", newline="") as fobj:
         writer = csv.DictWriter(fobj, fieldnames=list(rows[0].keys()))

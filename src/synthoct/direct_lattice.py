@@ -66,7 +66,7 @@ def run_direct_lattice_refinement(
                 }
             )
 
-    rows.sort(key=lambda row: float(row["SSIM"]), reverse=True)
+    rows.sort(key=lambda row: float(row["MS-SSIM"]), reverse=True)
     metrics_path = out_dir / "direct_lattice_metrics.csv"
     with metrics_path.open("w", newline="") as fobj:
         writer = csv.DictWriter(fobj, fieldnames=list(rows[0].keys()))

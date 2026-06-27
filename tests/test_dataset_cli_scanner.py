@@ -10,6 +10,7 @@ from skimage import io as skio
 import synthoct.correction_refinement as correction_refinement
 import synthoct.energy_ratio_refinement as energy_ratio_refinement
 import synthoct.candidate_rendering as candidate_rendering
+import synthoct.api_recovery as api_recovery
 import synthoct.scanners.api as scanner_api
 import synthoct.seed_search as seed_search
 import synthoct.transfer_refinement as transfer_refinement
@@ -715,3 +716,32 @@ def test_cli_optimize_direct_lattice_passes_controls(tmp_path, monkeypatch):
     assert captured["seed"] == 23
     assert captured["recipes"] == ["sqrt_attn", "surface_locked"]
     assert captured["energy_scales"] == [0.02, 0.03]
+
+
+def test_cli_recover_api_results_updates_failed_row(tmp_path, monkeypatch):
+    scan = tmp_path / "reference.png"
+    image = np.tile(np.linspace(0, 255, 512, dtype=np.uint8), (256, 1))
+    skio.imsave(scan, image)
+    png = tmp_path / "synthetic.png"
+    gray = tmp_path / "synthetic_gray.png"
+    metrics = tmp_path / "metrics.csv"
+    metrics.write_text(
+        "status,method,request_id,synthetic_png,synthetic_gray_png,error,MSE,PSNR,SSIM,MS-SSIM,VIF,LPIPS,LPIPS_PROXY\n"
+        f"failed,candidate,failed,{png},{gray},API result was not ready: https://synthoct.com/results/result_abc123.png,nan,nan,nan,nan,nan,nan,nan\n",
+        encoding="utf-8",
+    )
+
+    class FakeResponse:
+        status_code = 200
+
+        def __init__(self, content):
+            self.content = content
+
+    rendered = tmp_path / "rendered_source.png"
+    skio.imsave(rendered, image)
+    monkeypatch.setattr(api_recovery.requests, "get", lambda url, timeout: FakeResponse(rendered.read_bytes()))
+
+    assert main(["recover-api-results", "--metrics", str(metrics), "--ref", str(scan)]) == 0
+    text = metrics.read_text()
+    assert "ok,candidate,abc123" in text
+    assert gray.exists()

@@ -144,7 +144,7 @@ def run_selective_transfer_refinement(
             }
         )
 
-    rows.sort(key=lambda row: float(row["SSIM"]) if str(row["SSIM"]) != "nan" else -1.0, reverse=True)
+    rows.sort(key=lambda row: float(row["MS-SSIM"]) if str(row["MS-SSIM"]) != "nan" else -1.0, reverse=True)
     metrics_path = out_dir / "selective_transfer_metrics.csv"
     with metrics_path.open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))

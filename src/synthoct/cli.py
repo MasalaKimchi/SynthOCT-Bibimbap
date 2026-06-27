@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 
 from . import __version__
+from .api_recovery import recover_api_results
 from .candidate_rendering import render_candidate_queue
 from .correction_refinement import (
     DEFAULT_CORRECTION_EXPONENTS,
@@ -19,6 +20,7 @@ from .energy_ratio_refinement import DEFAULT_ENERGY_RATIO_EXPONENTS, run_energy_
 from .empirical_basis import run_empirical_basis_refinement
 from .evaluation import calculate_metrics
 from .features import generate_maps
+from .flow_refinement import DEFAULT_FLOW_VARIANTS, run_flow_refinement
 from .generators import (
     FINAL_CONFIG_NAME,
     HYPOTHESIS_CONFIGS,
@@ -43,6 +45,7 @@ from .submission import (
     prepare_submission_bundle,
     write_preliminary_upload_plan,
 )
+from .texture_refinement import DEFAULT_TEXTURE_VARIANTS, run_texture_refinement
 from .transfer_refinement import DEFAULT_TRANSFER_EXPONENTS, run_selective_transfer_refinement
 from .validation import METHOD_WAVES, METHODS, plot_hypothesis_progress, resolve_method_wave, run_internal_validation
 
@@ -216,6 +219,44 @@ def build_parser() -> argparse.ArgumentParser:
     energy_ratio.add_argument("--air-boundary", type=float, default=28.0)
     energy_ratio.add_argument("--no-match-total-energy", action="store_true")
 
+    texture = sub.add_parser(
+        "optimize-texture",
+        help="Hosted-API local-variance texture refinement from an existing phantom/render pair.",
+    )
+    texture.add_argument("--ref", required=True, help="Reference B-scan PNG/NPY.")
+    texture.add_argument("--phantom", required=True, help="Base phantom scatterer file.")
+    texture.add_argument("--rendered-gray", required=True, help="Hosted-rendered grayscale PNG for the base phantom.")
+    texture.add_argument("--out", default="outputs/texture_refinement")
+    texture.add_argument(
+        "--variants",
+        nargs="+",
+        default=[],
+        help="Optional mean:texture:deep exponent triples, e.g. 0.10:0.6:1.8.",
+    )
+    texture.add_argument("--api-key-file", help="Optional untracked file containing the hosted scanner API key.")
+    texture.add_argument("--poll-interval-seconds", type=float, default=10.0)
+    texture.add_argument("--max-polls", type=int, default=90)
+    texture.add_argument("--rerun-existing", action="store_true")
+
+    flow = sub.add_parser(
+        "optimize-flow",
+        help="Hosted-API optical-flow coordinate transport from an existing phantom/render pair.",
+    )
+    flow.add_argument("--ref", required=True, help="Reference B-scan PNG/NPY.")
+    flow.add_argument("--phantom", required=True, help="Base phantom scatterer file.")
+    flow.add_argument("--rendered-gray", required=True, help="Hosted-rendered grayscale PNG for the base phantom.")
+    flow.add_argument("--out", default="outputs/flow_refinement")
+    flow.add_argument(
+        "--variants",
+        nargs="+",
+        default=[],
+        help="Optional strength:sigma:attachment triples, e.g. 0.20:1.0:5.0.",
+    )
+    flow.add_argument("--api-key-file", help="Optional untracked file containing the hosted scanner API key.")
+    flow.add_argument("--poll-interval-seconds", type=float, default=10.0)
+    flow.add_argument("--max-polls", type=int, default=90)
+    flow.add_argument("--rerun-existing", action="store_true")
+
     learned = sub.add_parser(
         "optimize-learned-surrogate",
         help="Train a local CNN scanner surrogate from hosted renders and emit inverse candidates.",
@@ -289,6 +330,13 @@ def build_parser() -> argparse.ArgumentParser:
     render_queue.add_argument("--max-polls", type=int, default=90)
     render_queue.add_argument("--max-candidates", type=int)
     render_queue.add_argument("--rerun-existing", action="store_true")
+
+    recover_api = sub.add_parser(
+        "recover-api-results",
+        help="Recover late hosted-scanner PNGs from failed metrics rows and recompute real metrics.",
+    )
+    recover_api.add_argument("--metrics", required=True, help="Metrics CSV containing result_<id>.png errors.")
+    recover_api.add_argument("--ref", required=True, help="Reference B-scan PNG/NPY.")
 
     submit = sub.add_parser("prepare-submission")
     submit.add_argument("--zip", required=True, dest="zip_path")
@@ -535,6 +583,52 @@ def main(argv: list[str] | None = None) -> int:
         print(metrics_path)
         return 0
 
+    if args.command == "optimize-texture":
+        variants = None
+        if args.variants:
+            variants = []
+            for value in args.variants:
+                parts = value.split(":")
+                if len(parts) != 3:
+                    raise ValueError(f"Texture variants must be mean:texture:deep triples, got {value!r}.")
+                variants.append(tuple(float(part) for part in parts))
+        metrics_path = run_texture_refinement(
+            args.ref,
+            args.phantom,
+            args.rendered_gray,
+            args.out,
+            variants=variants if variants is not None else DEFAULT_TEXTURE_VARIANTS,
+            api_key_file=args.api_key_file,
+            poll_interval_seconds=args.poll_interval_seconds,
+            max_polls=args.max_polls,
+            skip_existing=not args.rerun_existing,
+        )
+        print(metrics_path)
+        return 0
+
+    if args.command == "optimize-flow":
+        variants = None
+        if args.variants:
+            variants = []
+            for value in args.variants:
+                parts = value.split(":")
+                if len(parts) != 3:
+                    raise ValueError(f"Flow variants must be strength:sigma:attachment triples, got {value!r}.")
+                variants.append(tuple(float(part) for part in parts))
+        metrics_path = run_flow_refinement(
+            args.ref,
+            args.phantom,
+            args.rendered_gray,
+            args.out,
+            variants=variants if variants is not None else DEFAULT_FLOW_VARIANTS,
+            api_key_file=args.api_key_file,
+            poll_interval_seconds=args.poll_interval_seconds,
+            max_polls=args.max_polls,
+            skip_existing=not args.rerun_existing,
+        )
+        print(metrics_path)
+        return 0
+
     if args.command == "optimize-learned-surrogate":
         metrics_path = run_learned_surrogate_refinement(
             args.ref,
@@ -611,6 +705,11 @@ def main(argv: list[str] | None = None) -> int:
             max_candidates=args.max_candidates,
             skip_existing=not args.rerun_existing,
         )
+        print(metrics_path)
+        return 0
+
+    if args.command == "recover-api-results":
+        metrics_path = recover_api_results(args.metrics, args.ref)
         print(metrics_path)
         return 0
 

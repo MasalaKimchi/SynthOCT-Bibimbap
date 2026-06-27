@@ -6,6 +6,7 @@ from typing import Iterable
 
 import numpy as np
 from scipy.ndimage import gaussian_filter
+from skimage.registration import optical_flow_tvl1
 
 from .evaluation import calculate_metrics
 from .features import load_scan
@@ -14,7 +15,12 @@ from .scanners import render_with_api, write_api_config
 from .submission import to_gray_png
 
 
-DEFAULT_ENERGY_RATIO_EXPONENTS = (0.008, 0.012, 0.024, 0.04, 0.08)
+DEFAULT_FLOW_VARIANTS = (
+    (0.15, 1.0, 5.0),
+    (0.30, 1.0, 5.0),
+    (-0.15, 1.0, 5.0),
+    (-0.30, 1.0, 5.0),
+)
 
 
 def _scatterer_pixels(data: np.ndarray, config: ExperimentConfig) -> tuple[np.ndarray, np.ndarray]:
@@ -23,62 +29,83 @@ def _scatterer_pixels(data: np.ndarray, config: ExperimentConfig) -> tuple[np.nd
     return zb, xb
 
 
-def write_energy_ratio_phantom(
+def _sample_field(field: np.ndarray, z: np.ndarray, x: np.ndarray) -> np.ndarray:
+    z0 = np.floor(z).astype(int)
+    x0 = np.floor(x).astype(int)
+    z1 = np.clip(z0 + 1, 0, field.shape[0] - 1)
+    x1 = np.clip(x0 + 1, 0, field.shape[1] - 1)
+    z0 = np.clip(z0, 0, field.shape[0] - 1)
+    x0 = np.clip(x0, 0, field.shape[1] - 1)
+    wz = np.clip(z - z0, 0.0, 1.0)
+    wx = np.clip(x - x0, 0.0, 1.0)
+    top = field[z0, x0] * (1.0 - wx) + field[z0, x1] * wx
+    bottom = field[z1, x0] * (1.0 - wx) + field[z1, x1] * wx
+    return top * (1.0 - wz) + bottom * wz
+
+
+def _flow_fields(
+    reference_path: str | Path,
+    rendered_gray_path: str | Path,
+    smooth_sigma: float,
+    attachment: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    ref = gaussian_filter(load_scan(reference_path), smooth_sigma)
+    pred = gaussian_filter(load_scan(rendered_gray_path), smooth_sigma)
+    ref = (ref - ref.mean()) / (ref.std() + 1e-8)
+    pred = (pred - pred.mean()) / (pred.std() + 1e-8)
+    v_flow, u_flow = optical_flow_tvl1(ref, pred, attachment=attachment, tightness=0.3, num_warp=8, num_iter=12)
+    return np.asarray(v_flow, dtype=np.float64), np.asarray(u_flow, dtype=np.float64)
+
+
+def write_flow_transport_phantom(
     reference_path: str | Path,
     phantom_path: str | Path,
     rendered_gray_path: str | Path,
     output_path: str | Path,
-    exponent: float,
-    stabilizer: float = 0.025,
-    sigma: float = 2.0,
-    ratio_low: float = 0.65,
-    ratio_high: float = 1.32,
-    clip_low: float = 0.78,
-    clip_high: float = 1.22,
-    air_boundary: float = 28.0,
-    match_total_energy: bool = True,
+    strength: float,
+    smooth_sigma: float = 1.0,
+    attachment: float = 5.0,
+    max_lateral_pixels: float = 12.0,
+    max_depth_pixels: float = 8.0,
+    tissue_start: float = 20.0,
+    tissue_width: float = 8.0,
 ) -> Path:
-    """Preserve coordinates while applying smoothed reference/render energy feedback."""
+    """Move scatterers by a scanner-observed optical-flow field."""
     data = load_phantom(phantom_path)
     config = ExperimentConfig(scatterers_count=len(data))
-    ref = load_scan(reference_path)
-    pred = load_scan(rendered_gray_path)
-    ratio = (gaussian_filter(ref, sigma) + stabilizer) / (gaussian_filter(pred, sigma) + stabilizer)
-    ratio = np.clip(ratio, ratio_low, ratio_high)
-    z = np.arange(config.n_depth, dtype=np.float64)[:, None]
-    tissue_gate = 1.0 / (1.0 + np.exp(-(z - air_boundary) / 5.0))
-    ratio = 1.0 + (ratio - 1.0) * tissue_gate
-
+    v_flow, u_flow = _flow_fields(reference_path, rendered_gray_path, smooth_sigma=smooth_sigma, attachment=attachment)
     zb, xb = _scatterer_pixels(data, config)
-    scale = np.clip(ratio[zb, xb] ** exponent, clip_low, clip_high)
+
+    dz_px = np.clip(v_flow[zb, xb], -max_depth_pixels, max_depth_pixels)
+    dx_px = np.clip(u_flow[zb, xb], -max_lateral_pixels, max_lateral_pixels)
+    gate = 1.0 / (1.0 + np.exp(-(zb.astype(np.float64) - tissue_start) / tissue_width))
+
     shaped = data.copy()
-    shaped[:, 3] = np.clip(shaped[:, 3] * scale, 0.001, 100.0)
-    if match_total_energy:
-        shaped[:, 3] *= data[:, 3].sum() / (shaped[:, 3].sum() + 1e-12)
-        shaped[:, 3] = np.clip(shaped[:, 3], 0.001, 100.0)
+    shaped[:, 0] = np.clip(
+        shaped[:, 0] - strength * gate * dx_px * config.pixel_size_x,
+        -config.x_max / 2,
+        config.x_max / 2,
+    )
+    shaped[:, 2] = np.clip(
+        shaped[:, 2] - strength * gate * dz_px * config.pixel_size_z,
+        0.0,
+        config.z_max,
+    )
     return save_phantom(shaped, output_path, config=config)
 
 
-def run_energy_ratio_refinement(
+def run_flow_refinement(
     reference_path: str | Path,
     phantom_path: str | Path,
     rendered_gray_path: str | Path,
     out_dir: str | Path,
-    exponents: Iterable[float] = DEFAULT_ENERGY_RATIO_EXPONENTS,
+    variants: Iterable[tuple[float, float, float]] = DEFAULT_FLOW_VARIANTS,
     api_key_file: str | Path | None = None,
     poll_interval_seconds: float = 10.0,
     max_polls: int = 90,
     skip_existing: bool = True,
-    stabilizer: float = 0.025,
-    sigma: float = 2.0,
-    ratio_low: float = 0.65,
-    ratio_high: float = 1.32,
-    clip_low: float = 0.78,
-    clip_high: float = 1.22,
-    air_boundary: float = 28.0,
-    match_total_energy: bool = True,
 ) -> Path:
-    """Render and rank coordinate-preserving energy-ratio feedback candidates."""
+    """Render and rank coordinate-transport candidates through the hosted scanner."""
     reference_path = Path(reference_path)
     phantom_path = Path(phantom_path)
     rendered_gray_path = Path(rendered_gray_path)
@@ -91,27 +118,21 @@ def run_energy_ratio_refinement(
 
     base = load_phantom(phantom_path)
     config_path = write_api_config(out_dir / "Configuration_api.ini", scatterers_count=len(base))
-    rows: list[dict[str, float | int | str | bool]] = []
-    for idx, exponent in enumerate(exponents, start=1):
-        label = f"energy_ratio_e{exponent:.3f}".replace(".", "p")
+    rows: list[dict[str, float | int | str]] = []
+    for idx, (strength, smooth_sigma, attachment) in enumerate(variants, start=1):
+        label = f"flow_s{strength:.3f}_sig{smooth_sigma:.2f}_att{attachment:.1f}".replace(".", "p").replace("-", "n")
         shaped_path = phantom_dir / f"{idx:02d}_{label}.txt"
         synthetic_path = synthetic_dir / f"{idx:02d}_{label}.png"
         gray_path = gray_dir / f"{idx:02d}_{label}_gray.png"
         if not shaped_path.exists() or not skip_existing:
-            write_energy_ratio_phantom(
+            write_flow_transport_phantom(
                 reference_path,
                 phantom_path,
                 rendered_gray_path,
                 shaped_path,
-                exponent=exponent,
-                stabilizer=stabilizer,
-                sigma=sigma,
-                ratio_low=ratio_low,
-                ratio_high=ratio_high,
-                clip_low=clip_low,
-                clip_high=clip_high,
-                air_boundary=air_boundary,
-                match_total_energy=match_total_energy,
+                strength=strength,
+                smooth_sigma=smooth_sigma,
+                attachment=attachment,
             )
 
         try:
@@ -152,15 +173,9 @@ def run_energy_ratio_refinement(
             {
                 "status": status,
                 "method": label,
-                "exponent": exponent,
-                "stabilizer": stabilizer,
-                "sigma": sigma,
-                "ratio_low": ratio_low,
-                "ratio_high": ratio_high,
-                "clip_low": clip_low,
-                "clip_high": clip_high,
-                "air_boundary": air_boundary,
-                "match_total_energy": match_total_energy,
+                "strength": strength,
+                "smooth_sigma": smooth_sigma,
+                "attachment": attachment,
                 "request_id": request_id,
                 "phantom_path": str(shaped_path.resolve()),
                 "synthetic_png": str(synthetic_path.resolve()),
@@ -173,9 +188,9 @@ def run_energy_ratio_refinement(
         )
 
     rows.sort(key=lambda row: float(row["MS-SSIM"]) if str(row["MS-SSIM"]) != "nan" else -1.0, reverse=True)
-    metrics_path = out_dir / "energy_ratio_metrics.csv"
-    with metrics_path.open("w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+    metrics_path = out_dir / "flow_refinement_metrics.csv"
+    with metrics_path.open("w", newline="") as fobj:
+        writer = csv.DictWriter(fobj, fieldnames=list(rows[0].keys()))
         writer.writeheader()
         writer.writerows(rows)
     return metrics_path

@@ -14,7 +14,12 @@ from .scanners import render_with_api, write_api_config
 from .submission import to_gray_png
 
 
-DEFAULT_ENERGY_RATIO_EXPONENTS = (0.008, 0.012, 0.024, 0.04, 0.08)
+DEFAULT_TEXTURE_VARIANTS = (
+    (0.08, 0.45, 1.4),
+    (0.12, 0.75, 1.8),
+    (0.16, 1.05, 2.2),
+    (0.20, 1.35, 2.8),
+)
 
 
 def _scatterer_pixels(data: np.ndarray, config: ExperimentConfig) -> tuple[np.ndarray, np.ndarray]:
@@ -23,34 +28,57 @@ def _scatterer_pixels(data: np.ndarray, config: ExperimentConfig) -> tuple[np.nd
     return zb, xb
 
 
-def write_energy_ratio_phantom(
+def _local_std(image: np.ndarray, sigma: float) -> np.ndarray:
+    mean = gaussian_filter(image, sigma)
+    second = gaussian_filter(image * image, sigma)
+    return np.sqrt(np.maximum(second - mean * mean, 0.0))
+
+
+def write_texture_matched_phantom(
     reference_path: str | Path,
     phantom_path: str | Path,
     rendered_gray_path: str | Path,
     output_path: str | Path,
-    exponent: float,
-    stabilizer: float = 0.025,
-    sigma: float = 2.0,
-    ratio_low: float = 0.65,
-    ratio_high: float = 1.32,
-    clip_low: float = 0.78,
-    clip_high: float = 1.22,
-    air_boundary: float = 28.0,
-    match_total_energy: bool = True,
+    mean_exponent: float,
+    texture_exponent: float,
+    deep_exponent: float,
+    mean_sigma: float = 1.35,
+    texture_sigma: float = 2.4,
+    stabilizer: float = 0.004,
+    texture_stabilizer: float = 0.010,
+    ratio_low: float = 0.55,
+    ratio_high: float = 1.35,
+    texture_low: float = 0.45,
+    texture_high: float = 1.20,
+    deep_start: float = 76.0,
+    deep_width: float = 18.0,
+    clip_low: float = 0.45,
+    clip_high: float = 1.25,
+    match_total_energy: bool = False,
 ) -> Path:
-    """Preserve coordinates while applying smoothed reference/render energy feedback."""
+    """Suppress scanner-observed excess speckle variance while preserving coordinates."""
     data = load_phantom(phantom_path)
     config = ExperimentConfig(scatterers_count=len(data))
     ref = load_scan(reference_path)
     pred = load_scan(rendered_gray_path)
-    ratio = (gaussian_filter(ref, sigma) + stabilizer) / (gaussian_filter(pred, sigma) + stabilizer)
-    ratio = np.clip(ratio, ratio_low, ratio_high)
-    z = np.arange(config.n_depth, dtype=np.float64)[:, None]
-    tissue_gate = 1.0 / (1.0 + np.exp(-(z - air_boundary) / 5.0))
-    ratio = 1.0 + (ratio - 1.0) * tissue_gate
+
+    mean_ratio = (gaussian_filter(ref, mean_sigma) + stabilizer) / (gaussian_filter(pred, mean_sigma) + stabilizer)
+    mean_ratio = np.clip(mean_ratio, ratio_low, ratio_high)
+
+    ref_std = _local_std(ref, texture_sigma)
+    pred_std = _local_std(pred, texture_sigma)
+    texture_ratio = (ref_std + texture_stabilizer) / (pred_std + texture_stabilizer)
+    texture_ratio = np.clip(texture_ratio, texture_low, texture_high)
+
+    rows = np.arange(config.n_depth, dtype=np.float64)[:, None]
+    deep_gate = 1.0 / (1.0 + np.exp(-(rows - deep_start) / deep_width))
+    texture_power = texture_exponent + deep_gate * deep_exponent
 
     zb, xb = _scatterer_pixels(data, config)
-    scale = np.clip(ratio[zb, xb] ** exponent, clip_low, clip_high)
+    scale = mean_ratio[zb, xb] ** mean_exponent
+    scale *= texture_ratio[zb, xb] ** texture_power[zb, 0]
+    scale = np.clip(scale, clip_low, clip_high)
+
     shaped = data.copy()
     shaped[:, 3] = np.clip(shaped[:, 3] * scale, 0.001, 100.0)
     if match_total_energy:
@@ -59,26 +87,18 @@ def write_energy_ratio_phantom(
     return save_phantom(shaped, output_path, config=config)
 
 
-def run_energy_ratio_refinement(
+def run_texture_refinement(
     reference_path: str | Path,
     phantom_path: str | Path,
     rendered_gray_path: str | Path,
     out_dir: str | Path,
-    exponents: Iterable[float] = DEFAULT_ENERGY_RATIO_EXPONENTS,
+    variants: Iterable[tuple[float, float, float]] = DEFAULT_TEXTURE_VARIANTS,
     api_key_file: str | Path | None = None,
     poll_interval_seconds: float = 10.0,
     max_polls: int = 90,
     skip_existing: bool = True,
-    stabilizer: float = 0.025,
-    sigma: float = 2.0,
-    ratio_low: float = 0.65,
-    ratio_high: float = 1.32,
-    clip_low: float = 0.78,
-    clip_high: float = 1.22,
-    air_boundary: float = 28.0,
-    match_total_energy: bool = True,
 ) -> Path:
-    """Render and rank coordinate-preserving energy-ratio feedback candidates."""
+    """Render and rank texture-aware amplitude refinement candidates."""
     reference_path = Path(reference_path)
     phantom_path = Path(phantom_path)
     rendered_gray_path = Path(rendered_gray_path)
@@ -91,27 +111,21 @@ def run_energy_ratio_refinement(
 
     base = load_phantom(phantom_path)
     config_path = write_api_config(out_dir / "Configuration_api.ini", scatterers_count=len(base))
-    rows: list[dict[str, float | int | str | bool]] = []
-    for idx, exponent in enumerate(exponents, start=1):
-        label = f"energy_ratio_e{exponent:.3f}".replace(".", "p")
+    rows: list[dict[str, float | int | str]] = []
+    for idx, (mean_exp, texture_exp, deep_exp) in enumerate(variants, start=1):
+        label = f"texture_m{mean_exp:.3f}_t{texture_exp:.3f}_d{deep_exp:.3f}".replace(".", "p")
         shaped_path = phantom_dir / f"{idx:02d}_{label}.txt"
         synthetic_path = synthetic_dir / f"{idx:02d}_{label}.png"
         gray_path = gray_dir / f"{idx:02d}_{label}_gray.png"
         if not shaped_path.exists() or not skip_existing:
-            write_energy_ratio_phantom(
+            write_texture_matched_phantom(
                 reference_path,
                 phantom_path,
                 rendered_gray_path,
                 shaped_path,
-                exponent=exponent,
-                stabilizer=stabilizer,
-                sigma=sigma,
-                ratio_low=ratio_low,
-                ratio_high=ratio_high,
-                clip_low=clip_low,
-                clip_high=clip_high,
-                air_boundary=air_boundary,
-                match_total_energy=match_total_energy,
+                mean_exponent=mean_exp,
+                texture_exponent=texture_exp,
+                deep_exponent=deep_exp,
             )
 
         try:
@@ -152,15 +166,9 @@ def run_energy_ratio_refinement(
             {
                 "status": status,
                 "method": label,
-                "exponent": exponent,
-                "stabilizer": stabilizer,
-                "sigma": sigma,
-                "ratio_low": ratio_low,
-                "ratio_high": ratio_high,
-                "clip_low": clip_low,
-                "clip_high": clip_high,
-                "air_boundary": air_boundary,
-                "match_total_energy": match_total_energy,
+                "mean_exponent": mean_exp,
+                "texture_exponent": texture_exp,
+                "deep_exponent": deep_exp,
                 "request_id": request_id,
                 "phantom_path": str(shaped_path.resolve()),
                 "synthetic_png": str(synthetic_path.resolve()),
@@ -173,9 +181,9 @@ def run_energy_ratio_refinement(
         )
 
     rows.sort(key=lambda row: float(row["MS-SSIM"]) if str(row["MS-SSIM"]) != "nan" else -1.0, reverse=True)
-    metrics_path = out_dir / "energy_ratio_metrics.csv"
-    with metrics_path.open("w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+    metrics_path = out_dir / "texture_refinement_metrics.csv"
+    with metrics_path.open("w", newline="") as fobj:
+        writer = csv.DictWriter(fobj, fieldnames=list(rows[0].keys()))
         writer.writeheader()
         writer.writerows(rows)
     return metrics_path
