@@ -108,16 +108,45 @@ def test_write_preliminary_upload_plan_sorts_by_ms_ssim(tmp_path):
     with metrics.open("w", newline="") as f:
         writer = csv.DictWriter(
             f,
-            fieldnames=["source_archive_path", "reference_png", "synthetic_png", "synthetic_gray_png", "phantom_path", "request_id", "MS-SSIM", "SSIM"],
+            fieldnames=[
+                "evidence_source",
+                "evidence_scope",
+                "source_archive_path",
+                "reference_png",
+                "synthetic_png",
+                "synthetic_gray_png",
+                "phantom_path",
+                "request_id",
+                "MS-SSIM",
+                "SSIM",
+            ],
         )
         writer.writeheader()
-        writer.writerow({"source_archive_path": "low.png", "MS-SSIM": "0.1", "SSIM": "0.2"})
-        writer.writerow({"source_archive_path": "high.png", "MS-SSIM": "0.9", "SSIM": "0.8"})
+        writer.writerow(
+            {
+                "evidence_source": "hosted_api_true_scanner",
+                "evidence_scope": "submission_manifest_render",
+                "source_archive_path": "low.png",
+                "MS-SSIM": "0.1",
+                "SSIM": "0.2",
+            }
+        )
+        writer.writerow(
+            {
+                "evidence_source": "hosted_api_true_scanner",
+                "evidence_scope": "submission_manifest_render",
+                "source_archive_path": "high.png",
+                "MS-SSIM": "0.9",
+                "SSIM": "0.8",
+            }
+        )
 
     plan = write_preliminary_upload_plan(metrics, tmp_path / "plan.csv")
     rows = list(csv.DictReader(plan.open()))
     assert rows[0]["source_archive_path"] == "high.png"
     assert rows[0]["upload_order"] == "1"
+    assert rows[0]["evidence_source"] == "hosted_api_true_scanner"
+    assert rows[0]["evidence_scope"] == "submission_manifest_render"
 
 
 def test_prepare_preliminary_png_pairs_copies_ranked_files(tmp_path):
@@ -129,12 +158,24 @@ def test_prepare_preliminary_png_pairs_copies_ranked_files(tmp_path):
     with plan.open("w", newline="") as f:
         writer = csv.DictWriter(
             f,
-            fieldnames=["upload_order", "source_archive_path", "synthetic_png", "reference_png", "MS-SSIM", "SSIM", "LPIPS_PROXY"],
+            fieldnames=[
+                "upload_order",
+                "evidence_source",
+                "evidence_scope",
+                "source_archive_path",
+                "synthetic_png",
+                "reference_png",
+                "MS-SSIM",
+                "SSIM",
+                "LPIPS_PROXY",
+            ],
         )
         writer.writeheader()
         writer.writerow(
             {
                 "upload_order": "1",
+                "evidence_source": "hosted_api_true_scanner",
+                "evidence_scope": "submission_manifest_render",
                 "source_archive_path": "DATASET_PNG/Female/scan_frame1.png",
                 "synthetic_png": str(synthetic),
                 "reference_png": str(reference),
@@ -145,5 +186,7 @@ def test_prepare_preliminary_png_pairs_copies_ranked_files(tmp_path):
     manifest = prepare_preliminary_png_pairs(plan, tmp_path / "pairs")
     rows = list(csv.DictReader(manifest.open()))
     assert len(rows) == 1
+    assert rows[0]["evidence_source"] == "hosted_api_true_scanner"
+    assert rows[0]["evidence_scope"] == "submission_manifest_render"
     assert (tmp_path / "pairs" / "synthetic_scans" / "001_scan_frame1_synthetic.png").read_bytes() == b"synthetic"
     assert (tmp_path / "pairs" / "real_reference_scans" / "001_scan_frame1_reference.png").read_bytes() == b"reference"

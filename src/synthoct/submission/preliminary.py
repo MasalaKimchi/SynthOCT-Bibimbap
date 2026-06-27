@@ -73,6 +73,8 @@ def benchmark_submission_api(
     config_path = write_api_config(out_dir / "Configuration_api.ini", scatterers_count=scatterers_count)
     results_csv = out_dir / "api_metrics.csv"
     fieldnames = [
+        "evidence_source",
+        "evidence_scope",
         "source_archive_path",
         "phantom_path",
         "request_id",
@@ -143,6 +145,8 @@ def benchmark_submission_api(
                     "elapsed_seconds": elapsed_seconds,
                     "poll_count": poll_count,
                     **metrics,
+                    "evidence_source": "hosted_api_true_scanner",
+                    "evidence_scope": "submission_manifest_render",
                 }
             )
             f.flush()
@@ -173,6 +177,8 @@ def write_preliminary_upload_plan(results_csv: str | Path, out_csv: str | Path, 
         rows = rows[:limit]
     fieldnames = [
         "upload_order",
+        "evidence_source",
+        "evidence_scope",
         "source_archive_path",
         "reference_png",
         "synthetic_png",
@@ -209,6 +215,8 @@ def prepare_preliminary_png_pairs(upload_plan_csv: str | Path, out_dir: str | Pa
     manifest_path = out_dir / "png_pair_manifest.csv"
     fieldnames = [
         "upload_order",
+        "evidence_source",
+        "evidence_scope",
         "source_archive_path",
         "synthetic_scan_png",
         "real_reference_scan_png",
@@ -233,6 +241,8 @@ def prepare_preliminary_png_pairs(upload_plan_csv: str | Path, out_dir: str | Pa
             writer.writerow(
                 {
                     "upload_order": order,
+                    "evidence_source": row.get("evidence_source", ""),
+                    "evidence_scope": row.get("evidence_scope", ""),
                     "source_archive_path": row["source_archive_path"],
                     "synthetic_scan_png": str(synthetic_dst),
                     "real_reference_scan_png": str(reference_dst),

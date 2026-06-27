@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import io
 import zipfile
 from pathlib import Path
@@ -152,6 +153,11 @@ def test_internal_validation_writes_summary(tmp_path, monkeypatch):
     text = summary.read_text()
     assert "physics-guided" in text
     assert "official" in text
+    detail_rows = list(csv.DictReader(detail.open()))
+    assert detail_rows[0]["evidence_source"] == "hosted_api_true_scanner"
+    assert detail_rows[0]["evidence_scope"] == "grouped_validation_2fold_1perfold"
+    challenge_rows = list(csv.DictReader((tmp_path / "validation" / "challenge_metrics_summary.csv").open()))
+    assert challenge_rows[0]["evidence_source"] == "hosted_api_true_scanner"
 
 
 def test_internal_validation_accepts_promising_pipeline_wave(tmp_path, monkeypatch):
@@ -178,6 +184,80 @@ def test_internal_validation_accepts_promising_pipeline_wave(tmp_path, monkeypat
     text = summary.read_text()
     assert "P01_simulator_constrained_prior" in text
     assert "P05_attenuation_layer_map" in text
+
+
+def test_audit_evidence_accepts_grouped_true_scanner_summary(tmp_path):
+    metrics = tmp_path / "challenge_metrics_summary.csv"
+    with metrics.open("w", newline="") as fobj:
+        writer = csv.DictWriter(
+            fobj,
+            fieldnames=[
+                "method",
+                "evidence_source",
+                "evidence_scope",
+                "n",
+                "MS-SSIM_mean",
+                "LPIPS_metric",
+                "LPIPS_or_proxy_mean",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "method": "candidate",
+                "evidence_source": "hosted_api_true_scanner",
+                "evidence_scope": "grouped_validation_2fold_1perfold",
+                "n": "2",
+                "MS-SSIM_mean": "0.72",
+                "LPIPS_metric": "LPIPS",
+                "LPIPS_or_proxy_mean": "0.18",
+            }
+        )
+
+    assert main(["audit-evidence", "--metrics", str(metrics), "--strict", "--require-real-lpips"]) == 0
+
+
+def test_audit_evidence_rejects_surrogate_preview_metrics(tmp_path):
+    metrics = tmp_path / "learned_surrogate_metrics.csv"
+    with metrics.open("w", newline="") as fobj:
+        writer = csv.DictWriter(
+            fobj,
+            fieldnames=["method", "evidence_source", "evidence_scope", "surrogate_MS-SSIM", "phantom_path"],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "method": "surrogate_candidate",
+                "evidence_source": "learned_surrogate_preview",
+                "evidence_scope": "not_challenge_evidence",
+                "surrogate_MS-SSIM": "0.90",
+                "phantom_path": "candidate.txt",
+            }
+        )
+
+    assert main(["audit-evidence", "--metrics", str(metrics), "--strict"]) == 2
+
+
+def test_audit_evidence_treats_single_reference_true_scanner_as_limited(tmp_path):
+    metrics = tmp_path / "candidate_queue_metrics.csv"
+    with metrics.open("w", newline="") as fobj:
+        writer = csv.DictWriter(
+            fobj,
+            fieldnames=["method", "evidence_source", "evidence_scope", "MS-SSIM", "LPIPS_PROXY"],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "method": "candidate",
+                "evidence_source": "hosted_api_true_scanner",
+                "evidence_scope": "single_reference_candidate_queue",
+                "MS-SSIM": "0.773537950274",
+                "LPIPS_PROXY": "0.21",
+            }
+        )
+
+    assert main(["audit-evidence", "--metrics", str(metrics)]) == 0
+    assert main(["audit-evidence", "--metrics", str(metrics), "--strict"]) == 2
 
 
 def test_cli_final_baseline(tmp_path):
@@ -542,6 +622,9 @@ def test_cli_render_candidate_queue_writes_metrics(tmp_path, monkeypatch):
     text = metrics.read_text()
     assert "test_candidate" in text
     assert "fake-request" in text
+    rows = list(csv.DictReader(metrics.open()))
+    assert rows[0]["evidence_source"] == "hosted_api_true_scanner"
+    assert rows[0]["evidence_scope"] == "single_reference_candidate_queue"
 
 
 def test_cli_optimize_empirical_basis_passes_controls(tmp_path, monkeypatch):

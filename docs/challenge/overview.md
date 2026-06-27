@@ -48,6 +48,8 @@ The active approach models tissue as an inhomogeneous point process:
 
 Offline ranking was useful for brainstorming, but it is not a trustworthy final signal. Promote a method only when scanner renders improve challenge-facing metrics across grouped folds or a matched official-scanner subset.
 
+The official final ranking is stronger than local validation: the organizers run the submitted code/model on a hidden hold-out test dataset. A local hosted-API score on one public B-scan, even if produced by the true scanner, is not a competition-wide score. Local surrogate scanners and preview renderers are useful only for triage; they are not proof of challenge performance.
+
 Recommended hosted API triage:
 
 ```bash
@@ -90,3 +92,5 @@ Kill a candidate when it loses clearly on both mean score and per-sample wins. I
 ## Current Decision
 
 Use `H61_api_low_depth_prelim` as the conservative final method unless a newer hosted API or Windows `Part2_Scanner.exe` run supersedes it. Treat older H11/H41/H56 results as historical priors only.
+
+See [winning_strategy.md](winning_strategy.md) for the current rules interpretation, scanner vocabulary, and promotion gate.

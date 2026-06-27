@@ -175,3 +175,14 @@ Important outputs:
 - `internal_validation_detail.csv`: sample-level diagnostics.
 
 Use `--rerun-existing` only when cached API renders should be ignored.
+
+Before treating a candidate as promoted, audit the evidence labels and scope:
+
+```bash
+synthoct audit-evidence \
+  --metrics outputs/api_validation/challenge_metrics_summary.csv \
+  --strict \
+  --require-real-lpips
+```
+
+The audit rejects surrogate-preview evidence and treats single-reference true-scanner renders as limited evidence rather than final-candidate proof.

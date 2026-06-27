@@ -73,6 +73,8 @@ def summarize_challenge_metrics(rows: list[dict[str, float | str]]) -> list[dict
         out.append(
             {
                 "method": method,
+                "evidence_source": _common_value(method_rows, "evidence_source"),
+                "evidence_scope": _common_value(method_rows, "evidence_scope"),
                 "n": len(method_rows),
                 "MS-SSIM_mean": float(ms_values.mean()) if ms_values.size else np.nan,
                 "MS-SSIM_std": float(ms_values.std(ddof=0)) if ms_values.size else np.nan,
@@ -85,6 +87,15 @@ def summarize_challenge_metrics(rows: list[dict[str, float | str]]) -> list[dict
         )
     out.sort(key=lambda row: (finite_float(row.get("MS-SSIM_mean"), -1.0), -finite_float(row.get("LPIPS_or_proxy_mean"), np.inf)), reverse=True)
     return out
+
+
+def _common_value(rows: list[dict[str, float | str]], key: str) -> str:
+    values = {str(row.get(key, "")) for row in rows if row.get(key, "") != ""}
+    if not values:
+        return ""
+    if len(values) == 1:
+        return next(iter(values))
+    return "mixed"
 
 
 def summarize_sample_wins(rows: list[dict[str, float | str]], score_key: str = "Struct_MS-SSIM") -> list[dict[str, float | str]]:

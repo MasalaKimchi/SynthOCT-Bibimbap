@@ -236,13 +236,15 @@ def run_learned_surrogate_refinement(
                 {
                     "method": label,
                     "status": "surrogate_unverified",
+                    "evidence_source": "learned_surrogate_preview",
+                    "evidence_scope": "not_challenge_evidence",
                     "phantom_path": str(phantom_path.resolve()),
                     "surrogate_preview_png": str(preview_full.resolve()),
                     "energy_ratio": ratio,
                     "texture_strength": texture_strength,
                     "train_pairs": len(pairs),
                     "best_training_ssim": pairs[0].ssim,
-                    **metrics,
+                    **{f"surrogate_{key}": value for key, value in metrics.items()},
                 }
             )
 

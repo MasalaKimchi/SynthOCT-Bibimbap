@@ -18,7 +18,7 @@ from .correction_refinement import (
 from .direct_lattice import run_direct_lattice_refinement
 from .energy_ratio_refinement import DEFAULT_ENERGY_RATIO_EXPONENTS, run_energy_ratio_refinement
 from .empirical_basis import run_empirical_basis_refinement
-from .evaluation import calculate_metrics
+from .evaluation import audit_challenge_evidence, calculate_metrics
 from .features import generate_maps
 from .flow_refinement import DEFAULT_FLOW_VARIANTS, run_flow_refinement
 from .generators import (
@@ -139,6 +139,12 @@ def build_parser() -> argparse.ArgumentParser:
     validate.add_argument("--poll-interval-seconds", type=float, default=10.0)
     validate.add_argument("--max-polls", type=int, default=60)
     validate.add_argument("--rerun-existing", action="store_true")
+
+    evidence = sub.add_parser("audit-evidence", help="Classify whether a metrics CSV is fair challenge evidence.")
+    evidence.add_argument("--metrics", required=True, help="Metrics CSV to audit.")
+    evidence.add_argument("--min-samples-per-method", type=int, default=2)
+    evidence.add_argument("--require-real-lpips", action="store_true")
+    evidence.add_argument("--strict", action="store_true", help="Exit nonzero unless the CSV is promotion-ready.")
 
     optimize = sub.add_parser("optimize-physics", help="Hosted-API candidate search; expensive because each candidate is rendered by the challenge scanner.")
     optimize.add_argument("--zip", required=True, dest="zip_path")
@@ -492,6 +498,15 @@ def main(argv: list[str] | None = None) -> int:
             result["plot"] = str(plot_hypothesis_progress(summary, args.plot))
         print(json.dumps(result, sort_keys=True))
         return 0
+
+    if args.command == "audit-evidence":
+        report = audit_challenge_evidence(
+            args.metrics,
+            min_samples_per_method=args.min_samples_per_method,
+            require_real_lpips=args.require_real_lpips,
+        )
+        print(json.dumps(report, sort_keys=True))
+        return 0 if (not args.strict or report["promotion_ready"]) else 2
 
     if args.command == "optimize-physics":
         detail, summary, best_config = run_candidate_search(

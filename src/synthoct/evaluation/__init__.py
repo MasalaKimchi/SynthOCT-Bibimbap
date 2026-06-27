@@ -9,6 +9,7 @@ from .maps import (
     safe_corr,
 )
 from .metrics import calculate_metrics, lpips_proxy, multiscale_ssim_fallback
+from .evidence import audit_challenge_evidence
 from .summaries import (
     challenge_lpips_key,
     finite_float,
@@ -25,6 +26,7 @@ __all__ = [
     "evaluate_feature_map_metrics",
     "lpips_proxy",
     "multiscale_ssim_fallback",
+    "audit_challenge_evidence",
     "profile_scores",
     "resize_like",
     "safe_corr",

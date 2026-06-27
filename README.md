@@ -169,3 +169,5 @@ synthoct prepare-png-pairs \
 ```
 
 Submission packaging details are in [docs/submission/guide.md](docs/submission/guide.md), scanner notes are in [docs/implementation/pipeline.md](docs/implementation/pipeline.md), and challenge strategy is in [docs/challenge/overview.md](docs/challenge/overview.md).
+
+For the current competition-winning interpretation, including the distinction between the true scanner, hosted API, local surrogate scanners, and single-reference scores, see [docs/challenge/winning_strategy.md](docs/challenge/winning_strategy.md).

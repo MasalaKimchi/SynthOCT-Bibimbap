@@ -80,6 +80,8 @@ def render_candidate_queue(
         rows.append(
             {
                 "status": status,
+                "evidence_source": "hosted_api_true_scanner",
+                "evidence_scope": "single_reference_candidate_queue",
                 "priority": row.get("priority", idx),
                 "method": method,
                 "request_id": request_id,

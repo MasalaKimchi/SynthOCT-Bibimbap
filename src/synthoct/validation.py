@@ -142,6 +142,8 @@ def run_internal_validation(
                         "fold": fold_idx,
                         "sample": sample_idx,
                         "method": method,
+                        "evidence_source": "hosted_api_true_scanner",
+                        "evidence_scope": f"grouped_validation_{folds}fold_{max_per_fold}perfold",
                         "archive_path": record.archive_path,
                         "generation_seconds": generation_seconds,
                         "render_seconds": render_seconds,
