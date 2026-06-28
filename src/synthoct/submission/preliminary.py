@@ -11,7 +11,7 @@ import numpy as np
 from skimage import io
 
 from synthoct.dataset import load_scan_from_zip
-from synthoct.evaluation import calculate_metrics
+from synthoct.evaluation import calculate_metrics, metric_evaluation_metadata
 from synthoct.scanners import render_with_api, resolve_api_key, write_api_config
 
 
@@ -90,6 +90,11 @@ def benchmark_submission_api(
         "VIF",
         "LPIPS",
         "LPIPS_PROXY",
+        "evaluation_region",
+        "reference_shape",
+        "prediction_shape",
+        "evaluated_shape",
+        "prediction_resized_to_reference",
     ]
     out_dir.mkdir(parents=True, exist_ok=True)
     write_header = not results_csv.exists()
@@ -127,6 +132,7 @@ def benchmark_submission_api(
                 to_gray_png(synthetic_png, synthetic_gray_png)
 
             metrics = calculate_metrics(reference_png, synthetic_gray_png, include_lpips=include_lpips)
+            metrics.update(metric_evaluation_metadata(reference_png, synthetic_gray_png))
             if progress:
                 print(
                     f"[{idx + 1}] request={request_id} elapsed={elapsed_seconds:.1f}s "
@@ -189,6 +195,11 @@ def write_preliminary_upload_plan(results_csv: str | Path, out_csv: str | Path, 
         "SSIM",
         "LPIPS",
         "LPIPS_PROXY",
+        "evaluation_region",
+        "reference_shape",
+        "prediction_shape",
+        "evaluated_shape",
+        "prediction_resized_to_reference",
     ]
     with out_csv.open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -225,6 +236,11 @@ def prepare_preliminary_png_pairs(upload_plan_csv: str | Path, out_dir: str | Pa
         "MS-SSIM",
         "SSIM",
         "LPIPS_PROXY",
+        "evaluation_region",
+        "reference_shape",
+        "prediction_shape",
+        "evaluated_shape",
+        "prediction_resized_to_reference",
     ]
     with manifest_path.open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -251,6 +267,11 @@ def prepare_preliminary_png_pairs(upload_plan_csv: str | Path, out_dir: str | Pa
                     "MS-SSIM": row.get("MS-SSIM", ""),
                     "SSIM": row.get("SSIM", ""),
                     "LPIPS_PROXY": row.get("LPIPS_PROXY", ""),
+                    "evaluation_region": row.get("evaluation_region", ""),
+                    "reference_shape": row.get("reference_shape", ""),
+                    "prediction_shape": row.get("prediction_shape", ""),
+                    "evaluated_shape": row.get("evaluated_shape", ""),
+                    "prediction_resized_to_reference": row.get("prediction_resized_to_reference", ""),
                 }
             )
     return manifest_path

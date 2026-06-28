@@ -182,7 +182,56 @@ Before treating a candidate as promoted, audit the evidence labels and scope:
 synthoct audit-evidence \
   --metrics outputs/api_validation/challenge_metrics_summary.csv \
   --strict \
-  --require-real-lpips
+  --require-real-lpips \
+  --max-generation-seconds 600
 ```
 
 The audit rejects surrogate-preview evidence and treats single-reference true-scanner renders as limited evidence rather than final-candidate proof.
+
+Challenge-facing metric rows include `evaluation_region=full_frame`, `reference_shape`, `prediction_shape`, `evaluated_shape`, and `prediction_resized_to_reference`. The metric implementation resizes a prediction to the reference dimensions when needed, then computes metrics over the full reference-shaped array rather than a crop.
+
+After the evidence audit passes, compare a candidate to the current final method:
+
+```bash
+synthoct decide-promotion \
+  --metrics outputs/api_validation/challenge_metrics_summary.csv \
+  --candidate H_new_candidate \
+  --baseline H61_api_low_depth_prelim \
+  --strict \
+  --max-generation-seconds 600
+```
+
+This command promotes only when the candidate stays inside the generation runtime budget, improves mean MS-SSIM, does not worsen LPIPS/proxy, has no worse per-sample win counts, and does not regress available physical guardrails such as depth/OAC/speckle-map agreement under the same fair evidence gate.
+
+To select the best promoted method automatically:
+
+```bash
+synthoct select-best \
+  --metrics outputs/api_validation/challenge_metrics_summary.csv \
+  --baseline H61_api_low_depth_prelim \
+  --strict \
+  --max-generation-seconds 600
+```
+
+If this exits nonzero, no validated method currently deserves to replace the baseline.
+
+Use `--max-guardrail-regression` only when accepting a small physical-diagnostic tradeoff is deliberate and documented.
+
+## Learned Surrogate Acceleration
+
+The learned surrogate command trains a local CNN approximation of the scanner from existing hosted-scanner phantom/render pairs. It is an accelerator for candidate generation, not a challenge scorer:
+
+```bash
+synthoct optimize-learned-surrogate \
+  --ref data/DATASET_PNG/Female/1950-1960/Cheek/l__shcheka_frame250.png \
+  --outputs-dir outputs \
+  --out outputs/learned_surrogate_refinement \
+  --holdout-fraction 0.2
+```
+
+It writes:
+
+- `learned_surrogate_metrics.csv`: surrogate-preview candidate rows, labeled `evidence_source=learned_surrogate_preview`.
+- `surrogate_calibration_metrics.csv`: held-out true-scanner render versus surrogate prediction rows, labeled `evidence_source=learned_surrogate_holdout`.
+
+Neither file is promotion-ready evidence. Render the emitted phantoms through `render-candidate-queue`, then validate the best candidates on a grouped split with `validate-internal`.

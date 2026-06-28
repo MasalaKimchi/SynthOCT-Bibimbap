@@ -6,6 +6,16 @@ from pathlib import Path
 
 import numpy as np
 
+HIGHER_IS_BETTER_GUARDRAILS = (
+    "DepthCorr",
+    "LateralCorr",
+    "OACProfileCorr",
+    "OAC_MS-SSIM",
+    "SC_MS-SSIM",
+    "RSC_MS-SSIM",
+)
+LOWER_IS_BETTER_GUARDRAILS = ("SCMeanAbsErr",)
+
 
 def challenge_lpips_key(row: dict[str, float | str], suffix: str = "") -> str:
     lpips_key = f"Struct_LPIPS{suffix}"
@@ -68,14 +78,22 @@ def summarize_challenge_metrics(rows: list[dict[str, float | str]]) -> list[dict
         lpips_key = challenge_lpips_key(method_rows[0])
         ms_values = np.array([finite_float(row.get("Struct_MS-SSIM")) for row in method_rows], dtype=float)
         lpips_values = np.array([finite_float(row.get(lpips_key)) for row in method_rows], dtype=float)
+        generation_values = np.array([finite_float(row.get("generation_seconds")) for row in method_rows], dtype=float)
         ms_values = ms_values[np.isfinite(ms_values)]
         lpips_values = lpips_values[np.isfinite(lpips_values)]
+        generation_values = generation_values[np.isfinite(generation_values)]
+        guardrails = _guardrail_means(method_rows)
         out.append(
             {
                 "method": method,
                 "evidence_source": _common_value(method_rows, "evidence_source"),
                 "evidence_scope": _common_value(method_rows, "evidence_scope"),
+                "evaluation_region": _common_value(method_rows, "Struct_evaluation_region"),
+                "evaluated_shape": _common_value(method_rows, "Struct_evaluated_shape"),
+                "prediction_resized_to_reference": _common_value(method_rows, "Struct_prediction_resized_to_reference"),
                 "n": len(method_rows),
+                "generation_seconds_mean": float(generation_values.mean()) if generation_values.size else np.nan,
+                "generation_seconds_max": float(generation_values.max()) if generation_values.size else np.nan,
                 "MS-SSIM_mean": float(ms_values.mean()) if ms_values.size else np.nan,
                 "MS-SSIM_std": float(ms_values.std(ddof=0)) if ms_values.size else np.nan,
                 "LPIPS_metric": lpips_key.replace("Struct_", ""),
@@ -83,6 +101,7 @@ def summarize_challenge_metrics(rows: list[dict[str, float | str]]) -> list[dict
                 "LPIPS_or_proxy_std": float(lpips_values.std(ddof=0)) if lpips_values.size else np.nan,
                 "MS-SSIM_wins": int(ms_wins[method]),
                 "LPIPS_wins": int(lpips_wins[method]),
+                **guardrails,
             }
         )
     out.sort(key=lambda row: (finite_float(row.get("MS-SSIM_mean"), -1.0), -finite_float(row.get("LPIPS_or_proxy_mean"), np.inf)), reverse=True)
@@ -96,6 +115,16 @@ def _common_value(rows: list[dict[str, float | str]], key: str) -> str:
     if len(values) == 1:
         return next(iter(values))
     return "mixed"
+
+
+def _guardrail_means(rows: list[dict[str, float | str]]) -> dict[str, float]:
+    out: dict[str, float] = {}
+    for key in (*HIGHER_IS_BETTER_GUARDRAILS, *LOWER_IS_BETTER_GUARDRAILS):
+        values = np.array([finite_float(row.get(key)) for row in rows], dtype=float)
+        values = values[np.isfinite(values)]
+        if values.size:
+            out[f"{key}_mean"] = float(values.mean())
+    return out
 
 
 def summarize_sample_wins(rows: list[dict[str, float | str]], score_key: str = "Struct_MS-SSIM") -> list[dict[str, float | str]]:

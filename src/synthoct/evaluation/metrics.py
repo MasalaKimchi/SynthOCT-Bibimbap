@@ -15,6 +15,19 @@ def _same_shape(ref: np.ndarray, pred: np.ndarray) -> tuple[np.ndarray, np.ndarr
     return ref, pred
 
 
+def metric_evaluation_metadata(ref_path: str | Path, pred_path: str | Path) -> dict[str, str]:
+    """Describe the image extent used by full-reference metric calculations."""
+    ref = load_scan(ref_path)
+    pred = load_scan(pred_path)
+    return {
+        "evaluation_region": "full_frame",
+        "reference_shape": _shape_label(ref.shape),
+        "prediction_shape": _shape_label(pred.shape),
+        "evaluated_shape": _shape_label(ref.shape),
+        "prediction_resized_to_reference": str(ref.shape != pred.shape).lower(),
+    }
+
+
 def calculate_metrics(ref_path: str | Path, pred_path: str | Path, include_lpips: bool = True) -> dict[str, float]:
     """Compare two rendered OCT PNGs or derived map PNGs."""
     ref, pred = _same_shape(load_scan(ref_path), load_scan(pred_path))
@@ -53,6 +66,10 @@ def calculate_metrics(ref_path: str | Path, pred_path: str | Path, include_lpips
         except Exception:
             pass
     return results
+
+
+def _shape_label(shape: tuple[int, ...]) -> str:
+    return "x".join(str(dim) for dim in shape)
 
 
 def multiscale_ssim_fallback(ref: np.ndarray, pred: np.ndarray) -> float:

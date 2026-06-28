@@ -12,6 +12,7 @@ import synthoct.correction_refinement as correction_refinement
 import synthoct.energy_ratio_refinement as energy_ratio_refinement
 import synthoct.candidate_rendering as candidate_rendering
 import synthoct.api_recovery as api_recovery
+import synthoct.learned_surrogate as learned_surrogate
 import synthoct.scanners.api as scanner_api
 import synthoct.seed_search as seed_search
 import synthoct.transfer_refinement as transfer_refinement
@@ -156,8 +157,15 @@ def test_internal_validation_writes_summary(tmp_path, monkeypatch):
     detail_rows = list(csv.DictReader(detail.open()))
     assert detail_rows[0]["evidence_source"] == "hosted_api_true_scanner"
     assert detail_rows[0]["evidence_scope"] == "grouped_validation_2fold_1perfold"
+    assert detail_rows[0]["Struct_evaluation_region"] == "full_frame"
+    assert detail_rows[0]["Struct_evaluated_shape"] == "8x8"
     challenge_rows = list(csv.DictReader((tmp_path / "validation" / "challenge_metrics_summary.csv").open()))
     assert challenge_rows[0]["evidence_source"] == "hosted_api_true_scanner"
+    assert challenge_rows[0]["evaluation_region"] == "full_frame"
+    assert float(challenge_rows[0]["generation_seconds_max"]) < 600.0
+    assert "DepthCorr_mean" in challenge_rows[0]
+    assert "OACProfileCorr_mean" in challenge_rows[0]
+    assert "SCMeanAbsErr_mean" in challenge_rows[0]
 
 
 def test_internal_validation_accepts_promising_pipeline_wave(tmp_path, monkeypatch):
@@ -199,6 +207,8 @@ def test_audit_evidence_accepts_grouped_true_scanner_summary(tmp_path):
                 "MS-SSIM_mean",
                 "LPIPS_metric",
                 "LPIPS_or_proxy_mean",
+                "evaluation_region",
+                "generation_seconds_max",
             ],
         )
         writer.writeheader()
@@ -211,6 +221,8 @@ def test_audit_evidence_accepts_grouped_true_scanner_summary(tmp_path):
                 "MS-SSIM_mean": "0.72",
                 "LPIPS_metric": "LPIPS",
                 "LPIPS_or_proxy_mean": "0.18",
+                "evaluation_region": "full_frame",
+                "generation_seconds_max": "10.0",
             }
         )
 
@@ -243,7 +255,7 @@ def test_audit_evidence_treats_single_reference_true_scanner_as_limited(tmp_path
     with metrics.open("w", newline="") as fobj:
         writer = csv.DictWriter(
             fobj,
-            fieldnames=["method", "evidence_source", "evidence_scope", "MS-SSIM", "LPIPS_PROXY"],
+            fieldnames=["method", "evidence_source", "evidence_scope", "evaluation_region", "MS-SSIM", "LPIPS_PROXY"],
         )
         writer.writeheader()
         writer.writerow(
@@ -251,6 +263,7 @@ def test_audit_evidence_treats_single_reference_true_scanner_as_limited(tmp_path
                 "method": "candidate",
                 "evidence_source": "hosted_api_true_scanner",
                 "evidence_scope": "single_reference_candidate_queue",
+                "evaluation_region": "full_frame",
                 "MS-SSIM": "0.773537950274",
                 "LPIPS_PROXY": "0.21",
             }
@@ -258,6 +271,321 @@ def test_audit_evidence_treats_single_reference_true_scanner_as_limited(tmp_path
 
     assert main(["audit-evidence", "--metrics", str(metrics)]) == 0
     assert main(["audit-evidence", "--metrics", str(metrics), "--strict"]) == 2
+
+
+def test_decide_promotion_accepts_candidate_that_beats_baseline(tmp_path):
+    metrics = tmp_path / "challenge_metrics_summary.csv"
+    with metrics.open("w", newline="") as fobj:
+        writer = csv.DictWriter(
+            fobj,
+            fieldnames=[
+                "method",
+                "evidence_source",
+                "evidence_scope",
+                "evaluation_region",
+                "n",
+                "MS-SSIM_mean",
+                "LPIPS_metric",
+                "LPIPS_or_proxy_mean",
+                "MS-SSIM_wins",
+                "LPIPS_wins",
+                "generation_seconds_max",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "method": "baseline",
+                "evidence_source": "hosted_api_true_scanner",
+                "evidence_scope": "grouped_validation_2fold_1perfold",
+                "evaluation_region": "full_frame",
+                "n": "2",
+                "MS-SSIM_mean": "0.70",
+                "LPIPS_metric": "LPIPS",
+                "LPIPS_or_proxy_mean": "0.25",
+                "MS-SSIM_wins": "0",
+                "LPIPS_wins": "0",
+                "generation_seconds_max": "12.0",
+            }
+        )
+        writer.writerow(
+            {
+                "method": "candidate",
+                "evidence_source": "hosted_api_true_scanner",
+                "evidence_scope": "grouped_validation_2fold_1perfold",
+                "evaluation_region": "full_frame",
+                "n": "2",
+                "MS-SSIM_mean": "0.74",
+                "LPIPS_metric": "LPIPS",
+                "LPIPS_or_proxy_mean": "0.24",
+                "MS-SSIM_wins": "2",
+                "LPIPS_wins": "2",
+                "generation_seconds_max": "11.0",
+            }
+        )
+
+    assert main(["decide-promotion", "--metrics", str(metrics), "--candidate", "candidate", "--baseline", "baseline", "--strict"]) == 0
+
+
+def test_decide_promotion_rejects_candidate_that_loses_lpips(tmp_path):
+    metrics = tmp_path / "challenge_metrics_summary.csv"
+    with metrics.open("w", newline="") as fobj:
+        writer = csv.DictWriter(
+            fobj,
+            fieldnames=[
+                "method",
+                "evidence_source",
+                "evidence_scope",
+                "evaluation_region",
+                "n",
+                "MS-SSIM_mean",
+                "LPIPS_metric",
+                "LPIPS_or_proxy_mean",
+                "MS-SSIM_wins",
+                "LPIPS_wins",
+                "generation_seconds_max",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "method": "baseline",
+                "evidence_source": "hosted_api_true_scanner",
+                "evidence_scope": "grouped_validation_2fold_1perfold",
+                "evaluation_region": "full_frame",
+                "n": "2",
+                "MS-SSIM_mean": "0.70",
+                "LPIPS_metric": "LPIPS",
+                "LPIPS_or_proxy_mean": "0.20",
+                "MS-SSIM_wins": "1",
+                "LPIPS_wins": "2",
+                "generation_seconds_max": "12.0",
+            }
+        )
+        writer.writerow(
+            {
+                "method": "candidate",
+                "evidence_source": "hosted_api_true_scanner",
+                "evidence_scope": "grouped_validation_2fold_1perfold",
+                "evaluation_region": "full_frame",
+                "n": "2",
+                "MS-SSIM_mean": "0.74",
+                "LPIPS_metric": "LPIPS",
+                "LPIPS_or_proxy_mean": "0.30",
+                "MS-SSIM_wins": "2",
+                "LPIPS_wins": "0",
+                "generation_seconds_max": "11.0",
+            }
+        )
+
+    assert main(["decide-promotion", "--metrics", str(metrics), "--candidate", "candidate", "--baseline", "baseline", "--strict"]) == 2
+
+
+def test_decide_promotion_rejects_candidate_over_runtime_budget(tmp_path):
+    metrics = tmp_path / "challenge_metrics_summary.csv"
+    with metrics.open("w", newline="") as fobj:
+        writer = csv.DictWriter(
+            fobj,
+            fieldnames=[
+                "method",
+                "evidence_source",
+                "evidence_scope",
+                "evaluation_region",
+                "n",
+                "MS-SSIM_mean",
+                "LPIPS_metric",
+                "LPIPS_or_proxy_mean",
+                "MS-SSIM_wins",
+                "LPIPS_wins",
+                "generation_seconds_max",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "method": "baseline",
+                "evidence_source": "hosted_api_true_scanner",
+                "evidence_scope": "grouped_validation_2fold_1perfold",
+                "evaluation_region": "full_frame",
+                "n": "2",
+                "MS-SSIM_mean": "0.70",
+                "LPIPS_metric": "LPIPS",
+                "LPIPS_or_proxy_mean": "0.25",
+                "MS-SSIM_wins": "0",
+                "LPIPS_wins": "0",
+                "generation_seconds_max": "20.0",
+            }
+        )
+        writer.writerow(
+            {
+                "method": "candidate",
+                "evidence_source": "hosted_api_true_scanner",
+                "evidence_scope": "grouped_validation_2fold_1perfold",
+                "evaluation_region": "full_frame",
+                "n": "2",
+                "MS-SSIM_mean": "0.74",
+                "LPIPS_metric": "LPIPS",
+                "LPIPS_or_proxy_mean": "0.24",
+                "MS-SSIM_wins": "2",
+                "LPIPS_wins": "2",
+                "generation_seconds_max": "601.0",
+            }
+        )
+
+    assert main(["decide-promotion", "--metrics", str(metrics), "--candidate", "candidate", "--baseline", "baseline", "--strict"]) == 2
+
+
+def test_decide_promotion_rejects_candidate_with_guardrail_regression(tmp_path):
+    metrics = tmp_path / "challenge_metrics_summary.csv"
+    with metrics.open("w", newline="") as fobj:
+        writer = csv.DictWriter(
+            fobj,
+            fieldnames=[
+                "method",
+                "evidence_source",
+                "evidence_scope",
+                "evaluation_region",
+                "n",
+                "MS-SSIM_mean",
+                "LPIPS_metric",
+                "LPIPS_or_proxy_mean",
+                "MS-SSIM_wins",
+                "LPIPS_wins",
+                "generation_seconds_max",
+                "DepthCorr_mean",
+                "OACProfileCorr_mean",
+                "SCMeanAbsErr_mean",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "method": "baseline",
+                "evidence_source": "hosted_api_true_scanner",
+                "evidence_scope": "grouped_validation_2fold_1perfold",
+                "evaluation_region": "full_frame",
+                "n": "2",
+                "MS-SSIM_mean": "0.70",
+                "LPIPS_metric": "LPIPS",
+                "LPIPS_or_proxy_mean": "0.25",
+                "MS-SSIM_wins": "0",
+                "LPIPS_wins": "0",
+                "generation_seconds_max": "20.0",
+                "DepthCorr_mean": "0.90",
+                "OACProfileCorr_mean": "0.80",
+                "SCMeanAbsErr_mean": "0.10",
+            }
+        )
+        writer.writerow(
+            {
+                "method": "candidate",
+                "evidence_source": "hosted_api_true_scanner",
+                "evidence_scope": "grouped_validation_2fold_1perfold",
+                "evaluation_region": "full_frame",
+                "n": "2",
+                "MS-SSIM_mean": "0.74",
+                "LPIPS_metric": "LPIPS",
+                "LPIPS_or_proxy_mean": "0.24",
+                "MS-SSIM_wins": "2",
+                "LPIPS_wins": "2",
+                "generation_seconds_max": "11.0",
+                "DepthCorr_mean": "0.70",
+                "OACProfileCorr_mean": "0.80",
+                "SCMeanAbsErr_mean": "0.10",
+            }
+        )
+
+    assert main(["decide-promotion", "--metrics", str(metrics), "--candidate", "candidate", "--baseline", "baseline", "--strict"]) == 2
+
+
+def test_select_best_picks_top_promoted_candidate(tmp_path):
+    metrics = tmp_path / "challenge_metrics_summary.csv"
+    with metrics.open("w", newline="") as fobj:
+        writer = csv.DictWriter(
+            fobj,
+            fieldnames=[
+                "method",
+                "evidence_source",
+                "evidence_scope",
+                "evaluation_region",
+                "n",
+                "MS-SSIM_mean",
+                "LPIPS_metric",
+                "LPIPS_or_proxy_mean",
+                "MS-SSIM_wins",
+                "LPIPS_wins",
+                "generation_seconds_max",
+            ],
+        )
+        writer.writeheader()
+        for row in [
+            ("baseline", "0.70", "0.25", "0", "0", "12.0"),
+            ("candidate_a", "0.74", "0.24", "2", "2", "11.0"),
+            ("candidate_b", "0.76", "0.24", "2", "2", "10.0"),
+        ]:
+            method, ms, lpips, ms_wins, lpips_wins, runtime = row
+            writer.writerow(
+                {
+                    "method": method,
+                    "evidence_source": "hosted_api_true_scanner",
+                    "evidence_scope": "grouped_validation_2fold_1perfold",
+                    "evaluation_region": "full_frame",
+                    "n": "2",
+                    "MS-SSIM_mean": ms,
+                    "LPIPS_metric": "LPIPS",
+                    "LPIPS_or_proxy_mean": lpips,
+                    "MS-SSIM_wins": ms_wins,
+                    "LPIPS_wins": lpips_wins,
+                    "generation_seconds_max": runtime,
+                }
+            )
+
+    assert main(["select-best", "--metrics", str(metrics), "--baseline", "baseline", "--strict"]) == 0
+
+
+def test_select_best_rejects_when_no_candidate_beats_baseline(tmp_path):
+    metrics = tmp_path / "challenge_metrics_summary.csv"
+    with metrics.open("w", newline="") as fobj:
+        writer = csv.DictWriter(
+            fobj,
+            fieldnames=[
+                "method",
+                "evidence_source",
+                "evidence_scope",
+                "evaluation_region",
+                "n",
+                "MS-SSIM_mean",
+                "LPIPS_metric",
+                "LPIPS_or_proxy_mean",
+                "MS-SSIM_wins",
+                "LPIPS_wins",
+                "generation_seconds_max",
+            ],
+        )
+        writer.writeheader()
+        for row in [
+            ("baseline", "0.75", "0.20", "2", "2", "12.0"),
+            ("candidate_a", "0.74", "0.19", "0", "2", "11.0"),
+            ("candidate_b", "0.76", "0.30", "2", "0", "10.0"),
+        ]:
+            method, ms, lpips, ms_wins, lpips_wins, runtime = row
+            writer.writerow(
+                {
+                    "method": method,
+                    "evidence_source": "hosted_api_true_scanner",
+                    "evidence_scope": "grouped_validation_2fold_1perfold",
+                    "evaluation_region": "full_frame",
+                    "n": "2",
+                    "MS-SSIM_mean": ms,
+                    "LPIPS_metric": "LPIPS",
+                    "LPIPS_or_proxy_mean": lpips,
+                    "MS-SSIM_wins": ms_wins,
+                    "LPIPS_wins": lpips_wins,
+                    "generation_seconds_max": runtime,
+                }
+            )
+
+    assert main(["select-best", "--metrics", str(metrics), "--baseline", "baseline", "--strict"]) == 2
 
 
 def test_cli_final_baseline(tmp_path):
@@ -567,6 +895,8 @@ def test_cli_optimize_learned_surrogate_passes_controls(tmp_path, monkeypatch):
                 "--texture-strengths",
                 "0.2",
                 "0.6",
+                "--holdout-fraction",
+                "0.4",
             ]
         )
         == 0
@@ -581,6 +911,25 @@ def test_cli_optimize_learned_surrogate_passes_controls(tmp_path, monkeypatch):
     assert captured["seed"] == 11
     assert captured["energy_ratios"] == [0.8, 0.9]
     assert captured["texture_strengths"] == [0.2, 0.6]
+    assert captured["holdout_fraction"] == 0.4
+
+
+def test_learned_surrogate_split_keeps_train_and_holdout_disjoint(tmp_path):
+    pairs = [
+        learned_surrogate.ScannerPair(
+            label=f"pair_{idx}",
+            phantom_path=tmp_path / f"phantom_{idx}.txt",
+            rendered_gray_path=tmp_path / f"render_{idx}.png",
+            ssim=0.1 * idx,
+        )
+        for idx in range(5)
+    ]
+
+    train, holdout = learned_surrogate._split_train_holdout(pairs, holdout_fraction=0.4, seed=7)
+
+    assert len(train) == 3
+    assert len(holdout) == 2
+    assert {pair.label for pair in train}.isdisjoint({pair.label for pair in holdout})
 
 
 def test_cli_render_candidate_queue_writes_metrics(tmp_path, monkeypatch):
@@ -625,6 +974,9 @@ def test_cli_render_candidate_queue_writes_metrics(tmp_path, monkeypatch):
     rows = list(csv.DictReader(metrics.open()))
     assert rows[0]["evidence_source"] == "hosted_api_true_scanner"
     assert rows[0]["evidence_scope"] == "single_reference_candidate_queue"
+    assert rows[0]["evaluation_region"] == "full_frame"
+    assert rows[0]["reference_shape"] == "256x512"
+    assert rows[0]["evaluated_shape"] == "256x512"
 
 
 def test_cli_optimize_empirical_basis_passes_controls(tmp_path, monkeypatch):

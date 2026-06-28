@@ -123,6 +123,7 @@ def run_learned_surrogate_refinement(
     scatterers_count: int = 900_000,
     energy_ratios: Iterable[float] = (0.78, 0.88, 1.0),
     texture_strengths: Iterable[float] = (0.0, 0.45),
+    holdout_fraction: float = 0.2,
 ) -> Path:
     """Train a CNN scanner surrogate and emit scanner-ready inverse candidates."""
     try:
@@ -141,9 +142,10 @@ def run_learned_surrogate_refinement(
     pairs = discover_scanner_pairs(outputs_dir, limit=train_limit)
     if not pairs:
         raise RuntimeError(f"No scanner-rendered training pairs found under {outputs_dir}.")
+    train_pairs, holdout_pairs = _split_train_holdout(pairs, holdout_fraction=holdout_fraction, seed=seed)
 
-    x_np = np.stack([phantom_to_field(pair.phantom_path, shape=shape) for pair in pairs], axis=0)
-    y_np = np.stack([_load_resized(pair.rendered_gray_path, shape) for pair in pairs], axis=0)[:, None, :, :]
+    x_np = np.stack([phantom_to_field(pair.phantom_path, shape=shape) for pair in train_pairs], axis=0)
+    y_np = np.stack([_load_resized(pair.rendered_gray_path, shape) for pair in train_pairs], axis=0)[:, None, :, :]
     target_np = _load_resized(reference_path, shape)[None, None, :, :]
 
     device = torch.device("cpu")
@@ -153,7 +155,7 @@ def run_learned_surrogate_refinement(
 
     model = _ScannerSurrogate().to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=2e-3, weight_decay=1e-4)
-    weights = torch.linspace(1.0, 1.6, steps=len(pairs), device=device).flip(0).view(-1, 1, 1, 1)
+    weights = torch.linspace(1.0, 1.6, steps=len(train_pairs), device=device).flip(0).view(-1, 1, 1, 1)
     for _epoch in range(max(1, epochs)):
         pred = model(x)
         loss = ((pred - y).abs() * weights).mean() + 0.35 * _gradient_loss(pred, y)
@@ -161,7 +163,10 @@ def run_learned_surrogate_refinement(
         loss.backward()
         opt.step()
 
-    base_pair = pairs[0]
+    calibration_path = _write_surrogate_calibration(model, holdout_pairs, out_dir, shape=shape)
+    holdout_summary = _summarize_calibration(calibration_path)
+
+    base_pair = train_pairs[0]
     if base_phantom_path is not None:
         base_field = phantom_to_field(base_phantom_path, shape=shape)
     else:
@@ -242,8 +247,11 @@ def run_learned_surrogate_refinement(
                     "surrogate_preview_png": str(preview_full.resolve()),
                     "energy_ratio": ratio,
                     "texture_strength": texture_strength,
-                    "train_pairs": len(pairs),
-                    "best_training_ssim": pairs[0].ssim,
+                    "train_pairs": len(train_pairs),
+                    "holdout_pairs": len(holdout_pairs),
+                    "surrogate_calibration_csv": str(calibration_path.resolve()) if calibration_path is not None else "",
+                    "best_training_ssim": train_pairs[0].ssim,
+                    **holdout_summary,
                     **{f"surrogate_{key}": value for key, value in metrics.items()},
                 }
             )
@@ -254,6 +262,81 @@ def run_learned_surrogate_refinement(
         writer.writeheader()
         writer.writerows(rows)
     return metrics_path
+
+
+def _split_train_holdout(
+    pairs: list[ScannerPair],
+    *,
+    holdout_fraction: float = 0.2,
+    seed: int = 23,
+) -> tuple[list[ScannerPair], list[ScannerPair]]:
+    if len(pairs) < 2 or holdout_fraction <= 0:
+        return pairs, []
+    rng = np.random.default_rng(seed)
+    order = np.arange(len(pairs))
+    rng.shuffle(order)
+    holdout_count = int(round(len(pairs) * holdout_fraction))
+    holdout_count = max(1, min(len(pairs) - 1, holdout_count))
+    holdout_idx = set(order[:holdout_count].tolist())
+    train_pairs = [pair for idx, pair in enumerate(pairs) if idx not in holdout_idx]
+    holdout_pairs = [pair for idx, pair in enumerate(pairs) if idx in holdout_idx]
+    return train_pairs, holdout_pairs
+
+
+def _write_surrogate_calibration(model, holdout_pairs: list[ScannerPair], out_dir: Path, shape: tuple[int, int]) -> Path | None:
+    if not holdout_pairs:
+        return None
+
+    import torch
+
+    calibration_dir = out_dir / "surrogate_calibration"
+    calibration_dir.mkdir(parents=True, exist_ok=True)
+    rows: list[dict[str, float | str]] = []
+    with torch.no_grad():
+        for idx, pair in enumerate(holdout_pairs, start=1):
+            field = torch.from_numpy(phantom_to_field(pair.phantom_path, shape=shape)[None].astype(np.float32))
+            preview = model(field).cpu().numpy()[0, 0]
+            preview_path = calibration_dir / f"{idx:02d}_{_safe_label(pair.label)}_surrogate.png"
+            preview_full = calibration_dir / f"{idx:02d}_{_safe_label(pair.label)}_surrogate_full.png"
+            _save_preview(preview, preview_path)
+            _save_preview(_upsample(preview, (256, 512)), preview_full)
+            metrics = calculate_metrics(pair.rendered_gray_path, preview_full, include_lpips=False)
+            rows.append(
+                {
+                    "method": pair.label,
+                    "status": "surrogate_holdout_calibration",
+                    "evidence_source": "learned_surrogate_holdout",
+                    "evidence_scope": "not_challenge_evidence",
+                    "phantom_path": str(pair.phantom_path),
+                    "true_scanner_render_png": str(pair.rendered_gray_path),
+                    "surrogate_preview_png": str(preview_full.resolve()),
+                    "training_row_ssim": pair.ssim,
+                    **{f"surrogate_{key}": value for key, value in metrics.items()},
+                }
+            )
+
+    calibration_path = out_dir / "surrogate_calibration_metrics.csv"
+    with calibration_path.open("w", newline="") as fobj:
+        writer = csv.DictWriter(fobj, fieldnames=list(rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(rows)
+    return calibration_path
+
+
+def _summarize_calibration(calibration_path: Path | None) -> dict[str, float | str]:
+    if calibration_path is None or not calibration_path.exists():
+        return {
+            "surrogate_holdout_MS-SSIM_mean": "",
+            "surrogate_holdout_SSIM_mean": "",
+            "surrogate_holdout_LPIPS_PROXY_mean": "",
+        }
+    rows = list(csv.DictReader(calibration_path.open()))
+    summary: dict[str, float | str] = {}
+    for key in ("surrogate_MS-SSIM", "surrogate_SSIM", "surrogate_LPIPS_PROXY"):
+        values = np.array([float(row[key]) for row in rows if row.get(key, "") not in {"", "nan"}], dtype=float)
+        values = values[np.isfinite(values)]
+        summary[f"{key.replace('surrogate_', 'surrogate_holdout_')}_mean"] = float(values.mean()) if values.size else ""
+    return summary
 
 
 class _ScannerSurrogate:
@@ -318,6 +401,10 @@ def _normalize01(arr: np.ndarray) -> np.ndarray:
 def _upsample(arr: np.ndarray, shape: tuple[int, int]) -> np.ndarray:
     factors = (shape[0] / arr.shape[0], shape[1] / arr.shape[1])
     return np.clip(zoom(arr, factors, order=1), 0.0, 1.0)
+
+
+def _safe_label(value: str) -> str:
+    return "".join(ch if ch.isalnum() or ch in {"-", "_"} else "_" for ch in value)[:80] or "holdout"
 
 
 def _save_preview(image: np.ndarray, path: str | Path) -> None:

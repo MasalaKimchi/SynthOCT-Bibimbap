@@ -26,6 +26,7 @@ from .evaluation import (
     competition_proxy_score,
     composite_score,
     evaluate_feature_map_metrics,
+    metric_evaluation_metadata,
     profile_scores,
     summarize_challenge_metrics,
     summarize_rows,
@@ -151,6 +152,8 @@ def run_internal_validation(
                         "request_id": request_id,
                     }
                     for key, value in calculate_metrics(ref_path, pred_path, include_lpips=include_lpips).items():
+                        row[f"Struct_{key}"] = value
+                    for key, value in metric_evaluation_metadata(ref_path, pred_path).items():
                         row[f"Struct_{key}"] = value
                     row.update(profile_scores(ref_path, pred_path))
                     if include_maps:

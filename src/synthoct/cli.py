@@ -18,7 +18,7 @@ from .correction_refinement import (
 from .direct_lattice import run_direct_lattice_refinement
 from .energy_ratio_refinement import DEFAULT_ENERGY_RATIO_EXPONENTS, run_energy_ratio_refinement
 from .empirical_basis import run_empirical_basis_refinement
-from .evaluation import audit_challenge_evidence, calculate_metrics
+from .evaluation import audit_challenge_evidence, calculate_metrics, decide_candidate_promotion, select_best_candidate
 from .features import generate_maps
 from .flow_refinement import DEFAULT_FLOW_VARIANTS, run_flow_refinement
 from .generators import (
@@ -144,7 +144,31 @@ def build_parser() -> argparse.ArgumentParser:
     evidence.add_argument("--metrics", required=True, help="Metrics CSV to audit.")
     evidence.add_argument("--min-samples-per-method", type=int, default=2)
     evidence.add_argument("--require-real-lpips", action="store_true")
+    evidence.add_argument("--max-generation-seconds", type=float, default=600.0)
     evidence.add_argument("--strict", action="store_true", help="Exit nonzero unless the CSV is promotion-ready.")
+
+    promote = sub.add_parser("decide-promotion", help="Compare a candidate against a baseline under fair challenge evidence.")
+    promote.add_argument("--metrics", required=True, help="Challenge metrics summary CSV to compare.")
+    promote.add_argument("--candidate", required=True, help="Candidate method name.")
+    promote.add_argument("--baseline", required=True, help="Baseline/current-final method name.")
+    promote.add_argument("--min-samples-per-method", type=int, default=2)
+    promote.add_argument("--require-real-lpips", action="store_true")
+    promote.add_argument("--min-ms-ssim-delta", type=float, default=0.0)
+    promote.add_argument("--max-lpips-delta", type=float, default=0.0)
+    promote.add_argument("--max-generation-seconds", type=float, default=600.0)
+    promote.add_argument("--max-guardrail-regression", type=float, default=0.0)
+    promote.add_argument("--strict", action="store_true", help="Exit nonzero unless the candidate is promoted.")
+
+    select_best = sub.add_parser("select-best", help="Select the best method that beats a baseline under fair challenge evidence.")
+    select_best.add_argument("--metrics", required=True, help="Challenge metrics summary CSV to rank.")
+    select_best.add_argument("--baseline", required=True, help="Baseline/current-final method name.")
+    select_best.add_argument("--min-samples-per-method", type=int, default=2)
+    select_best.add_argument("--require-real-lpips", action="store_true")
+    select_best.add_argument("--min-ms-ssim-delta", type=float, default=0.0)
+    select_best.add_argument("--max-lpips-delta", type=float, default=0.0)
+    select_best.add_argument("--max-generation-seconds", type=float, default=600.0)
+    select_best.add_argument("--max-guardrail-regression", type=float, default=0.0)
+    select_best.add_argument("--strict", action="store_true", help="Exit nonzero unless a candidate is selected.")
 
     optimize = sub.add_parser("optimize-physics", help="Hosted-API candidate search; expensive because each candidate is rendered by the challenge scanner.")
     optimize.add_argument("--zip", required=True, dest="zip_path")
@@ -280,6 +304,7 @@ def build_parser() -> argparse.ArgumentParser:
     learned.add_argument("--seed", type=int, default=23)
     learned.add_argument("--energy-ratios", nargs="+", type=float, default=[0.78, 0.88, 1.0])
     learned.add_argument("--texture-strengths", nargs="+", type=float, default=[0.0, 0.45])
+    learned.add_argument("--holdout-fraction", type=float, default=0.2)
 
     empirical = sub.add_parser(
         "optimize-empirical-basis",
@@ -355,6 +380,13 @@ def build_parser() -> argparse.ArgumentParser:
         choices=tuple(HYPOTHESIS_CONFIGS.keys()) + tuple(PROMISING_PIPELINE_CONFIGS.keys()) + tuple(VISUAL_PIPELINE_CONFIGS.keys()),
         help="Named H- or P-series method to package.",
     )
+    submit.add_argument("--evidence-metrics", help="Optional challenge_metrics_summary.csv used to write submission_readiness_report.json.")
+    submit.add_argument("--baseline", help="Baseline/current-final method for evidence-backed readiness checks.")
+    submit.add_argument("--min-samples-per-method", type=int, default=2)
+    submit.add_argument("--require-real-lpips", action="store_true")
+    submit.add_argument("--max-generation-seconds", type=float, default=600.0)
+    submit.add_argument("--max-guardrail-regression", type=float, default=0.0)
+    submit.add_argument("--strict-evidence", action="store_true", help="Fail packaging unless the method is the selected promoted candidate.")
 
     api_eval = sub.add_parser("api-evaluate-submission", help="Render submission phantoms with the hosted SynthOCT API.")
     api_eval.add_argument("--zip", required=True, dest="zip_path")
@@ -504,9 +536,39 @@ def main(argv: list[str] | None = None) -> int:
             args.metrics,
             min_samples_per_method=args.min_samples_per_method,
             require_real_lpips=args.require_real_lpips,
+            max_generation_seconds=args.max_generation_seconds,
         )
         print(json.dumps(report, sort_keys=True))
         return 0 if (not args.strict or report["promotion_ready"]) else 2
+
+    if args.command == "decide-promotion":
+        report = decide_candidate_promotion(
+            args.metrics,
+            candidate=args.candidate,
+            baseline=args.baseline,
+            min_samples_per_method=args.min_samples_per_method,
+            require_real_lpips=args.require_real_lpips,
+            min_ms_ssim_delta=args.min_ms_ssim_delta,
+            max_lpips_delta=args.max_lpips_delta,
+            max_generation_seconds=args.max_generation_seconds,
+            max_guardrail_regression=args.max_guardrail_regression,
+        )
+        print(json.dumps(report, sort_keys=True))
+        return 0 if (not args.strict or report["promote"]) else 2
+
+    if args.command == "select-best":
+        report = select_best_candidate(
+            args.metrics,
+            baseline=args.baseline,
+            min_samples_per_method=args.min_samples_per_method,
+            require_real_lpips=args.require_real_lpips,
+            min_ms_ssim_delta=args.min_ms_ssim_delta,
+            max_lpips_delta=args.max_lpips_delta,
+            max_generation_seconds=args.max_generation_seconds,
+            max_guardrail_regression=args.max_guardrail_regression,
+        )
+        print(json.dumps(report, sort_keys=True))
+        return 0 if (not args.strict or report["promote"]) else 2
 
     if args.command == "optimize-physics":
         detail, summary, best_config = run_candidate_search(
@@ -659,6 +721,7 @@ def main(argv: list[str] | None = None) -> int:
             scatterers_count=args.scatterers_count,
             energy_ratios=args.energy_ratios,
             texture_strengths=args.texture_strengths,
+            holdout_fraction=args.holdout_fraction,
         )
         print(metrics_path)
         return 0
@@ -737,6 +800,13 @@ def main(argv: list[str] | None = None) -> int:
             limit=args.limit,
             seed=args.seed,
             method=args.method or FINAL_CONFIG_NAME,
+            evidence_metrics=args.evidence_metrics,
+            baseline=args.baseline,
+            min_samples_per_method=args.min_samples_per_method,
+            require_real_lpips=args.require_real_lpips,
+            max_generation_seconds=args.max_generation_seconds,
+            max_guardrail_regression=args.max_guardrail_regression,
+            strict_evidence=args.strict_evidence,
         )
         print(json.dumps({k: str(v) for k, v in bundle.__dict__.items()}, sort_keys=True))
         return 0

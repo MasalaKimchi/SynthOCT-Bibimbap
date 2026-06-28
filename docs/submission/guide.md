@@ -54,6 +54,22 @@ synthoct prepare-submission \
   --scatterers-count 300000
 ```
 
+For final packaging, attach the local fair-evidence decision and fail if the method is not the selected promoted candidate:
+
+```bash
+synthoct prepare-submission \
+  --zip 18095266.zip \
+  --out outputs/submission_ready_h68_full \
+  --method H68_layer_map_prior \
+  --scatterers-count 300000 \
+  --evidence-metrics outputs/api_validation/challenge_metrics_summary.csv \
+  --baseline H61_api_low_depth_prelim \
+  --strict-evidence \
+  --max-generation-seconds 600
+```
+
+This writes `submission_readiness_report.json` and includes it in the phantom zip. Use this strict mode after `synthoct select-best` has identified the candidate; skip it only for smoke packaging or exploratory bundles.
+
 ## API Rendering
 
 Render generated phantoms through the hosted API:
@@ -118,10 +134,11 @@ flowchart TD
 ## Before Upload
 
 1. Confirm the generated phantoms pass `submission_validation.csv`.
-2. Use hosted API or Windows scanner-rendered PNGs, not direct image synthesis outputs.
-3. Upload one synthetic/reference PNG pair at a time if the portal form is pair-based.
-4. Confirm whether repeated pair uploads accumulate or replace prior uploads.
-5. Use the final code zip or repository link for final code/model submission.
+2. Confirm `submission_readiness_report.json` is `ready` for the final method.
+3. Use hosted API or Windows scanner-rendered PNGs, not direct image synthesis outputs.
+4. Upload one synthetic/reference PNG pair at a time if the portal form is pair-based.
+5. Confirm whether repeated pair uploads accumulate or replace prior uploads.
+6. Use the final code zip or repository link for final code/model submission.
 
 Primary preliminary method: `H61_api_low_depth_prelim`.
 

@@ -36,6 +36,8 @@ However, it was not a competition-wide result:
 
 The number is useful as proof that scanner-in-loop amplitude/energy correction can reach a local high score on one case. It is not evidence that the method would win.
 
+Metric CSVs now include evaluation metadata such as `evaluation_region=full_frame`, `reference_shape`, `prediction_shape`, `evaluated_shape`, and `prediction_resized_to_reference` so full-image scores cannot be confused with crop or patch scores.
+
 ## Why Prior Optimization Was Far From Competition-Optimal
 
 The strongest branch so far was coordinate-preserving energy-ratio feedback plus tiny axial and global amplitude calibration. That is a local correction method, not a general learned inverse model. Its limitations are structural:
@@ -78,10 +80,57 @@ Use the executable evidence audit before promoting a candidate:
 synthoct audit-evidence \
   --metrics outputs/api_validation/challenge_metrics_summary.csv \
   --strict \
-  --require-real-lpips
+  --require-real-lpips \
+  --max-generation-seconds 600
 ```
 
 `promotion_ready=true` means the CSV is local grouped true-scanner evidence that is fair to use for candidate comparison. It still does not mean hidden-holdout victory; only organizer execution on the hidden test set can establish the final competition result.
+
+Strict promotion also requires `evaluation_region=full_frame` and `generation_seconds_max <= 600`, because crop-only, unlabeled, or over-budget metric rows are not strong enough evidence for final-candidate promotion.
+
+Then compare the candidate against the current final method:
+
+```bash
+synthoct decide-promotion \
+  --metrics outputs/api_validation/challenge_metrics_summary.csv \
+  --candidate H_new_candidate \
+  --baseline H61_api_low_depth_prelim \
+  --strict \
+  --require-real-lpips \
+  --max-generation-seconds 600
+```
+
+The decision requires grouped true-scanner full-frame evidence, generation within the `600` second challenge budget, higher mean `MS-SSIM`, no worse `LPIPS`/proxy, no worse per-sample win counts, and no regression in available physical guardrails such as depth correlation, OAC profile correlation, speckle-contrast error, and OAC/SC/RSC map similarity. Passing this gate means “promote locally for submission preparation,” not “claim hidden-holdout victory.”
+
+To rank all validated methods at once, use:
+
+```bash
+synthoct select-best \
+  --metrics outputs/api_validation/challenge_metrics_summary.csv \
+  --baseline H61_api_low_depth_prelim \
+  --strict \
+  --require-real-lpips \
+  --max-generation-seconds 600
+```
+
+This returns the best candidate that clears the same fair-evidence gate. If no method clears the gate, keep the baseline rather than promoting a weaker or less fairly evaluated method.
+
+If a small physical-guardrail tolerance is intentionally needed, pass `--max-guardrail-regression`, but treat that as a documented risk rather than a default path.
+
+When creating final artifacts, pass the same metrics file to `prepare-submission`:
+
+```bash
+synthoct prepare-submission \
+  --zip 18095266.zip \
+  --out outputs/submission_ready_selected \
+  --method H_new_candidate \
+  --evidence-metrics outputs/api_validation/challenge_metrics_summary.csv \
+  --baseline H61_api_low_depth_prelim \
+  --strict-evidence \
+  --max-generation-seconds 600
+```
+
+This writes `submission_readiness_report.json` and refuses to package an unselected method in strict mode.
 
 ## Evidence Labels In Artifacts
 
@@ -95,3 +144,17 @@ Metric CSVs should carry explicit evidence labels so results cannot be misread:
 - `evidence_scope=not_challenge_evidence`: preview-only evidence that must not be promoted without true-scanner rendering.
 
 Surrogate preview metrics should use `surrogate_*` column names rather than bare challenge metric names such as `MS-SSIM`, so downstream ranking code does not accidentally treat them as official evidence.
+
+Metric rows should also carry `evaluation_region=full_frame` for structural challenge metrics. Missing evaluation-region labels are treated as insufficient promotion evidence.
+
+## ML/DL Use Boundary
+
+The fair ML/DL path is not a direct image generator. It is a hybrid inverse system:
+
+1. train a surrogate scanner on true-scanner phantom/render pairs;
+2. reserve held-out true-scanner renders and record `surrogate_calibration_metrics.csv`;
+3. use the surrogate only to search phantom density/energy fields or initialize a learned phantom generator;
+4. render selected phantoms through the hosted API or official Windows scanner;
+5. promote only after `synthoct audit-evidence --strict` passes on grouped true-scanner metrics.
+
+The `optimize-learned-surrogate` command writes candidate preview rows with `evidence_source=learned_surrogate_preview` and writes holdout calibration rows with `evidence_source=learned_surrogate_holdout`. Both are intentionally `evidence_scope=not_challenge_evidence`.

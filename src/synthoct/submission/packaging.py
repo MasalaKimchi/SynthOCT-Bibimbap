@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import json
 import tempfile
 import zipfile
 from dataclasses import dataclass
@@ -10,6 +11,7 @@ import numpy as np
 from skimage import io
 
 from synthoct.dataset import iter_records, load_scan_from_zip
+from synthoct.evaluation import select_best_candidate
 from synthoct.generators import FINAL_CONFIG_NAME, PROMISING_PIPELINE_CONFIGS, VISUAL_PIPELINE_CONFIGS, final_phantom, hypothesis_phantom, pipeline_phantom
 from synthoct.phantom import ExperimentConfig, load_phantom
 
@@ -24,6 +26,7 @@ class SubmissionArtifact:
     code_zip: Path
     readme: Path
     validation_csv: Path
+    readiness_report: Path | None = None
 
 
 def safe_stem(archive_path: str) -> str:
@@ -215,6 +218,50 @@ def prepare_code_submission(repo_root: str | Path, out_dir: str | Path) -> Path:
     return zip_out
 
 
+def write_submission_readiness_report(
+    out_dir: str | Path,
+    *,
+    method: str,
+    metrics_csv: str | Path,
+    baseline: str,
+    min_samples_per_method: int = 2,
+    require_real_lpips: bool = False,
+    max_generation_seconds: float = 600.0,
+    max_guardrail_regression: float = 0.0,
+    strict: bool = False,
+) -> Path:
+    out_dir = Path(out_dir)
+    selection = select_best_candidate(
+        metrics_csv,
+        baseline=baseline,
+        min_samples_per_method=min_samples_per_method,
+        require_real_lpips=require_real_lpips,
+        max_generation_seconds=max_generation_seconds,
+        max_guardrail_regression=max_guardrail_regression,
+    )
+    selected = selection.get("selected")
+    ready = bool(selection.get("promote")) and selected == method
+    report = {
+        "status": "ready" if ready else "not_ready",
+        "packaged_method": method,
+        "selected_method": selected,
+        "baseline": baseline,
+        "metrics_csv": str(Path(metrics_csv)),
+        "strict": strict,
+        "selection": selection,
+        "interpretation": (
+            "Packaged method matches the best local promoted candidate under fair challenge evidence."
+            if ready
+            else "Packaged method does not match a fair-evidence promoted candidate."
+        ),
+    }
+    report_path = out_dir / "submission_readiness_report.json"
+    report_path.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
+    if strict and not ready:
+        raise RuntimeError(report["interpretation"])
+    return report_path
+
+
 def prepare_submission_bundle(
     zip_path: str | Path,
     repo_root: str | Path,
@@ -223,6 +270,13 @@ def prepare_submission_bundle(
     limit: int | None = None,
     seed: int = 7,
     method: str = FINAL_CONFIG_NAME,
+    evidence_metrics: str | Path | None = None,
+    baseline: str | None = None,
+    min_samples_per_method: int = 2,
+    require_real_lpips: bool = False,
+    max_generation_seconds: float = 600.0,
+    max_guardrail_regression: float = 0.0,
+    strict_evidence: bool = False,
 ) -> SubmissionArtifact:
     manifest, phantom_zip = prepare_phantom_submission(
         zip_path,
@@ -234,10 +288,28 @@ def prepare_submission_bundle(
     )
     code_zip = prepare_code_submission(repo_root, out_dir)
     out_dir = Path(out_dir)
+    readiness_report = None
+    if evidence_metrics is not None:
+        if baseline is None:
+            raise ValueError("--baseline is required when --evidence-metrics is provided.")
+        readiness_report = write_submission_readiness_report(
+            out_dir,
+            method=method,
+            metrics_csv=evidence_metrics,
+            baseline=baseline,
+            min_samples_per_method=min_samples_per_method,
+            require_real_lpips=require_real_lpips,
+            max_generation_seconds=max_generation_seconds,
+            max_guardrail_regression=max_guardrail_regression,
+            strict=strict_evidence,
+        )
+        with zipfile.ZipFile(phantom_zip, "a", compression=zipfile.ZIP_DEFLATED) as zf:
+            zf.write(readiness_report, readiness_report.name)
     return SubmissionArtifact(
         manifest=manifest,
         phantom_zip=phantom_zip,
         code_zip=code_zip,
         readme=out_dir / "SUBMISSION_README.md",
         validation_csv=out_dir / "submission_validation.csv",
+        readiness_report=readiness_report,
     )

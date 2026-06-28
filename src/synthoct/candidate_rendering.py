@@ -3,7 +3,7 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-from .evaluation import calculate_metrics
+from .evaluation import calculate_metrics, metric_evaluation_metadata
 from .phantom import load_phantom
 from .scanners import render_with_api, write_api_config
 from .submission import to_gray_png
@@ -60,6 +60,7 @@ def render_candidate_queue(
                 )
                 to_gray_png(rendered_path, gray_path)
             metrics = calculate_metrics(reference_path, gray_path, include_lpips=False)
+            metrics.update(metric_evaluation_metadata(reference_path, gray_path))
             status = "ok"
             error = ""
         except Exception as exc:
@@ -74,6 +75,11 @@ def render_candidate_queue(
                 "VIF": float("nan"),
                 "LPIPS": float("nan"),
                 "LPIPS_PROXY": float("nan"),
+                "evaluation_region": "",
+                "reference_shape": "",
+                "prediction_shape": "",
+                "evaluated_shape": "",
+                "prediction_resized_to_reference": "",
             }
             status = "failed"
             error = str(exc)

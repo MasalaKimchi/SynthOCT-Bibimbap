@@ -4,7 +4,7 @@ import csv
 from collections import Counter, defaultdict
 from pathlib import Path
 
-from .summaries import finite_float
+from .summaries import HIGHER_IS_BETTER_GUARDRAILS, LOWER_IS_BETTER_GUARDRAILS, finite_float
 
 TRUE_SCANNER_SOURCES = {"hosted_api_true_scanner", "official_windows_true_scanner"}
 GROUPED_VALIDATION_PREFIX = "grouped_validation_"
@@ -15,6 +15,7 @@ def audit_challenge_evidence(
     *,
     min_samples_per_method: int = 2,
     require_real_lpips: bool = False,
+    max_generation_seconds: float = 600.0,
 ) -> dict[str, object]:
     """Classify whether a metrics CSV is strong enough to promote a candidate.
 
@@ -40,6 +41,7 @@ def audit_challenge_evidence(
     warnings: list[str] = []
     evidence_sources = sorted({str(row.get("evidence_source", "")) for row in rows if row.get("evidence_source", "")})
     evidence_scopes = sorted({str(row.get("evidence_scope", "")) for row in rows if row.get("evidence_scope", "")})
+    evaluation_regions = sorted({_evaluation_region(row) for row in rows if _evaluation_region(row)})
     source_counts = Counter(str(row.get("evidence_source", "")) or "<missing>" for row in rows)
     scope_counts = Counter(str(row.get("evidence_scope", "")) or "<missing>" for row in rows)
 
@@ -56,6 +58,10 @@ def audit_challenge_evidence(
 
     if not _has_metric(fieldnames, rows, ("MS-SSIM_mean", "Struct_MS-SSIM", "MS-SSIM")):
         issues.append("missing finite MS-SSIM metric")
+    if not evaluation_regions:
+        issues.append("missing evaluation_region labels")
+    elif any(region != "full_frame" for region in evaluation_regions):
+        issues.append(f"non-full-frame evaluation region present: {', '.join(evaluation_regions)}")
 
     has_real_lpips = _has_real_lpips(fieldnames, rows)
     has_lpips_proxy = _has_metric(fieldnames, rows, ("LPIPS_or_proxy_mean", "Struct_LPIPS_PROXY", "LPIPS_PROXY"))
@@ -63,6 +69,14 @@ def audit_challenge_evidence(
         issues.append("missing finite real LPIPS metric")
     elif not has_real_lpips and has_lpips_proxy:
         warnings.append("LPIPS appears to be proxy/fallback rather than real LPIPS")
+
+    runtime_values = _generation_seconds_by_method(rows)
+    if not runtime_values:
+        issues.append("missing generation_seconds_max runtime evidence")
+    else:
+        over_budget = {method: seconds for method, seconds in runtime_values.items() if seconds > max_generation_seconds}
+        if over_budget:
+            issues.append(f"generation runtime exceeds {max_generation_seconds:.1f}s: {_format_float_counts(over_budget)}")
 
     method_counts = _method_counts(rows)
     undersampled = {method: count for method, count in method_counts.items() if count < min_samples_per_method}
@@ -86,14 +100,185 @@ def audit_challenge_evidence(
         "evidence_source_counts": dict(source_counts),
         "evidence_scopes": evidence_scopes,
         "evidence_scope_counts": dict(scope_counts),
+        "evaluation_regions": evaluation_regions,
         "true_scanner_evidence": true_scanner,
         "grouped_validation_evidence": grouped_validation,
         "has_ms_ssim": _has_metric(fieldnames, rows, ("MS-SSIM_mean", "Struct_MS-SSIM", "MS-SSIM")),
         "has_real_lpips": has_real_lpips,
         "has_lpips_proxy": has_lpips_proxy,
+        "max_generation_seconds": max_generation_seconds,
+        "generation_seconds_max_by_method": dict(sorted(runtime_values.items())),
         "issues": issues,
         "warnings": warnings,
         "interpretation": _interpretation(status),
+    }
+
+
+def decide_candidate_promotion(
+    metrics_csv: str | Path,
+    *,
+    candidate: str,
+    baseline: str,
+    min_samples_per_method: int = 2,
+    require_real_lpips: bool = False,
+    min_ms_ssim_delta: float = 0.0,
+    max_lpips_delta: float = 0.0,
+    max_generation_seconds: float = 600.0,
+    max_guardrail_regression: float = 0.0,
+) -> dict[str, object]:
+    """Decide whether candidate evidence beats a baseline under challenge metrics."""
+    metrics_csv = Path(metrics_csv)
+    audit = audit_challenge_evidence(
+        metrics_csv,
+        min_samples_per_method=min_samples_per_method,
+        require_real_lpips=require_real_lpips,
+        max_generation_seconds=max_generation_seconds,
+    )
+    with metrics_csv.open(newline="") as fobj:
+        rows = list(csv.DictReader(fobj))
+
+    by_method = {str(row.get("method", "")): row for row in rows}
+    issues = list(audit.get("issues", []))
+    warnings = list(audit.get("warnings", []))
+    if candidate not in by_method:
+        issues.append(f"candidate method not found: {candidate}")
+    if baseline not in by_method:
+        issues.append(f"baseline method not found: {baseline}")
+    if issues:
+        return {
+            "metrics_csv": str(metrics_csv),
+            "candidate": candidate,
+            "baseline": baseline,
+            "promote": False,
+            "status": "not_promoted",
+            "issues": issues,
+            "warnings": warnings,
+            "evidence_audit": audit,
+        }
+
+    candidate_row = by_method[candidate]
+    baseline_row = by_method[baseline]
+    cand_ms = finite_float(candidate_row.get("MS-SSIM_mean"), -1.0)
+    base_ms = finite_float(baseline_row.get("MS-SSIM_mean"), -1.0)
+    cand_lpips = finite_float(candidate_row.get("LPIPS_or_proxy_mean"), float("inf"))
+    base_lpips = finite_float(baseline_row.get("LPIPS_or_proxy_mean"), float("inf"))
+    cand_ms_wins = int(finite_float(candidate_row.get("MS-SSIM_wins"), 0.0))
+    base_ms_wins = int(finite_float(baseline_row.get("MS-SSIM_wins"), 0.0))
+    cand_lpips_wins = int(finite_float(candidate_row.get("LPIPS_wins"), 0.0))
+    base_lpips_wins = int(finite_float(baseline_row.get("LPIPS_wins"), 0.0))
+    cand_generation_max = finite_float(candidate_row.get("generation_seconds_max"), float("inf"))
+    base_generation_max = finite_float(baseline_row.get("generation_seconds_max"), float("inf"))
+    ms_delta = cand_ms - base_ms
+    lpips_delta = cand_lpips - base_lpips
+    generation_delta = cand_generation_max - base_generation_max
+    ms_pass = ms_delta > min_ms_ssim_delta
+    lpips_pass = lpips_delta <= max_lpips_delta
+    wins_pass = cand_ms_wins >= base_ms_wins and cand_lpips_wins >= base_lpips_wins
+    runtime_pass = cand_generation_max <= max_generation_seconds
+    guardrail_deltas = _guardrail_deltas(candidate_row, baseline_row)
+    guardrail_failures = _guardrail_failures(guardrail_deltas, max_guardrail_regression=max_guardrail_regression)
+    guardrails_pass = not guardrail_failures
+    promote = bool(audit.get("promotion_ready")) and ms_pass and lpips_pass and wins_pass and runtime_pass and guardrails_pass
+    if not ms_pass:
+        warnings.append(f"candidate MS-SSIM delta {ms_delta:.6g} does not exceed {min_ms_ssim_delta:.6g}")
+    if not lpips_pass:
+        warnings.append(f"candidate LPIPS/proxy delta {lpips_delta:.6g} exceeds {max_lpips_delta:.6g}")
+    if not wins_pass:
+        warnings.append("candidate does not match or exceed baseline per-sample MS-SSIM and LPIPS wins")
+    if not runtime_pass:
+        warnings.append(f"candidate generation runtime {cand_generation_max:.6g}s exceeds {max_generation_seconds:.6g}s")
+    if guardrail_failures:
+        warnings.append(f"candidate regresses physical guardrail(s): {_format_guardrail_failures(guardrail_failures)}")
+
+    return {
+        "metrics_csv": str(metrics_csv),
+        "candidate": candidate,
+        "baseline": baseline,
+        "promote": promote,
+        "status": "promoted" if promote else "not_promoted",
+        "hidden_holdout_final_score": False,
+        "candidate_MS-SSIM_mean": cand_ms,
+        "baseline_MS-SSIM_mean": base_ms,
+        "MS-SSIM_delta": ms_delta,
+        "candidate_LPIPS_or_proxy_mean": cand_lpips,
+        "baseline_LPIPS_or_proxy_mean": base_lpips,
+        "LPIPS_or_proxy_delta": lpips_delta,
+        "candidate_MS-SSIM_wins": cand_ms_wins,
+        "baseline_MS-SSIM_wins": base_ms_wins,
+        "candidate_LPIPS_wins": cand_lpips_wins,
+        "baseline_LPIPS_wins": base_lpips_wins,
+        "candidate_generation_seconds_max": cand_generation_max,
+        "baseline_generation_seconds_max": base_generation_max,
+        "generation_seconds_delta": generation_delta,
+        "max_generation_seconds": max_generation_seconds,
+        "guardrail_deltas": guardrail_deltas,
+        "guardrail_failures": guardrail_failures,
+        "max_guardrail_regression": max_guardrail_regression,
+        "issues": [],
+        "warnings": warnings,
+        "evidence_audit": audit,
+        "interpretation": _promotion_interpretation(promote),
+    }
+
+
+def select_best_candidate(
+    metrics_csv: str | Path,
+    *,
+    baseline: str,
+    min_samples_per_method: int = 2,
+    require_real_lpips: bool = False,
+    min_ms_ssim_delta: float = 0.0,
+    max_lpips_delta: float = 0.0,
+    max_generation_seconds: float = 600.0,
+    max_guardrail_regression: float = 0.0,
+) -> dict[str, object]:
+    """Rank all methods and return the best candidate that beats the baseline."""
+    metrics_csv = Path(metrics_csv)
+    with metrics_csv.open(newline="") as fobj:
+        rows = list(csv.DictReader(fobj))
+    method_names = [str(row.get("method", "")) for row in rows if row.get("method", "")]
+    decisions = [
+        decide_candidate_promotion(
+            metrics_csv,
+            candidate=method,
+            baseline=baseline,
+            min_samples_per_method=min_samples_per_method,
+            require_real_lpips=require_real_lpips,
+            min_ms_ssim_delta=min_ms_ssim_delta,
+            max_lpips_delta=max_lpips_delta,
+            max_generation_seconds=max_generation_seconds,
+            max_guardrail_regression=max_guardrail_regression,
+        )
+        for method in method_names
+        if method != baseline
+    ]
+    decisions.sort(key=_promotion_rank_key, reverse=True)
+    promoted = [decision for decision in decisions if decision.get("promote")]
+    best = promoted[0] if promoted else (decisions[0] if decisions else None)
+    return {
+        "metrics_csv": str(metrics_csv),
+        "baseline": baseline,
+        "selected": best.get("candidate") if best and best.get("promote") else None,
+        "promote": bool(best and best.get("promote")),
+        "status": "promoted" if best and best.get("promote") else "not_promoted",
+        "ranked_candidates": [
+            {
+                "candidate": decision.get("candidate"),
+                "promote": decision.get("promote"),
+                "MS-SSIM_delta": decision.get("MS-SSIM_delta"),
+                "LPIPS_or_proxy_delta": decision.get("LPIPS_or_proxy_delta"),
+                "candidate_MS-SSIM_wins": decision.get("candidate_MS-SSIM_wins"),
+                "candidate_LPIPS_wins": decision.get("candidate_LPIPS_wins"),
+                "candidate_generation_seconds_max": decision.get("candidate_generation_seconds_max"),
+                "guardrail_deltas": decision.get("guardrail_deltas", {}),
+                "guardrail_failures": decision.get("guardrail_failures", {}),
+                "warnings": decision.get("warnings", []),
+                "issues": decision.get("issues", []),
+            }
+            for decision in decisions
+        ],
+        "best_decision": best,
+        "interpretation": _selection_interpretation(bool(best and best.get("promote"))),
     }
 
 
@@ -104,6 +289,43 @@ def _method_counts(rows: list[dict[str, str]]) -> dict[str, int]:
         n_value = finite_float(row.get("n"))
         counts[method] += int(n_value) if n_value >= 1 else 1
     return dict(counts)
+
+
+def _evaluation_region(row: dict[str, str]) -> str:
+    return str(row.get("evaluation_region") or row.get("Struct_evaluation_region") or "")
+
+
+def _generation_seconds_by_method(rows: list[dict[str, str]]) -> dict[str, float]:
+    out: dict[str, float] = {}
+    for row in rows:
+        method = str(row.get("method", "")) or "<missing>"
+        value = finite_float(row.get("generation_seconds_max"))
+        if value != value:
+            value = finite_float(row.get("generation_seconds"))
+        if value == value:
+            out[method] = max(out.get(method, 0.0), value)
+    return out
+
+
+def _guardrail_deltas(candidate_row: dict[str, str], baseline_row: dict[str, str]) -> dict[str, float]:
+    out: dict[str, float] = {}
+    for key in HIGHER_IS_BETTER_GUARDRAILS:
+        summary_key = f"{key}_mean"
+        candidate = finite_float(candidate_row.get(summary_key))
+        baseline = finite_float(baseline_row.get(summary_key))
+        if candidate == candidate and baseline == baseline:
+            out[summary_key] = candidate - baseline
+    for key in LOWER_IS_BETTER_GUARDRAILS:
+        summary_key = f"{key}_mean"
+        candidate = finite_float(candidate_row.get(summary_key))
+        baseline = finite_float(baseline_row.get(summary_key))
+        if candidate == candidate and baseline == baseline:
+            out[summary_key] = baseline - candidate
+    return out
+
+
+def _guardrail_failures(guardrail_deltas: dict[str, float], *, max_guardrail_regression: float) -> dict[str, float]:
+    return {key: delta for key, delta in guardrail_deltas.items() if delta < -max_guardrail_regression}
 
 
 def _has_metric(fieldnames: list[str], rows: list[dict[str, str]], keys: tuple[str, ...]) -> bool:
@@ -121,9 +343,39 @@ def _format_counts(counts: dict[str, int]) -> str:
     return ", ".join(f"{method}={count}" for method, count in sorted(counts.items()))
 
 
+def _format_float_counts(counts: dict[str, float]) -> str:
+    return ", ".join(f"{method}={value:.3f}" for method, value in sorted(counts.items()))
+
+
+def _format_guardrail_failures(failures: dict[str, float]) -> str:
+    return ", ".join(f"{key} delta={value:.6g}" for key, value in sorted(failures.items()))
+
+
 def _interpretation(status: str) -> str:
     if status == "promotion_ready":
         return "Local grouped true-scanner evidence is strong enough to compare candidates, but final ranking still requires organizer hidden-holdout execution."
     if status == "limited_true_scanner_evidence":
         return "Rows appear to come from a true scanner, but the evidence is too narrow for promotion to final candidate."
     return "Rows are not reliable challenge evidence for promotion."
+
+
+def _promotion_rank_key(decision: dict[str, object]) -> tuple[float, float, int, int, float]:
+    return (
+        1.0 if decision.get("promote") else 0.0,
+        float(decision.get("MS-SSIM_delta", float("-inf"))),
+        -float(decision.get("LPIPS_or_proxy_delta", float("inf"))),
+        int(decision.get("candidate_MS-SSIM_wins", 0)),
+        -float(decision.get("candidate_generation_seconds_max", float("inf"))),
+    )
+
+
+def _promotion_interpretation(promote: bool) -> str:
+    if promote:
+        return "Candidate beats the named baseline under local grouped true-scanner full-frame evidence; hidden-holdout organizer execution is still required for final ranking."
+    return "Candidate is not promoted under the local fair-evidence gate."
+
+
+def _selection_interpretation(promote: bool) -> str:
+    if promote:
+        return "Selected candidate is the best local promoted method under the fair-evidence gate; hidden-holdout organizer execution is still required for final ranking."
+    return "No candidate beats the baseline under the local fair-evidence gate."

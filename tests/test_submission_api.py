@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import io
+import json
 import zipfile
 
 import numpy as np
@@ -82,6 +83,97 @@ def test_prepare_submission_can_package_candidate_method(tmp_path):
 
     assert bundle.phantom_zip.name == "synthoct_h68_phantoms.zip"
     assert "H68_layer_map_prior" in bundle.readme.read_text(encoding="utf-8")
+
+
+def _write_selection_metrics(path, promoted_method="H68_layer_map_prior"):
+    with path.open("w", newline="") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "method",
+                "evidence_source",
+                "evidence_scope",
+                "evaluation_region",
+                "n",
+                "MS-SSIM_mean",
+                "LPIPS_metric",
+                "LPIPS_or_proxy_mean",
+                "MS-SSIM_wins",
+                "LPIPS_wins",
+                "generation_seconds_max",
+            ],
+        )
+        writer.writeheader()
+        rows = [
+            ("H61_api_low_depth_prelim", "0.70", "0.25", "0", "0", "12.0"),
+            (promoted_method, "0.74", "0.24", "2", "2", "11.0"),
+        ]
+        for method, ms, lpips, ms_wins, lpips_wins, runtime in rows:
+            writer.writerow(
+                {
+                    "method": method,
+                    "evidence_source": "hosted_api_true_scanner",
+                    "evidence_scope": "grouped_validation_2fold_1perfold",
+                    "evaluation_region": "full_frame",
+                    "n": "2",
+                    "MS-SSIM_mean": ms,
+                    "LPIPS_metric": "LPIPS",
+                    "LPIPS_or_proxy_mean": lpips,
+                    "MS-SSIM_wins": ms_wins,
+                    "LPIPS_wins": lpips_wins,
+                    "generation_seconds_max": runtime,
+                }
+            )
+
+
+def test_prepare_submission_writes_readiness_report_for_selected_method(tmp_path):
+    archive = tmp_path / "dataset.zip"
+    _make_nested_png_dataset(archive)
+    metrics = tmp_path / "challenge_metrics_summary.csv"
+    _write_selection_metrics(metrics)
+
+    bundle = prepare_submission_bundle(
+        archive,
+        tmp_path,
+        tmp_path / "submission_h68_ready",
+        scatterers_count=32,
+        limit=1,
+        method="H68_layer_map_prior",
+        evidence_metrics=metrics,
+        baseline="H61_api_low_depth_prelim",
+        strict_evidence=True,
+    )
+
+    assert bundle.readiness_report is not None
+    report = json.loads(bundle.readiness_report.read_text(encoding="utf-8"))
+    assert report["status"] == "ready"
+    assert report["packaged_method"] == "H68_layer_map_prior"
+    with zipfile.ZipFile(bundle.phantom_zip) as zf:
+        assert "submission_readiness_report.json" in zf.namelist()
+
+
+def test_prepare_submission_strict_evidence_rejects_unselected_method(tmp_path):
+    archive = tmp_path / "dataset.zip"
+    _make_nested_png_dataset(archive)
+    metrics = tmp_path / "challenge_metrics_summary.csv"
+    _write_selection_metrics(metrics, promoted_method="H67_coarse_to_fine_crisp")
+
+    try:
+        prepare_submission_bundle(
+            archive,
+            tmp_path,
+            tmp_path / "submission_h68_rejected",
+            scatterers_count=32,
+            limit=1,
+            method="H68_layer_map_prior",
+            evidence_metrics=metrics,
+            baseline="H61_api_low_depth_prelim",
+            strict_evidence=True,
+        )
+    except RuntimeError as exc:
+        assert "does not match" in str(exc)
+    else:
+        raise AssertionError("Expected strict evidence packaging to reject unselected method")
 
 
 def test_validate_phantom_submission_rejects_missing_manifest(tmp_path):
