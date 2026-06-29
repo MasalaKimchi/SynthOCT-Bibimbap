@@ -83,8 +83,8 @@ Report real LPIPS when available. If a fallback is used, label it explicitly as 
 
 Promote a candidate only when it has one of:
 
-- higher mean MS-SSIM than `H61_api_low_depth_prelim` without worse LPIPS;
-- lower mean LPIPS than `H61_api_low_depth_prelim` without worse MS-SSIM;
+- higher challenge-facing score than the current local candidate without worse evidence quality;
+- lower LPIPS or higher MS-SSIM without regressing the official aggregate or physical maps;
 - more per-sample wins on challenge metrics;
 - similar challenge score with stronger physical guardrails;
 - coherent subset wins that justify a later scan router.

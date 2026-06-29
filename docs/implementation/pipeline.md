@@ -84,7 +84,7 @@ synthoct optimize-transfer \
   --api-key-file ~/.config/synthoct/api_key
 ```
 
-The first successful transfer sweep used the current best density-corrected phantom and improved hosted-API SSIM from `0.2651` to `0.2724` at exponent `0.18`; a recursive micro-step from that result reached `0.2726` at exponent `0.04`. This remains far below the target, but it is the best verified scanner-rendered direction so far.
+Early transfer sweeps improved one hosted-API reference case, but these are single-reference experiments. Treat them as optimizer examples, not current submission evidence.
 
 The follow-on `optimize-energy-ratio` command preserves scatterer coordinates and applies smoothed `reference / rendered` energy feedback:
 
@@ -98,7 +98,7 @@ synthoct optimize-energy-ratio \
   --api-key-file ~/.config/synthoct/api_key
 ```
 
-Seven recursive passes of this operator raised the first reference scan to hosted-API SSIM `0.2912`, the best verified scanner-rendered score so far. The next recursive pass generated valid phantom files, but the hosted API rejected those requests at POST with 500/400 responses, so they are not counted as scored candidates.
+Seven recursive passes of this operator raised the first reference scan to hosted-API SSIM `0.2912`. The next recursive pass generated valid phantom files, but the hosted API rejected those requests at POST with 500/400 responses. These results remain historical because they were not converted into a grouped, reproducible submission candidate.
 
 ## Scanner Backends
 

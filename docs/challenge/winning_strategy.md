@@ -42,47 +42,30 @@ Metric CSVs now include evaluation metadata such as `evaluation_region=full_fram
 
 ## Current True-Scanner Candidate Status
 
-On `2026-06-28`, a small matched hosted-API run compared the active H-series candidates on `2` grouped public samples at `300000` scatterers:
+Current local status:
+
+- `learned-prior-sparse-p140-t32` is the conservative local submission candidate.
+- Required artifact: `outputs/learned_priors/goal_h_candidates_prior.npz`.
+- Current evidence file: `outputs/api_validation_goal_t32_p140_h61_offset1_5x1/challenge_metrics_summary.csv`.
+- Current corrected full package: `outputs/submission_ready_learned_prior_sparse_p140_t32_full_corrected`.
+- `H61_api_low_depth_prelim` remains the fallback if learned-prior packaging or evidence checks fail.
 
 ```text
-H61_api_low_depth_prelim  MS-SSIM_mean=0.03080  LPIPS_PROXY_mean=0.05651  MS-SSIM_wins=2  LPIPS_wins=2
-H67_coarse_to_fine_crisp  MS-SSIM_mean=0.02665  LPIPS_PROXY_mean=0.05773  MS-SSIM_wins=0  LPIPS_wins=0
-H68_layer_map_prior       MS-SSIM_mean=0.01337  LPIPS_PROXY_mean=0.05681  MS-SSIM_wins=0  LPIPS_wins=0
+learned-prior-sparse-p140-t32  official_score=0.67703  Struct_LPIPS=0.57616  threshold_pass=0
+learned-prior-sparse-p140      official_score=0.67190  Struct_LPIPS=0.58624  threshold_pass=0
+H61_api_low_depth_prelim       official_score=0.52492  Struct_LPIPS=0.66842  threshold_pass=0
 ```
 
-The evidence audit passed as grouped, full-frame hosted true-scanner evidence, but only with `LPIPS_PROXY`. The promotion selector rejected H67 and H68, so `H61_api_low_depth_prelim` remained the then-current default at that point in the experiment log. This was not a hidden-holdout result; it was a small local gate that prevented promoting weaker candidates.
+This is enough for local submission preparation under strict real-LPIPS hosted true-scanner evidence. It is not hidden-holdout proof, and it still fails the preliminary Structural LPIPS gate.
 
-A follow-up learned-prior offset-holdout run trained an empirical prior from those true-scanner pairs and validated on later samples using `--sample-offset 1`. `learned-prior-structural` reached `MS-SSIM_mean=0.11676` versus H61 at `0.02946`, with better physical guardrails, but its `LPIPS_PROXY_mean=0.10594` was much worse than H61 at `0.05800`. The learned-prior branch is therefore the best current MS-SSIM direction, not a promoted final method. The immediate target is reducing learned-prior LPIPS/proxy distance while retaining its structural gains.
+Recent rejected or exploratory branches:
 
-Density sparsification fixed that proxy failure, making `learned-prior-sparse-p140` the first strong learned-prior local candidate validated through the hosted true scanner on a `5`-fold x `1` sample offset split. After installing the real metric stack (`sewar`, `lpips`, and compatible `torchvision`), the saved true-scanner renders were rescored with real LPIPS and the `sewar` MS-SSIM backend:
+- H67/H68 lost to H61 on the initial small hosted-API gate.
+- Visual inverse pipelines (`P06`-`P09`) did not beat p140-t32 under full Struct/OAC/SC/RSC metrics.
+- Standalone `neural-prior` improved Structural LPIPS but lost too much Structural MS-SSIM and SC/RSC map quality.
+- Hybrid neural energy blends (`e20`, `e60`) reduced Structural LPIPS, but broader offset-1 plus offset-2 grouped summaries still slightly favor p140-t32 on official aggregate.
 
-```text
-learned-prior-sparse-p140  MS-SSIM_mean=0.67634  LPIPS_mean=0.58467  MS-SSIM_wins=5  LPIPS_wins=5
-H61_api_low_depth_prelim   MS-SSIM_mean=0.42519  LPIPS_mean=0.68546  MS-SSIM_wins=0  LPIPS_wins=0
-```
-
-`synthoct audit-evidence --strict --require-real-lpips`, `synthoct select-best --strict --require-real-lpips`, and `synthoct challenge-readiness --strict --require-real-lpips` pass for `learned-prior-sparse-p140` when using this metrics file. This is a local promotion for submission preparation, not proof of hidden-holdout victory.
-
-The saved `5`-sample true-scanner renders were then rescored with Struct/OAC/SC/RSC map metrics and real LPIPS. The handout-style official aggregate score is:
-
-```text
-learned-prior-sparse-p140  official_score=0.67190  threshold_pass=0  threshold_failure=Struct_LPIPS>=0.4
-H61_api_low_depth_prelim   official_score=0.52492  threshold_pass=0
-```
-
-This proves a stronger local public-split candidate than H61 under the full local metric stack, but it also exposes the next optimization target: reduce Structural LPIPS below the preliminary threshold without giving up the OAC/SC/RSC gains.
-
-A follow-up `2`-fold hosted-API LPIPS variant check around `learned-prior-sparse-p140` found `learned-prior-sparse-p140-t32` slightly ahead on official score (`0.67839` versus `0.67403` for `p140`) and `learned-prior-sparse-p120` slightly lower on Structural LPIPS (`0.56568` versus `0.57119`). All variants still failed `Struct_LPIPS>=0.4`. This makes the current limitation sharper: small density-power, texture-weight, and energy-noise tweaks do not close the perceptual structural gap.
-
-The `p140-t32` variant was then rerun on the same `5`-fold x `1` sample offset pattern as the current `p140` evidence. It scored `0.67703` under the official eight-median aggregate, compared with `0.67190` for `p140` and `0.52492` for H61. `p140-t32` is therefore the current local promoted package candidate, but it still fails the preliminary gate because Structural LPIPS remains `0.57616`, above `<0.4`.
-
-The same `2`-fold offset split was used to recheck visual inverse pipelines (`P06`-`P09`) against `learned-prior-sparse-p140-t32`. The best visual recipe was `P09_gamma_sparse_lowfloor_ssim` with official score `0.38542` and Structural LPIPS `0.58958`, far below `p140-t32` at `0.67839`. Visual recipes remained target-locked enough to look conceptually tempting, but true-scanner map metrics show they damage OAC/SC/RSC too much to be competitive.
-
-An initial scanner-compatible neural phantom-prior model was trained from `17` available true-scanner rows and evaluated on a separate offset-2 `2`-sample hosted-API split. It was not promoted: `neural-prior` scored `0.56240` versus `0.72217` for `learned-prior-sparse-p140-t32`. The important signal is narrower: neural-prior reduced Structural LPIPS to `0.45202` versus `0.56202` for p140-t32, but gave up Structural MS-SSIM and SC/RSC map LPIPS. This confirms that ML/DL can attack the right bottleneck, but the current model is not yet a winning generator. The next target is a hybrid that preserves p140-t32's OAC/SC/RSC behavior while importing neural-prior's lower perceptual structural distance.
-
-The first hybrid attempt confirmed that density topology is fragile: small neural density blends damaged MS-SSIM and SC/RSC enough to lose badly. Energy-only blending was safer. `hybrid-neural-p140-t32-e20` beat `learned-prior-sparse-p140-t32` on a matched offset-2 `5`-sample hosted-API run (`official_score=0.70240` versus `0.70051`) and slightly lowered Structural LPIPS (`0.59613` versus `0.59778`). But an offset-1 `5`-sample check reversed the official-score ordering (`0.67652` versus `0.67703`), and the merged offset-1 plus offset-2 diagnostic summary leaves `p140-t32` slightly ahead (`0.68760` versus `0.68674`).
-
-A stronger energy-only blend, `hybrid-neural-p140-t32-e60`, improved Structural LPIPS more consistently and beat `p140-t32` on separate offset-1 and offset-2 `5`-sample runs. The combined offset-1 plus offset-2 `10`-sample grouped diagnostic still did not promote it: `p140-t32` scored `0.68760`, while `e60` scored `0.68710`, despite better Structural LPIPS (`0.58103` versus `0.58697`). The hybrid remains useful evidence that neural energy shaping attacks the right bottleneck, not a robust replacement for p140-t32 yet.
+See [../history/experiments.md](../history/experiments.md) for the dated evidence trail and [ml_dl_expert_review.md](ml_dl_expert_review.md) for the current ML/DL assessment.
 
 ## Why Prior Optimization Was Far From Competition-Optimal
 
