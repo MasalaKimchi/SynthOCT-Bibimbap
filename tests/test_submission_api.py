@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import threading
 import zipfile
 
 import numpy as np
@@ -13,7 +14,13 @@ from synthoct.cli import main
 from synthoct.neural_prior import train_neural_phantom_prior
 from synthoct.phantom import ExperimentConfig, generate_two_layers, save_phantom
 from synthoct.scanners import resolve_api_key
-from synthoct.submission import prepare_preliminary_png_pairs, prepare_submission_bundle, validate_phantom_submission, write_preliminary_upload_plan
+from synthoct.submission import (
+    benchmark_submission_api,
+    prepare_preliminary_png_pairs,
+    prepare_submission_bundle,
+    validate_phantom_submission,
+    write_preliminary_upload_plan,
+)
 
 
 def _make_nested_png_dataset(path):
@@ -386,6 +393,113 @@ def test_write_preliminary_upload_plan_sorts_by_ms_ssim(tmp_path):
     assert rows[0]["upload_order"] == "1"
     assert rows[0]["evidence_source"] == "hosted_api_true_scanner"
     assert rows[0]["evidence_scope"] == "submission_manifest_render"
+
+
+def test_benchmark_submission_api_can_render_with_concurrency(tmp_path, monkeypatch):
+    import synthoct.submission.preliminary as preliminary
+
+    archive = tmp_path / "dataset.zip"
+    _make_nested_png_dataset(archive)
+    submission = prepare_submission_bundle(
+        archive,
+        tmp_path,
+        tmp_path / "submission",
+        scatterers_count=32,
+        limit=2,
+    )
+    calls = []
+
+    def fake_render_with_api(phantom_path, config_path, out_png, **kwargs):
+        del phantom_path, config_path, kwargs
+        image = np.ones((16, 16), dtype=np.uint8) * (80 + len(calls) * 40)
+        skio.imsave(out_png, image)
+        calls.append(out_png)
+        return f"fake-{len(calls)}", out_png, 0.1, 1
+
+    monkeypatch.setattr(preliminary, "render_with_api", fake_render_with_api)
+
+    metrics, _config = benchmark_submission_api(
+        archive,
+        submission.manifest.parent,
+        tmp_path / "api_eval",
+        limit=2,
+        scatterers_count=32,
+        api_key="test-key",
+        api_concurrency=2,
+    )
+
+    rows = list(csv.DictReader(metrics.open()))
+    assert len(rows) == 2
+    assert len(calls) == 2
+    assert rows[0]["evidence_source"] == "hosted_api_true_scanner"
+    assert rows[0]["source_archive_path"].endswith("sample_frame0.png")
+    assert rows[1]["source_archive_path"].endswith("sample_frame1.png")
+
+    metrics, _config = benchmark_submission_api(
+        archive,
+        submission.manifest.parent,
+        tmp_path / "api_eval",
+        limit=2,
+        scatterers_count=32,
+        api_key="test-key",
+        api_concurrency=2,
+    )
+
+    rerun_rows = list(csv.DictReader(metrics.open()))
+    assert len(rerun_rows) == 2
+    assert len(calls) == 2
+    assert [row["source_archive_path"] for row in rerun_rows] == [row["source_archive_path"] for row in rows]
+    assert all(row["request_id"] == "existing" for row in rerun_rows)
+
+
+def test_benchmark_submission_api_records_concurrent_failures(tmp_path, monkeypatch):
+    import synthoct.submission.preliminary as preliminary
+
+    archive = tmp_path / "dataset.zip"
+    _make_nested_png_dataset(archive)
+    submission = prepare_submission_bundle(
+        archive,
+        tmp_path,
+        tmp_path / "submission",
+        scatterers_count=32,
+        limit=2,
+    )
+    lock = threading.Lock()
+    calls = []
+
+    def fake_render_with_api(phantom_path, config_path, out_png, **kwargs):
+        del phantom_path, config_path, kwargs
+        with lock:
+            calls.append(out_png)
+            call_count = len(calls)
+        if call_count == 1:
+            raise TimeoutError("connect timeout")
+        image = np.ones((16, 16), dtype=np.uint8) * 120
+        skio.imsave(out_png, image)
+        return "fake-ok", out_png, 0.1, 1
+
+    monkeypatch.setattr(preliminary, "render_with_api", fake_render_with_api)
+
+    metrics, _config = benchmark_submission_api(
+        archive,
+        submission.manifest.parent,
+        tmp_path / "api_eval_failures",
+        limit=2,
+        scatterers_count=32,
+        api_key="test-key",
+        api_concurrency=2,
+    )
+
+    rows = list(csv.DictReader(metrics.open()))
+    assert len(rows) == 2
+    assert {row["status"] for row in rows} == {"ok", "failed"}
+    failed = next(row for row in rows if row["status"] == "failed")
+    assert failed["request_id"] == "failed"
+    assert "connect timeout" in failed["error"]
+    assert failed["MS-SSIM"] == "nan"
+    plan_rows = list(csv.DictReader((tmp_path / "api_eval_failures" / "preliminary_upload_plan.csv").open()))
+    assert len(plan_rows) == 1
+    assert plan_rows[0]["request_id"] == "fake-ok"
 
 
 def test_prepare_preliminary_png_pairs_copies_ranked_files(tmp_path):

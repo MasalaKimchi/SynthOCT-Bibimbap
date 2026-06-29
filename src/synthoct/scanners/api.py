@@ -90,13 +90,23 @@ def prepare_api_render_request(
 RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
 
+def _retry_delay(response: requests.Response, attempt: int) -> float:
+    retry_after = getattr(response, "headers", {}).get("Retry-After")
+    if retry_after:
+        try:
+            return max(float(retry_after), 0.0)
+        except ValueError:
+            pass
+    return 2.0 * attempt
+
+
 def _request_with_retries(method: str, url: str, attempts: int = 3, **kwargs) -> requests.Response:
     last_error: Exception | None = None
     for attempt in range(1, attempts + 1):
         try:
             response = requests.request(method, url, **kwargs)
             if response.status_code in RETRYABLE_STATUS_CODES and attempt < attempts:
-                time.sleep(2.0 * attempt)
+                time.sleep(_retry_delay(response, attempt))
                 continue
             return response
         except requests.RequestException as exc:
@@ -141,17 +151,14 @@ class HostedApiScanner:
         return out_png
 
 
-def render_with_api(
+def submit_api_render(
     phantom_path: str | Path,
     config_path: str | Path,
-    out_png: str | Path,
     api_key: str | None = None,
     api_key_file: str | Path | None = None,
     endpoint: str = "https://synthoct.com/process_oct",
-    result_base_url: str = "https://synthoct.com/results",
-    poll_interval_seconds: float = 10.0,
-    max_polls: int = 60,
-) -> tuple[str, Path, float, int]:
+) -> tuple[str, float]:
+    """Submit one hosted scanner job and return its request id and submit time."""
     request = prepare_api_render_request(
         phantom_path,
         config_path,
@@ -159,9 +166,6 @@ def render_with_api(
         api_key_file=api_key_file,
         endpoint=endpoint,
     )
-
-    out_png = Path(out_png).resolve()
-    out_png.parent.mkdir(parents=True, exist_ok=True)
 
     start = time.perf_counter()
     with request.config_path.open("rb") as config_f, request.phantom_path.open("rb") as phantom_f:
@@ -180,16 +184,62 @@ def render_with_api(
     request_id = payload.get("request_id") or payload.get("id")
     if not request_id:
         raise RuntimeError(f"API response did not include request_id: {payload}")
+    return str(request_id), time.perf_counter() - start
 
+
+def poll_api_result(
+    request_id: str,
+    out_png: str | Path,
+    result_base_url: str = "https://synthoct.com/results",
+    poll_interval_seconds: float = 10.0,
+    max_polls: int = 60,
+    initial_delay_seconds: float = 2.0,
+) -> tuple[Path, float, int]:
+    """Poll a submitted hosted scanner job until the PNG result is available."""
+    out_png = Path(out_png).resolve()
+    out_png.parent.mkdir(parents=True, exist_ok=True)
+    start = time.perf_counter()
     result_url = f"{result_base_url.rstrip('/')}/result_{request_id}.png"
     for poll_idx in range(1, max_polls + 1):
-        time.sleep(poll_interval_seconds if poll_idx > 1 else 2.0)
+        time.sleep(poll_interval_seconds if poll_idx > 1 else initial_delay_seconds)
         result = _request_with_retries("GET", result_url, timeout=DEFAULT_GET_TIMEOUT_SECONDS)
         if result.status_code == 200 and result.content.startswith(b"\x89PNG"):
             out_png.write_bytes(result.content)
-            elapsed = time.perf_counter() - start
-            return request_id, out_png, elapsed, poll_idx
+            return out_png, time.perf_counter() - start, poll_idx
         if result.status_code not in {202, 404}:
             result.raise_for_status()
 
     raise TimeoutError(f"API result was not ready after {max_polls} polls: {result_url}")
+
+
+def render_with_api(
+    phantom_path: str | Path,
+    config_path: str | Path,
+    out_png: str | Path,
+    api_key: str | None = None,
+    api_key_file: str | Path | None = None,
+    endpoint: str = "https://synthoct.com/process_oct",
+    result_base_url: str = "https://synthoct.com/results",
+    poll_interval_seconds: float = 10.0,
+    max_polls: int = 60,
+) -> tuple[str, Path, float, int]:
+    start = time.perf_counter()
+    request_id, _submit_seconds = submit_api_render(
+        phantom_path,
+        config_path,
+        api_key=api_key,
+        api_key_file=api_key_file,
+        endpoint=endpoint,
+    )
+    try:
+        rendered_path, _poll_seconds, poll_count = poll_api_result(
+            request_id,
+            out_png,
+            result_base_url=result_base_url,
+            poll_interval_seconds=poll_interval_seconds,
+            max_polls=max_polls,
+        )
+    except Exception as exc:
+        setattr(exc, "request_id", request_id)
+        raise
+    return request_id, rendered_path, time.perf_counter() - start, poll_count

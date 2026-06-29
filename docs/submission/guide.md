@@ -70,9 +70,9 @@ synthoct prepare-submission \
   --max-generation-seconds 600
 ```
 
-As of the latest local true-scanner validation, `learned-prior-sparse-p140-t32` is the selected local candidate. The current evidence file uses real LPIPS, full-frame hosted true-scanner renders, and complete Struct/OAC/SC/RSC map metrics. This remains a local fair-evidence decision, not a hidden-holdout result.
+As of the latest local true-scanner validation, `learned-prior-sparse-p140-t32` is the selected conservative generator candidate. The current evidence file uses real LPIPS, full-frame hosted true-scanner renders, and complete Struct/OAC/SC/RSC map metrics. This remains a local fair-evidence decision, not a hidden-holdout result.
 
-This writes `submission_readiness_report.json` and includes it in the phantom zip. The current corrected full public-set package is `outputs/submission_ready_learned_prior_sparse_p140_t32_full_corrected`: it contains `120` manifest rows, `120` validation rows, and a code zip with `artifacts/goal_h_candidates_prior.npz`. Exact checksums are generated in `outputs/submission_ready_learned_prior_sparse_p140_t32_full_corrected/artifact_manifest.md`; see [final_artifact_manifest.md](final_artifact_manifest.md) for why the exact hashes live outside the code zip. Do not upload the older uncorrected `outputs/submission_ready_learned_prior_sparse_p140_t32_full` package; it was generated from incorrectly scaled temporary reference PNGs. Use strict mode after `synthoct select-best --require-real-lpips` has identified the candidate; skip it only for smoke packaging or exploratory bundles. The current official-map summary still warns that the preliminary LPIPS threshold is not fully passed, mainly due to Structural LPIPS.
+This writes `submission_readiness_report.json` and includes it in the phantom zip. The current corrected full public-set package is `outputs/submission_ready_learned_prior_sparse_p140_t32_full_corrected`: it contains `120` manifest rows, `120` validation rows, and a code zip with `artifacts/goal_h_candidates_prior.npz`. Exact checksums are generated in `outputs/submission_ready_learned_prior_sparse_p140_t32_full_corrected/artifact_manifest.md`; see [final_artifact_manifest.md](final_artifact_manifest.md) for why the exact hashes live outside the code zip. The best measured public-set rescue artifact is `outputs/submission_ready_p140_t32_flow_energy_rank120_adaptive_rank36_patch`, validated at `outputs/api_preliminary_p140_t32_flow_energy_rank120_adaptive_rank36_patch/challenge_metrics_summary.csv`; it improves the public-set floor but is selected from public validation failures, so do not treat it as hidden-holdout proof. Do not upload the older uncorrected `outputs/submission_ready_learned_prior_sparse_p140_t32_full` package; it was generated from incorrectly scaled temporary reference PNGs. Use strict mode after `synthoct select-best --require-real-lpips` has identified the candidate; skip it only for smoke packaging or exploratory bundles. The current official-map summary still warns that the preliminary LPIPS threshold is not fully passed, mainly due to Structural LPIPS.
 
 The corrected preliminary portal pair folder is:
 
@@ -123,6 +123,8 @@ synthoct api-evaluate-submission \
   --zip 18095266.zip \
   --submission-dir outputs/submission_ready_h61_full \
   --out outputs/api_preliminary_h61 \
+  --api-concurrency 2 \
+  --progress \
   --api-key-file ~/.config/synthoct/api_key
 ```
 
@@ -133,7 +135,34 @@ Outputs:
 - `outputs/api_preliminary_h61/api_metrics.csv`;
 - `outputs/api_preliminary_h61/preliminary_upload_plan.csv`.
 
-Omit `--limit` to render every packaged phantom. API keys are resolved from `SYNTHOCT_API_KEY`, `SYNTHOCT_CHALLENGE_API_KEY`, or a local file passed with `--api-key-file`. Do not commit keys or portal credentials.
+Omit `--limit` to render every packaged phantom. Use `--api-concurrency 2` for conservative parallel hosted rendering; a two-job probe, repeated 24-candidate batches, and full 120-pair runs completed successfully, but no public SynthOCT rate-limit policy has been found, so do not assume high concurrency is acceptable. Existing PNGs are reused while `api_metrics.csv` is rewritten in manifest order, making interrupted or expanded runs safe to resume. Candidate queues can use the same setting with `synthoct render-candidate-queue --api-concurrency 2`; include a `reference_png` column for multi-reference queues, otherwise `--ref` is used as the single fallback reference. Candidate queue metrics are flushed as rows finish, and hosted poll failures preserve the request id when one was assigned, so late result recovery is less brittle. API keys are resolved from `SYNTHOCT_API_KEY`, `SYNTHOCT_CHALLENGE_API_KEY`, or a local file passed with `--api-key-file`. Do not commit keys or portal credentials.
+
+For larger rescue sweeps, use the rank-window batch command. It selects public-set rows by low Structural MS-SSIM rank, renders fixed flow phantoms, renders energy-ratio follow-ups, and writes both per-row and summary CSVs:
+
+```bash
+synthoct flow-energy-rank-batch \
+  --base-api-metrics outputs/api_preliminary_learned_prior_sparse_p140_t32_120_concurrent/api_metrics.csv \
+  --out outputs/batch_flow_energy_worst120_rank13_36 \
+  --rank-start 13 \
+  --rank-end 36 \
+  --api-concurrency 2 \
+  --poll-interval-seconds 3 \
+  --api-key-file ~/.config/synthoct/api_key
+```
+
+For adaptive parameter selection against the current best artifact, sweep multiple flow strengths over a weak rank window:
+
+```bash
+synthoct adaptive-flow-strength-batch \
+  --current-api-metrics outputs/api_preliminary_p140_t32_flow_energy_rank120_adaptive_weak12_patch/api_metrics.csv \
+  --out outputs/adaptive_flow_strength_rank13_36_from_adaptive \
+  --rank-start 13 \
+  --rank-end 36 \
+  --strengths 0.12 0.38 \
+  --api-concurrency 2 \
+  --poll-interval-seconds 3 \
+  --api-key-file ~/.config/synthoct/api_key
+```
 
 ## Portal PNG Pairs
 
@@ -196,6 +225,8 @@ synthoct challenge-readiness \
 6. Confirm whether repeated pair uploads accumulate or replace prior uploads.
 7. Use the final code zip or repository link for final code/model submission.
 
-Primary local package candidate: `learned-prior-sparse-p140-t32`.
+Primary conservative generator candidate: `learned-prior-sparse-p140-t32`.
+
+Best measured public-set rescue artifact: `outputs/submission_ready_p140_t32_flow_energy_rank120_adaptive_rank36_patch`.
 
 Fallback candidate: rerender `H61_api_low_depth_prelim` through the hosted API or official Windows scanner if learned-prior evidence or packaging fails.

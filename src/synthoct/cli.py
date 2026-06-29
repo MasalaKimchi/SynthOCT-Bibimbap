@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 
 from . import __version__
+from .adaptive_flow_batch import run_adaptive_flow_strength_batch, run_residual_selector_flow_batch
 from .api_recovery import recover_api_results
 from .candidate_rendering import render_candidate_queue
 from .correction_refinement import (
@@ -20,6 +21,7 @@ from .energy_ratio_refinement import DEFAULT_ENERGY_RATIO_EXPONENTS, run_energy_
 from .empirical_basis import run_empirical_basis_refinement
 from .evaluation import audit_challenge_evidence, calculate_metrics, challenge_readiness_report, decide_candidate_promotion, select_best_candidate
 from .features import generate_maps
+from .flow_energy_batch import run_flow_energy_rank_batch
 from .flow_refinement import DEFAULT_FLOW_VARIANTS, run_flow_refinement
 from .generators import (
     FINAL_CONFIG_NAME,
@@ -41,6 +43,12 @@ from .neural_prior import HYBRID_PRIOR_CONFIGS, neural_prior_phantom, train_neur
 from .patch_basis import run_patch_basis_refinement
 from .dataset import iter_records, prepare_dataset
 from .optimizer import run_candidate_search
+from .residual_selector import (
+    enrich_residual_teacher_maps,
+    plan_residual_api_budget,
+    plan_residual_selector_queue,
+    train_residual_parameter_selector,
+)
 from .scanners import render_phantom, write_api_config
 from .seed_search import run_api_seed_search
 from .submission import (
@@ -347,6 +355,11 @@ def build_parser() -> argparse.ArgumentParser:
     learned.add_argument("--energy-ratios", nargs="+", type=float, default=[0.78, 0.88, 1.0])
     learned.add_argument("--texture-strengths", nargs="+", type=float, default=[0.0, 0.45])
     learned.add_argument("--holdout-fraction", type=float, default=0.2)
+    learned.add_argument("--anchored-residual", action="store_true", help="Optimize smoothed residuals around the base phantom fields instead of free fields.")
+    learned.add_argument("--density-residual-scale", type=float, default=0.18)
+    learned.add_argument("--energy-residual-scale", type=float, default=0.22)
+    learned.add_argument("--anchor-weight", type=float, default=0.35)
+    learned.add_argument("--residual-kernel", type=int, default=15)
 
     prior = sub.add_parser("train-phantom-prior", help="Distill true-scanner phantom/render pairs into a reusable empirical prior artifact.")
     prior.add_argument("--outputs-dir", default="outputs", help="Directory containing hosted-scanner metrics and artifacts.")
@@ -421,7 +434,135 @@ def build_parser() -> argparse.ArgumentParser:
     render_queue.add_argument("--poll-interval-seconds", type=float, default=10.0)
     render_queue.add_argument("--max-polls", type=int, default=90)
     render_queue.add_argument("--max-candidates", type=int)
+    render_queue.add_argument("--api-concurrency", type=int, default=1, help="Number of hosted API render jobs to run at once.")
     render_queue.add_argument("--rerun-existing", action="store_true")
+
+    flow_energy_batch = sub.add_parser(
+        "flow-energy-rank-batch",
+        help="Run fixed flow+energy API rescue over a base metrics MS-SSIM rank window.",
+    )
+    flow_energy_batch.add_argument("--base-api-metrics", required=True, help="api_metrics.csv from a base hosted validation run.")
+    flow_energy_batch.add_argument("--out", required=True, help="Output directory for queues, phantoms, renders, and metrics.")
+    flow_energy_batch.add_argument("--rank-start", type=int, required=True, help="1-based low MS-SSIM rank to include.")
+    flow_energy_batch.add_argument("--rank-end", type=int, required=True, help="1-based low MS-SSIM rank to include.")
+    flow_energy_batch.add_argument("--api-key-file", help="Optional untracked file containing the hosted scanner API key.")
+    flow_energy_batch.add_argument("--api-concurrency", type=int, default=2, help="Number of hosted API render jobs to run at once.")
+    flow_energy_batch.add_argument("--poll-interval-seconds", type=float, default=3.0)
+    flow_energy_batch.add_argument("--max-polls", type=int, default=80)
+    flow_energy_batch.add_argument("--flow-strength", type=float, default=0.25)
+    flow_energy_batch.add_argument("--flow-smooth-sigma", type=float, default=1.2)
+    flow_energy_batch.add_argument("--flow-attachment", type=float, default=6.0)
+    flow_energy_batch.add_argument("--energy-exponent", type=float, default=0.8)
+
+    adaptive_flow = sub.add_parser(
+        "adaptive-flow-strength-batch",
+        help="Sweep flow strengths plus energy follow-ups over weak current API rows.",
+    )
+    adaptive_flow.add_argument("--current-api-metrics", required=True, help="api_metrics.csv for the current best hosted run.")
+    adaptive_flow.add_argument("--out", required=True, help="Output directory for queues, phantoms, renders, and metrics.")
+    adaptive_flow.add_argument("--rank-start", type=int, required=True, help="1-based low MS-SSIM rank to include.")
+    adaptive_flow.add_argument("--rank-end", type=int, required=True, help="1-based low MS-SSIM rank to include.")
+    adaptive_flow.add_argument("--strengths", nargs="+", type=float, default=[0.12, 0.38])
+    adaptive_flow.add_argument("--api-key-file", help="Optional untracked file containing the hosted scanner API key.")
+    adaptive_flow.add_argument("--api-concurrency", type=int, default=2, help="Number of hosted API render jobs to run at once.")
+    adaptive_flow.add_argument("--poll-interval-seconds", type=float, default=3.0)
+    adaptive_flow.add_argument("--max-polls", type=int, default=80)
+    adaptive_flow.add_argument("--flow-smooth-sigma", type=float, default=1.2)
+    adaptive_flow.add_argument("--flow-attachment", type=float, default=6.0)
+    adaptive_flow.add_argument("--energy-exponent", type=float, default=0.8)
+
+    residual_selector = sub.add_parser(
+        "train-residual-selector",
+        help="Distill public flow+energy rescue rows into a conservative residual-parameter selector.",
+    )
+    residual_selector.add_argument("--base-api-metrics", required=True, help="Current/base api_metrics.csv.")
+    residual_selector.add_argument("--teacher-metrics", nargs="+", required=True, help="Flow/adaptive teacher metrics CSVs.")
+    residual_selector.add_argument("--out", required=True, help="Output selector artifact JSON.")
+    residual_selector.add_argument("--default-strength", type=float, default=0.25)
+    residual_selector.add_argument("--holdout-fraction", type=float, default=0.25)
+    residual_selector.add_argument("--min-delta", type=float, default=0.0)
+    residual_selector.add_argument("--uncertainty-z", type=float, default=1.0)
+    residual_selector.add_argument("--neighbor-count", type=int, default=12)
+    residual_selector.add_argument("--exploration-weight", type=float, default=0.25)
+    residual_selector.add_argument("--surrogate-calibration-metrics", nargs="*", default=[])
+    residual_selector.add_argument("--min-surrogate-ms-ssim", type=float, default=0.90)
+    residual_selector.add_argument("--max-surrogate-lpips-proxy", type=float, default=0.03)
+    residual_selector.add_argument(
+        "--holdout-group-fields",
+        nargs="*",
+        default=["sex", "age_band", "body_site"],
+        help="Fields used to keep anatomical cohorts together in selector holdout validation.",
+    )
+
+    residual_enrich = sub.add_parser(
+        "enrich-residual-teacher-maps",
+        help="Compute Struct/OAC/SC/RSC metrics for residual teacher CSV rows.",
+    )
+    residual_enrich.add_argument("--base-api-metrics", required=True, help="Base/current api_metrics.csv for path joins.")
+    residual_enrich.add_argument("--teacher-metrics", required=True, help="Teacher metrics CSV to enrich.")
+    residual_enrich.add_argument("--out", required=True, help="Output enriched teacher metrics CSV.")
+    residual_enrich.add_argument("--maps-dir", help="Directory for generated map PNGs.")
+    residual_enrich.add_argument("--include-lpips", action="store_true")
+    residual_enrich.add_argument("--max-rows", type=int)
+
+    residual_queue = sub.add_parser(
+        "plan-residual-selector-queue",
+        help="Write row/strength probe recommendations from a residual selector artifact.",
+    )
+    residual_queue.add_argument("--base-api-metrics", required=True, help="Current/base api_metrics.csv.")
+    residual_queue.add_argument("--artifact", required=True, help="Selector artifact JSON from train-residual-selector.")
+    residual_queue.add_argument("--out", required=True, help="Output recommendation CSV.")
+    residual_queue.add_argument("--limit", type=int)
+    residual_queue.add_argument("--min-expected-delta-lcb", type=float, default=0.0)
+    residual_queue.add_argument("--row-wise-strengths", action="store_true", help="Choose a residual strength per row from local teacher neighbors.")
+
+    residual_budget = sub.add_parser(
+        "plan-residual-api-budget",
+        help="Expand selector recommendations into a bounded two-stage API probe queue.",
+    )
+    residual_budget.add_argument("--selector-queue", required=True, help="CSV from plan-residual-selector-queue.")
+    residual_budget.add_argument("--out", required=True, help="Output budgeted selector queue CSV.")
+    residual_budget.add_argument("--total-api-calls", type=int, default=120)
+    residual_budget.add_argument("--energy-followup-fraction", type=float, default=1.0 / 3.0)
+    residual_budget.add_argument("--strength-multipliers", nargs="+", type=float, default=[1.0, 0.72, 1.38])
+    residual_budget.add_argument("--energy-exponents", nargs="+", type=float, default=[0.80, 0.72, 0.92])
+    residual_budget.add_argument("--min-strength", type=float, default=0.05)
+    residual_budget.add_argument("--max-strength", type=float, default=0.55)
+    residual_budget.add_argument(
+        "--diversity-fields",
+        nargs="*",
+        default=[],
+        help="Optional active-learning strata such as sex age_band body_site rank_bucket.",
+    )
+    residual_budget.add_argument("--max-per-stratum", type=int, help="Soft cap on planned flow probes per diversity stratum.")
+    residual_budget.add_argument(
+        "--probe-feedback-metrics",
+        nargs="*",
+        default=[],
+        help="Optional residual-selector true-scanner probe metrics used as cautious active-learning feedback.",
+    )
+    residual_budget.add_argument(
+        "--feedback-group-fields",
+        nargs="*",
+        default=["sex", "age_band", "body_site"],
+        help="Fields used to share true-probe feedback across similar queued candidates.",
+    )
+
+    residual_batch = sub.add_parser(
+        "residual-selector-flow-batch",
+        help="Run selector-recommended residual flow+energy probes through the hosted scanner.",
+    )
+    residual_batch.add_argument("--selector-queue", required=True, help="CSV from plan-residual-selector-queue.")
+    residual_batch.add_argument("--out", required=True, help="Output directory for queues, phantoms, renders, and metrics.")
+    residual_batch.add_argument("--max-candidates", type=int, help="Limit recommendations consumed from the selector queue.")
+    residual_batch.add_argument("--max-energy-followups", type=int, help="Limit stage-2 energy API calls after flow renders.")
+    residual_batch.add_argument("--api-key-file", help="Optional untracked file containing the hosted scanner API key.")
+    residual_batch.add_argument("--api-concurrency", type=int, default=2, help="Number of hosted API render jobs to run at once.")
+    residual_batch.add_argument("--poll-interval-seconds", type=float, default=3.0)
+    residual_batch.add_argument("--max-polls", type=int, default=80)
+    residual_batch.add_argument("--flow-smooth-sigma", type=float, default=1.2)
+    residual_batch.add_argument("--flow-attachment", type=float, default=6.0)
+    residual_batch.add_argument("--energy-exponent", type=float, default=0.8)
 
     recover_api = sub.add_parser(
         "recover-api-results",
@@ -466,7 +607,9 @@ def build_parser() -> argparse.ArgumentParser:
     api_eval.add_argument("--include-lpips", action="store_true")
     api_eval.add_argument("--poll-interval-seconds", type=float, default=10.0)
     api_eval.add_argument("--max-polls", type=int, default=60)
+    api_eval.add_argument("--api-concurrency", type=int, default=1, help="Number of hosted API render jobs to run in parallel.")
     api_eval.add_argument("--rerun-existing", action="store_true")
+    api_eval.add_argument("--progress", action="store_true", help="Print hosted render and metric progress to stderr.")
     api_eval.add_argument("--api-key-file", help="Optional untracked file containing the hosted scanner API key.")
 
     upload_plan = sub.add_parser("prepare-upload-plan", help="Rank rendered PNG pairs for preliminary portal upload.")
@@ -844,6 +987,11 @@ def main(argv: list[str] | None = None) -> int:
             energy_ratios=args.energy_ratios,
             texture_strengths=args.texture_strengths,
             holdout_fraction=args.holdout_fraction,
+            anchored_residual=args.anchored_residual,
+            density_residual_scale=args.density_residual_scale,
+            energy_residual_scale=args.energy_residual_scale,
+            anchor_weight=args.anchor_weight,
+            residual_kernel=args.residual_kernel,
         )
         print(metrics_path)
         return 0
@@ -928,6 +1076,121 @@ def main(argv: list[str] | None = None) -> int:
             max_polls=args.max_polls,
             max_candidates=args.max_candidates,
             skip_existing=not args.rerun_existing,
+            api_concurrency=args.api_concurrency,
+        )
+        print(metrics_path)
+        return 0
+
+    if args.command == "flow-energy-rank-batch":
+        metrics_path = run_flow_energy_rank_batch(
+            args.base_api_metrics,
+            args.out,
+            rank_start=args.rank_start,
+            rank_end=args.rank_end,
+            api_key_file=args.api_key_file,
+            api_concurrency=args.api_concurrency,
+            poll_interval_seconds=args.poll_interval_seconds,
+            max_polls=args.max_polls,
+            flow_strength=args.flow_strength,
+            flow_smooth_sigma=args.flow_smooth_sigma,
+            flow_attachment=args.flow_attachment,
+            energy_exponent=args.energy_exponent,
+        )
+        print(metrics_path)
+        return 0
+
+    if args.command == "adaptive-flow-strength-batch":
+        metrics_path = run_adaptive_flow_strength_batch(
+            args.current_api_metrics,
+            args.out,
+            rank_start=args.rank_start,
+            rank_end=args.rank_end,
+            strengths=tuple(args.strengths),
+            api_key_file=args.api_key_file,
+            api_concurrency=args.api_concurrency,
+            poll_interval_seconds=args.poll_interval_seconds,
+            max_polls=args.max_polls,
+            flow_smooth_sigma=args.flow_smooth_sigma,
+            flow_attachment=args.flow_attachment,
+            energy_exponent=args.energy_exponent,
+        )
+        print(metrics_path)
+        return 0
+
+    if args.command == "train-residual-selector":
+        artifact_path = train_residual_parameter_selector(
+            args.base_api_metrics,
+            list(args.teacher_metrics),
+            args.out,
+            default_strength=args.default_strength,
+            holdout_fraction=args.holdout_fraction,
+            min_delta=args.min_delta,
+            uncertainty_z=args.uncertainty_z,
+            neighbor_count=args.neighbor_count,
+            exploration_weight=args.exploration_weight,
+            surrogate_calibration_metrics=list(args.surrogate_calibration_metrics),
+            min_surrogate_ms_ssim=args.min_surrogate_ms_ssim,
+            max_surrogate_lpips_proxy=args.max_surrogate_lpips_proxy,
+            holdout_group_fields=tuple(args.holdout_group_fields),
+        )
+        print(artifact_path)
+        return 0
+
+    if args.command == "enrich-residual-teacher-maps":
+        enriched_path = enrich_residual_teacher_maps(
+            args.base_api_metrics,
+            args.teacher_metrics,
+            args.out,
+            maps_dir=args.maps_dir,
+            include_lpips=args.include_lpips,
+            max_rows=args.max_rows,
+        )
+        print(enriched_path)
+        return 0
+
+    if args.command == "plan-residual-selector-queue":
+        queue_path = plan_residual_selector_queue(
+            args.base_api_metrics,
+            args.artifact,
+            args.out,
+            limit=args.limit,
+            min_expected_delta_lcb=args.min_expected_delta_lcb,
+            row_wise_strengths=args.row_wise_strengths,
+        )
+        print(queue_path)
+        return 0
+
+    if args.command == "plan-residual-api-budget":
+        queue_path = plan_residual_api_budget(
+            args.selector_queue,
+            args.out,
+            total_api_calls=args.total_api_calls,
+            energy_followup_fraction=args.energy_followup_fraction,
+            strength_multipliers=tuple(args.strength_multipliers),
+            energy_exponents=tuple(args.energy_exponents),
+            min_strength=args.min_strength,
+            max_strength=args.max_strength,
+            diversity_fields=tuple(args.diversity_fields),
+            max_per_stratum=args.max_per_stratum,
+            probe_feedback_metrics=tuple(args.probe_feedback_metrics),
+            feedback_group_fields=tuple(args.feedback_group_fields),
+        )
+        print(queue_path)
+        return 0
+
+    if args.command == "residual-selector-flow-batch":
+        metrics_path = run_residual_selector_flow_batch(
+            args.selector_queue,
+            args.out,
+            max_candidates=args.max_candidates,
+            max_energy_followups=args.max_energy_followups,
+            api_key_file=args.api_key_file,
+            api_concurrency=args.api_concurrency,
+            poll_interval_seconds=args.poll_interval_seconds,
+            max_polls=args.max_polls,
+            flow_smooth_sigma=args.flow_smooth_sigma,
+            flow_attachment=args.flow_attachment,
+            energy_exponent=args.energy_exponent,
         )
         print(metrics_path)
         return 0
@@ -970,8 +1233,9 @@ def main(argv: list[str] | None = None) -> int:
             poll_interval_seconds=args.poll_interval_seconds,
             max_polls=args.max_polls,
             skip_existing=not args.rerun_existing,
-            progress=True,
+            progress=args.progress,
             api_key_file=args.api_key_file,
+            api_concurrency=args.api_concurrency,
         )
         upload_plan = Path(args.out).resolve() / "preliminary_upload_plan.csv"
         print(json.dumps({"results_csv": str(results_csv), "config": str(config_path), "upload_plan": str(upload_plan)}, sort_keys=True))

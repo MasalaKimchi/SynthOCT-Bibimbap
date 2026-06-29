@@ -125,10 +125,16 @@ def run_learned_surrogate_refinement(
     energy_ratios: Iterable[float] = (0.78, 0.88, 1.0),
     texture_strengths: Iterable[float] = (0.0, 0.45),
     holdout_fraction: float = 0.2,
+    anchored_residual: bool = False,
+    density_residual_scale: float = 0.18,
+    energy_residual_scale: float = 0.22,
+    anchor_weight: float = 0.35,
+    residual_kernel: int = 15,
 ) -> Path:
     """Train a CNN scanner surrogate and emit scanner-ready inverse candidates."""
     try:
         import torch
+        from torch.nn import functional as F
     except Exception as exc:  # pragma: no cover - depends on optional environment package.
         raise RuntimeError("The learned surrogate optimizer requires torch.") from exc
 
@@ -174,14 +180,42 @@ def run_learned_surrogate_refinement(
         base_field = phantom_to_field(base_pair.phantom_path, shape=shape)
     density0 = np.clip(base_field[0], 1e-4, 0.999)
     energy0 = np.clip(base_field[1], 1e-4, 0.999)
-    density_var = torch.logit(torch.from_numpy(density0[None, None].astype(np.float32))).to(device).requires_grad_(True)
-    energy_var = torch.logit(torch.from_numpy(energy0[None, None].astype(np.float32))).to(device).requires_grad_(True)
-    inv_opt = torch.optim.AdamW([density_var, energy_var], lr=7e-2, weight_decay=1e-4)
     z_prior = torch.linspace(0.0, 1.0, steps=shape[0], device=device).view(1, 1, shape[0], 1)
     air_gate = torch.sigmoid((z_prior - 0.11) / 0.025)
+    base_density_t = torch.from_numpy(density0[None, None].astype(np.float32)).to(device) * air_gate
+    base_energy_t = torch.from_numpy(energy0[None, None].astype(np.float32)).to(device) * air_gate
+
+    def lowpass(delta):
+        kernel = int(residual_kernel)
+        if kernel <= 1:
+            return delta
+        if kernel % 2 == 0:
+            kernel += 1
+        pad = kernel // 2
+        return F.avg_pool2d(F.pad(delta, (pad, pad, pad, pad), mode="reflect"), kernel_size=kernel, stride=1)
+
+    if anchored_residual:
+        density_delta = torch.zeros_like(base_density_t, requires_grad=True)
+        energy_delta = torch.zeros_like(base_energy_t, requires_grad=True)
+        inv_opt = torch.optim.AdamW([density_delta, energy_delta], lr=5e-2, weight_decay=1e-4)
+    else:
+        density_var = torch.logit(torch.from_numpy(density0[None, None].astype(np.float32))).to(device).requires_grad_(True)
+        energy_var = torch.logit(torch.from_numpy(energy0[None, None].astype(np.float32))).to(device).requires_grad_(True)
+        inv_opt = torch.optim.AdamW([density_var, energy_var], lr=7e-2, weight_decay=1e-4)
+
     for _step in range(max(1, optimize_steps)):
-        density = torch.sigmoid(density_var) * air_gate
-        energy = torch.sigmoid(energy_var) * air_gate
+        if anchored_residual:
+            density_residual = lowpass(density_delta)
+            energy_residual = lowpass(energy_delta)
+            density = (base_density_t * torch.exp(float(density_residual_scale) * density_residual)).clamp(0.0, 1.0)
+            energy = (base_energy_t * torch.exp(float(energy_residual_scale) * energy_residual)).clamp(0.0, 1.0)
+            anchor_loss = (density - base_density_t).abs().mean() + (energy - base_energy_t).abs().mean()
+            residual_loss = _smoothness(density_residual) + _smoothness(energy_residual)
+        else:
+            density = torch.sigmoid(density_var) * air_gate
+            energy = torch.sigmoid(energy_var) * air_gate
+            anchor_loss = torch.zeros((), device=device)
+            residual_loss = torch.zeros((), device=device)
         cumulative = torch.cumsum(energy, dim=2)
         cumulative = cumulative / (cumulative.amax(dim=(2, 3), keepdim=True) + 1e-6)
         candidate = torch.cat([density, energy, energy / (density + 1e-3), cumulative], dim=1).clamp(0.0, 1.0)
@@ -192,6 +226,8 @@ def run_learned_surrogate_refinement(
             + 0.18 * (pred.mean(dim=3) - target.mean(dim=3)).abs().mean()
             + 0.015 * _smoothness(density)
             + 0.010 * _smoothness(energy)
+            + float(anchor_weight) * anchor_loss
+            + 0.020 * residual_loss
         )
         inv_opt.zero_grad()
         loss.backward()
@@ -201,8 +237,12 @@ def run_learned_surrogate_refinement(
     target_texture_full = _reference_texture(reference_path, (256, 512))
 
     with torch.no_grad():
-        density = (torch.sigmoid(density_var) * air_gate).cpu().numpy()[0, 0]
-        energy = (torch.sigmoid(energy_var) * air_gate).cpu().numpy()[0, 0]
+        if anchored_residual:
+            density = (base_density_t * torch.exp(float(density_residual_scale) * lowpass(density_delta))).clamp(0.0, 1.0).cpu().numpy()[0, 0]
+            energy = (base_energy_t * torch.exp(float(energy_residual_scale) * lowpass(energy_delta))).clamp(0.0, 1.0).cpu().numpy()[0, 0]
+        else:
+            density = (torch.sigmoid(density_var) * air_gate).cpu().numpy()[0, 0]
+            energy = (torch.sigmoid(energy_var) * air_gate).cpu().numpy()[0, 0]
 
     reference_full = Path(reference_path)
     base_data = load_phantom(base_phantom_path or base_pair.phantom_path)
@@ -223,7 +263,8 @@ def run_learned_surrogate_refinement(
         up_energy_base = _blend_texture(_upsample(energy, (256, 512)), target_texture_full, texture_strength * 0.55)
         for ratio in energy_ratios:
             candidate_idx += 1
-            label = f"learned_surrogate_t{texture_strength:.2f}_r{ratio:.2f}".replace(".", "p")
+            mode = "anchored_surrogate" if anchored_residual else "learned_surrogate"
+            label = f"{mode}_t{texture_strength:.2f}_r{ratio:.2f}".replace(".", "p")
             phantom_path = phantom_dir / f"{candidate_idx:02d}_{label}.txt"
             preview_path = preview_dir / f"{candidate_idx:02d}_{label}_surrogate.png"
             field_to_phantom(
@@ -248,6 +289,11 @@ def run_learned_surrogate_refinement(
                     "surrogate_preview_png": str(preview_full.resolve()),
                     "energy_ratio": ratio,
                     "texture_strength": texture_strength,
+                    "anchored_residual": int(anchored_residual),
+                    "density_residual_scale": density_residual_scale if anchored_residual else "",
+                    "energy_residual_scale": energy_residual_scale if anchored_residual else "",
+                    "anchor_weight": anchor_weight if anchored_residual else "",
+                    "residual_kernel": residual_kernel if anchored_residual else "",
                     "train_pairs": len(train_pairs),
                     "holdout_pairs": len(holdout_pairs),
                     "surrogate_calibration_csv": str(calibration_path.resolve()) if calibration_path is not None else "",

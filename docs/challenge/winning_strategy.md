@@ -48,13 +48,19 @@ Current local status:
 - Required artifact: `outputs/learned_priors/goal_h_candidates_prior.npz`.
 - Current evidence file: `outputs/api_validation_goal_t32_p140_h61_offset1_5x1/challenge_metrics_summary.csv`.
 - Current corrected full package: `outputs/submission_ready_learned_prior_sparse_p140_t32_full_corrected`.
+- Best measured full-public-set rescue artifact: `outputs/submission_ready_p140_t32_flow_energy_rank120_adaptive_rank36_patch`, with evidence at `outputs/api_preliminary_p140_t32_flow_energy_rank120_adaptive_rank36_patch/challenge_metrics_summary.csv`.
 - `H61_api_low_depth_prelim` remains the fallback if learned-prior packaging or evidence checks fail.
 
 ```text
+public-set p140-t32 flow+energy adaptive rank36 patch   official_score=0.69400  Struct_LPIPS=0.58850  threshold_pass=0
+public-set p140-t32 flow+energy adaptive weak12 patch   official_score=0.69292  Struct_LPIPS=0.58804  threshold_pass=0
+public-set p140-t32 flow+energy rank120 positive patch  official_score=0.69245  Struct_LPIPS=0.58813  threshold_pass=0
 learned-prior-sparse-p140-t32  official_score=0.67703  Struct_LPIPS=0.57616  threshold_pass=0
 learned-prior-sparse-p140      official_score=0.67190  Struct_LPIPS=0.58624  threshold_pass=0
 H61_api_low_depth_prelim       official_score=0.52492  Struct_LPIPS=0.66842  threshold_pass=0
 ```
+
+The flow+energy patch is selected from public-set worst cases and improves the measured public-set floor; the adaptive weak-row sweep shows that per-sample parameter selection can add small gains. It is not yet a hidden-general generator. Use it as a rescue artifact and as evidence for a future learned residual/parameter-selection module, not as proof that the operator solves the challenge.
 
 This is enough for local submission preparation under strict real-LPIPS hosted true-scanner evidence. It is not hidden-holdout proof, and it still fails the preliminary Structural LPIPS gate.
 

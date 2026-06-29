@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from .evaluation import calculate_metrics, metric_evaluation_metadata
@@ -18,6 +19,7 @@ def render_candidate_queue(
     max_polls: int = 90,
     max_candidates: int | None = None,
     skip_existing: bool = True,
+    api_concurrency: int = 1,
 ) -> Path:
     """Render queued phantom candidates with the hosted scanner and rank metrics."""
     queue_csv = Path(queue_csv)
@@ -35,11 +37,27 @@ def render_candidate_queue(
         queued = queued[:max_candidates]
     if not queued:
         raise RuntimeError(f"No candidates found in {queue_csv}.")
+    api_concurrency = max(1, int(api_concurrency))
 
-    rows = []
-    for idx, row in enumerate(queued, start=1):
+    metrics_path = out_dir / "candidate_queue_metrics.csv"
+
+    def write_metrics(rows_to_write: list[dict[str, float | int | str]]) -> None:
+        if not rows_to_write:
+            return
+        ordered = sorted(
+            rows_to_write,
+            key=lambda item: float(item["MS-SSIM"]) if str(item["MS-SSIM"]) != "nan" else -1.0,
+            reverse=True,
+        )
+        with metrics_path.open("w", newline="") as fobj:
+            writer = csv.DictWriter(fobj, fieldnames=list(ordered[0].keys()))
+            writer.writeheader()
+            writer.writerows(ordered)
+
+    def render_row(idx: int, row: dict[str, str]) -> dict[str, float | int | str]:
         method = row.get("method") or f"candidate_{idx:03d}"
         phantom_path = Path(row["phantom_path"])
+        row_reference_path = Path(row.get("reference_png") or reference_path)
         synthetic_path = synthetic_dir / f"{idx:02d}_{method}.png"
         gray_path = gray_dir / f"{idx:02d}_{method}_gray.png"
         scatterers_count = len(load_phantom(phantom_path))
@@ -59,12 +77,12 @@ def render_candidate_queue(
                     max_polls=max_polls,
                 )
                 to_gray_png(rendered_path, gray_path)
-            metrics = calculate_metrics(reference_path, gray_path, include_lpips=False)
-            metrics.update(metric_evaluation_metadata(reference_path, gray_path))
+            metrics = calculate_metrics(row_reference_path, gray_path, include_lpips=False)
+            metrics.update(metric_evaluation_metadata(row_reference_path, gray_path))
             status = "ok"
             error = ""
         except Exception as exc:
-            request_id = "failed"
+            request_id = str(getattr(exc, "request_id", "failed"))
             render_seconds = 0.0
             poll_count = 0
             metrics = {
@@ -83,28 +101,43 @@ def render_candidate_queue(
             }
             status = "failed"
             error = str(exc)
-        rows.append(
-            {
-                "status": status,
-                "evidence_source": "hosted_api_true_scanner",
-                "evidence_scope": "single_reference_candidate_queue",
-                "priority": row.get("priority", idx),
-                "method": method,
-                "request_id": request_id,
-                "phantom_path": str(phantom_path.resolve()),
-                "synthetic_png": str(synthetic_path.resolve()),
-                "synthetic_gray_png": str(gray_path.resolve()),
-                "render_seconds": render_seconds,
-                "poll_count": poll_count,
-                "error": error,
-                **metrics,
-            }
-        )
+        return {
+            "status": status,
+            "evidence_source": "hosted_api_true_scanner",
+            "evidence_scope": "single_reference_candidate_queue",
+            "priority": row.get("priority", idx),
+            "method": method,
+            "request_id": request_id,
+            "reference_png": str(row_reference_path.resolve()),
+            "phantom_path": str(phantom_path.resolve()),
+            "synthetic_png": str(synthetic_path.resolve()),
+            "synthetic_gray_png": str(gray_path.resolve()),
+            "render_seconds": render_seconds,
+            "poll_count": poll_count,
+            "error": error,
+            **metrics,
+        }
 
-    rows.sort(key=lambda item: float(item["MS-SSIM"]) if str(item["MS-SSIM"]) != "nan" else -1.0, reverse=True)
-    metrics_path = out_dir / "candidate_queue_metrics.csv"
-    with metrics_path.open("w", newline="") as fobj:
-        writer = csv.DictWriter(fobj, fieldnames=list(rows[0].keys()))
-        writer.writeheader()
-        writer.writerows(rows)
+    rows = []
+    if api_concurrency == 1:
+        for idx, row in enumerate(queued, start=1):
+            rows.append(render_row(idx, row))
+            write_metrics(rows)
+    else:
+        executor = ThreadPoolExecutor(max_workers=api_concurrency)
+        futures = [executor.submit(render_row, idx, row) for idx, row in enumerate(queued, start=1)]
+        try:
+            for future in as_completed(futures):
+                rows.append(future.result())
+                write_metrics(rows)
+        except KeyboardInterrupt:
+            for future in futures:
+                future.cancel()
+            write_metrics(rows)
+            executor.shutdown(wait=False, cancel_futures=True)
+            raise
+        else:
+            executor.shutdown()
+
+    write_metrics(rows)
     return metrics_path

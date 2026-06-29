@@ -4,6 +4,8 @@ import csv
 import math
 import shutil
 import sys
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Iterable
 
@@ -56,6 +58,7 @@ def benchmark_submission_api(
     progress: bool = False,
     api_key: str | None = None,
     api_key_file: str | Path | None = None,
+    api_concurrency: int = 1,
 ) -> tuple[Path, Path]:
     """Render submission phantoms through the hosted API and score PNG pairs."""
     submission_dir = Path(submission_dir).resolve()
@@ -68,6 +71,7 @@ def benchmark_submission_api(
     config_path = write_api_config(out_dir / "Configuration_api.ini", scatterers_count=scatterers_count)
     results_csv = out_dir / "api_metrics.csv"
     fieldnames = [
+        "status",
         "evidence_source",
         "evidence_scope",
         "source_archive_path",
@@ -90,31 +94,30 @@ def benchmark_submission_api(
         "prediction_shape",
         "evaluated_shape",
         "prediction_resized_to_reference",
+        "error",
     ]
     out_dir.mkdir(parents=True, exist_ok=True)
-    write_header = not results_csv.exists()
-    with results_csv.open("a", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        if write_header:
-            writer.writeheader()
-        for idx, row in enumerate(_iter_manifest_rows(manifest_path, limit=limit)):
-            source_archive_path = row["source_archive_path"]
-            phantom_path = submission_dir / row["phantom_path"]
-            stem = f"{idx:04d}_{Path(source_archive_path).stem}"
-            reference_png = out_dir / "references" / f"{stem}_reference.png"
-            synthetic_png = out_dir / "synthetic" / f"{stem}_synthetic.png"
-            synthetic_gray_png = out_dir / "synthetic_gray" / f"{stem}_synthetic_gray.png"
-            if progress:
-                print(f"[{idx + 1}] rendering {source_archive_path}", file=sys.stderr, flush=True)
+    manifest_rows = list(_iter_manifest_rows(manifest_path, limit=limit))
+    api_concurrency = max(1, int(api_concurrency))
 
-            _write_reference(zip_path, source_archive_path, reference_png)
+    def render_row(idx: int, row: dict[str, str]) -> dict[str, float | int | str]:
+        source_archive_path = row["source_archive_path"]
+        phantom_path = submission_dir / row["phantom_path"]
+        stem = f"{idx:04d}_{Path(source_archive_path).stem}"
+        reference_png = out_dir / "references" / f"{stem}_reference.png"
+        synthetic_png = out_dir / "synthetic" / f"{stem}_synthetic.png"
+        synthetic_gray_png = out_dir / "synthetic_gray" / f"{stem}_synthetic_gray.png"
+        if progress:
+            print(f"[{idx + 1}] rendering {source_archive_path}", file=sys.stderr, flush=True)
+
+        _write_reference(zip_path, source_archive_path, reference_png)
+        try:
             if skip_existing and synthetic_png.exists() and synthetic_gray_png.exists():
                 request_id = "existing"
                 elapsed_seconds = 0.0
                 poll_count = 0
             else:
-                if resolved_api_key is None:
-                    resolved_api_key = resolve_api_key(api_key_file=api_key_file)
+                synthetic_png.parent.mkdir(parents=True, exist_ok=True)
                 request_id, synthetic_png, elapsed_seconds, poll_count = render_with_api(
                     phantom_path,
                     config_path,
@@ -125,34 +128,124 @@ def benchmark_submission_api(
                     max_polls=max_polls,
                 )
                 to_gray_png(synthetic_png, synthetic_gray_png)
+            status = "ok"
+            error = ""
+        except Exception as exc:
+            request_id = str(getattr(exc, "request_id", "failed"))
+            elapsed_seconds = 0.0
+            poll_count = 0
+            status = "failed"
+            error = str(exc)
 
-            metrics = calculate_metrics(reference_png, synthetic_gray_png, include_lpips=include_lpips)
-            metrics.update(metric_evaluation_metadata(reference_png, synthetic_gray_png))
+        return {
+            "row_index": idx,
+            "status": status,
+            "source_archive_path": source_archive_path,
+            "phantom_path": str(phantom_path),
+            "request_id": request_id,
+            "reference_png": str(reference_png),
+            "synthetic_png": str(synthetic_png),
+            "synthetic_gray_png": str(synthetic_gray_png),
+            "elapsed_seconds": elapsed_seconds,
+            "poll_count": poll_count,
+            "error": error,
+        }
+
+    if manifest_rows and resolved_api_key is None and not all(
+        skip_existing
+        and (out_dir / "synthetic" / f"{idx:04d}_{Path(row['source_archive_path']).stem}_synthetic.png").exists()
+        and (out_dir / "synthetic_gray" / f"{idx:04d}_{Path(row['source_archive_path']).stem}_synthetic_gray.png").exists()
+        for idx, row in enumerate(manifest_rows)
+    ):
+        resolved_api_key = resolve_api_key(api_key_file=api_key_file)
+
+    render_results: list[dict[str, float | int | str]] = []
+    if api_concurrency == 1:
+        for idx, row in enumerate(manifest_rows):
+            render_results.append(render_row(idx, row))
+    else:
+        start = time.perf_counter()
+        with ThreadPoolExecutor(max_workers=api_concurrency) as executor:
+            futures = [executor.submit(render_row, idx, row) for idx, row in enumerate(manifest_rows)]
+            for completed, future in enumerate(as_completed(futures), start=1):
+                result = future.result()
+                render_results.append(result)
+                if progress:
+                    print(
+                        f"[{completed}/{len(futures)}] done request={result['request_id']} "
+                        f"source={result['source_archive_path']}",
+                        file=sys.stderr,
+                        flush=True,
+                    )
+        if progress:
+            print(
+                f"Rendered {len(render_results)} row(s) with api_concurrency={api_concurrency} "
+                f"in {time.perf_counter() - start:.1f}s",
+                file=sys.stderr,
+                flush=True,
+            )
+
+    render_results.sort(key=lambda item: int(item["row_index"]))
+    with results_csv.open("w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for idx, result in enumerate(render_results):
+            if result["status"] == "ok" and Path(str(result["synthetic_gray_png"])).exists():
+                metrics = calculate_metrics(result["reference_png"], result["synthetic_gray_png"], include_lpips=include_lpips)
+                metrics.update(metric_evaluation_metadata(result["reference_png"], result["synthetic_gray_png"]))
+            else:
+                metrics = _failed_metrics()
             if progress:
-                print(
-                    f"[{idx + 1}] request={request_id} elapsed={elapsed_seconds:.1f}s "
-                    f"ms_ssim={metrics['MS-SSIM']:.4f} ssim={metrics['SSIM']:.4f}",
-                    file=sys.stderr,
-                    flush=True,
-                )
+                if result["status"] == "ok":
+                    print(
+                        f"[{idx + 1}] request={result['request_id']} elapsed={float(result['elapsed_seconds']):.1f}s "
+                        f"ms_ssim={metrics['MS-SSIM']:.4f} ssim={metrics['SSIM']:.4f}",
+                        file=sys.stderr,
+                        flush=True,
+                    )
+                else:
+                    print(
+                        f"[{idx + 1}] request={result['request_id']} failed error={result['error']}",
+                        file=sys.stderr,
+                        flush=True,
+                    )
             writer.writerow(
                 {
-                    "source_archive_path": source_archive_path,
-                    "phantom_path": str(phantom_path),
-                    "request_id": request_id,
-                    "reference_png": str(reference_png),
-                    "synthetic_png": str(synthetic_png),
-                    "synthetic_gray_png": str(synthetic_gray_png),
-                    "elapsed_seconds": elapsed_seconds,
-                    "poll_count": poll_count,
+                    "status": result["status"],
+                    "source_archive_path": result["source_archive_path"],
+                    "phantom_path": result["phantom_path"],
+                    "request_id": result["request_id"],
+                    "reference_png": result["reference_png"],
+                    "synthetic_png": result["synthetic_png"],
+                    "synthetic_gray_png": result["synthetic_gray_png"],
+                    "elapsed_seconds": result["elapsed_seconds"],
+                    "poll_count": result["poll_count"],
                     **metrics,
                     "evidence_source": "hosted_api_true_scanner",
                     "evidence_scope": "submission_manifest_render",
+                    "error": result["error"],
                 }
             )
             f.flush()
     write_preliminary_upload_plan(results_csv, out_dir / "preliminary_upload_plan.csv")
     return results_csv, config_path
+
+
+def _failed_metrics() -> dict[str, float | str]:
+    return {
+        "MSE": float("nan"),
+        "PSNR": float("nan"),
+        "SSIM": float("nan"),
+        "MS-SSIM": float("nan"),
+        "VIF": float("nan"),
+        "LPIPS": float("nan"),
+        "LPIPS_PROXY": float("nan"),
+        "evaluation_region": "",
+        "reference_shape": "",
+        "prediction_shape": "",
+        "evaluated_shape": "",
+        "prediction_resized_to_reference": "",
+    }
 
 
 def _score_for_upload_plan(row: dict[str, str]) -> float:
@@ -173,6 +266,7 @@ def write_preliminary_upload_plan(results_csv: str | Path, out_csv: str | Path, 
     out_csv.parent.mkdir(parents=True, exist_ok=True)
     with results_csv.open(newline="") as f:
         rows = list(csv.DictReader(f))
+    rows = [row for row in rows if row.get("status", "ok") in {"", "ok"}]
     rows.sort(key=_score_for_upload_plan, reverse=True)
     if limit is not None:
         rows = rows[:limit]

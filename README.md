@@ -62,7 +62,7 @@ synthoct baseline pipeline --name P06_visual_surface_dark_body --input data/DATA
 synthoct baseline final --input data/DATASET_PNG/Female/1950-1960/Cheek/l__shcheka_frame250.png --out outputs/final.txt
 ```
 
-`baseline` is the legacy CLI name, but these commands generate phantoms, not final images. The legacy `baseline final` command still emits `H61_api_low_depth_prelim`; the current promoted local submission candidate is `learned-prior-sparse-p140-t32` when packaged with `outputs/learned_priors/goal_h_candidates_prior.npz` and validated against `outputs/api_validation_goal_t32_p140_h61_offset1_5x1/challenge_metrics_summary.csv`.
+`baseline` is the legacy CLI name, but these commands generate phantoms, not final images. The legacy `baseline final` command still emits `H61_api_low_depth_prelim`; the conservative generator candidate is `learned-prior-sparse-p140-t32` when packaged with `outputs/learned_priors/goal_h_candidates_prior.npz`. The best measured full-public-set artifact is the tactical `outputs/submission_ready_p140_t32_flow_energy_rank120_adaptive_rank36_patch` patch, validated at `outputs/api_preliminary_p140_t32_flow_energy_rank120_adaptive_rank36_patch/challenge_metrics_summary.csv`; treat it as public-set rescue evidence, not proof of hidden-holdout generalization.
 
 An ML/DL lane is available as candidate-generation infrastructure. It trains from existing true-scanner validation rows, emits a `.pt` model artifact, and still produces four-column scanner-compatible phantoms that must be rendered by the true scanner before promotion:
 
@@ -136,6 +136,7 @@ synthoct api-evaluate-submission \
   --zip 18095266.zip \
   --submission-dir outputs/submission_ready_h61 \
   --out outputs/api_preliminary_h61 \
+  --api-concurrency 2 \
   --api-key-file ~/.config/synthoct/api_key
 ```
 
