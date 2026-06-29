@@ -19,7 +19,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.8"]
-lpips = ["lpips>=0.1.4", "torch==2.10.0"]
+lpips = ["lpips>=0.1.4", "torch>=2.6", "torchvision>=0.21"]
+ml = ["torch>=2.6"]
 
 [project.scripts]
 synthoct = "synthoct.cli:main"

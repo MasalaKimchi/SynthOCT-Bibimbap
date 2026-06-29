@@ -190,7 +190,7 @@ The audit rejects surrogate-preview evidence and treats single-reference true-sc
 
 Challenge-facing metric rows include `evaluation_region=full_frame`, `reference_shape`, `prediction_shape`, `evaluated_shape`, and `prediction_resized_to_reference`. The metric implementation resizes a prediction to the reference dimensions when needed, then computes metrics over the full reference-shaped array rather than a crop.
 
-After the evidence audit passes, compare a candidate to the current final method:
+After the evidence audit passes, compare a candidate to the current baseline or conservative fallback:
 
 ```bash
 synthoct decide-promotion \
@@ -235,3 +235,57 @@ It writes:
 - `surrogate_calibration_metrics.csv`: held-out true-scanner render versus surrogate prediction rows, labeled `evidence_source=learned_surrogate_holdout`.
 
 Neither file is promotion-ready evidence. Render the emitted phantoms through `render-candidate-queue`, then validate the best candidates on a grouped split with `validate-internal`.
+
+## Empirical Phantom Prior
+
+The empirical prior path distills existing true-scanner phantom/render pairs into a reusable phantom-field artifact:
+
+```bash
+synthoct train-phantom-prior \
+  --outputs-dir outputs \
+  --out outputs/learned_priors/empirical_phantom_prior.npz \
+  --shape 128 256
+```
+
+Then generate a scanner-compatible candidate phantom from a target B-scan:
+
+```bash
+synthoct baseline learned-prior \
+  --input data/DATASET_PNG/Female/1950-1960/Cheek/l__shcheka_frame250.png \
+  --artifact outputs/learned_priors/empirical_phantom_prior.npz \
+  --out outputs/learned_prior_candidate/phantom.txt
+```
+
+This path is deliberately artifact-backed: it gives ML/DL or empirical training a place to influence density and energy fields while preserving the challenge contract that the generator emits `X Y Z Energy` scatterers. The prior artifact is labeled `evidence_scope=not_challenge_evidence`; only true-scanner grouped validation of generated phantoms can promote a learned-prior method.
+
+Validate it like any other candidate by rendering the generated phantoms through the hosted API:
+
+```bash
+synthoct validate-internal \
+  --zip 18095266.zip \
+  --out outputs/learned_prior_api_validation \
+  --methods H61_api_low_depth_prelim learned-prior \
+  --learned-prior-artifact outputs/learned_priors/empirical_phantom_prior.npz \
+  --folds 5 \
+  --max-per-fold 2 \
+  --sample-offset 1 \
+  --include-lpips \
+  --api-key-file ~/.config/synthoct/api_key
+```
+
+Use `--sample-offset` to avoid validating a learned prior on the same first-per-fold samples that produced its training pairs.
+
+If `synthoct challenge-readiness --method learned-prior --strict` selects it, `prepare-submission` can package the method and include the prior artifact in the code zip:
+
+```bash
+synthoct prepare-submission \
+  --zip 18095266.zip \
+  --out outputs/submission_ready_learned_prior \
+  --method learned-prior-sparse-p140-t32 \
+  --learned-prior-artifact outputs/learned_priors/empirical_phantom_prior.npz \
+  --evidence-metrics outputs/learned_prior_api_validation/challenge_metrics_summary.csv \
+  --baseline H61_api_low_depth_prelim \
+  --strict-evidence
+```
+
+The current best local command set uses the prior trained at `outputs/learned_priors/goal_h_candidates_prior.npz` and the `5`-fold validation at `outputs/api_validation_goal_t32_p140_h61_offset1_5x1/challenge_metrics_summary.csv`. That validation should be produced or rescored with `--include-lpips`, audited with `--require-real-lpips`, and treated as local submission evidence only; hidden-holdout ranking still belongs to the organizers.

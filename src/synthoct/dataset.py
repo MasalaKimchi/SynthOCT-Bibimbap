@@ -86,6 +86,21 @@ def load_scan_from_zip(zip_path: str | Path, archive_path: str) -> np.ndarray:
             backing.close()
 
 
+def scan_to_uint8(arr: np.ndarray) -> np.ndarray:
+    """Convert a loaded scan to the display-scale uint8 PNG contract."""
+    if arr.max(initial=0) <= 1.0:
+        arr = arr * 255.0
+    return np.clip(arr, 0, 255).astype(np.uint8)
+
+
+def write_scan_png_from_zip(zip_path: str | Path, archive_path: str, out_path: str | Path) -> Path:
+    """Write a dataset scan as a display-scale PNG without changing its content."""
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    skio.imsave(out_path, scan_to_uint8(load_scan_from_zip(zip_path, archive_path)))
+    return out_path
+
+
 def make_grouped_folds(records: list[ScanRecord], folds: int = 3) -> dict[int, list[ScanRecord]]:
     """Group OCT records by subject metadata, then distribute groups across folds."""
     groups: dict[str, list[ScanRecord]] = defaultdict(list)
@@ -128,7 +143,7 @@ def prepare_dataset(zip_path: str | Path, out_dir: str | Path, extract: bool = T
                     if record.archive_path.lower().endswith(".npy"):
                         np.save(local, arr)
                     else:
-                        skio.imsave(local, arr.astype(np.uint8) if arr.max(initial=0) > 1 else (arr * 255).astype(np.uint8))
+                        skio.imsave(local, scan_to_uint8(arr))
                 local_path = str(local)
             writer.writerow(
                 {

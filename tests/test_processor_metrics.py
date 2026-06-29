@@ -4,6 +4,8 @@ import numpy as np
 from skimage import io
 
 from synthoct.evaluation import calculate_metrics
+import synthoct.evaluation.maps as eval_maps
+from synthoct.evaluation.summaries import summarize_challenge_metrics
 from synthoct.features import calculate_oac, calculate_speckle_contrast_map, generate_maps
 
 
@@ -27,3 +29,80 @@ def test_oac_and_speckle_shapes():
     arr = np.ones((32, 48), dtype=np.float32)
     assert calculate_oac(arr).shape == arr.shape
     assert calculate_speckle_contrast_map(arr, window_size=6).shape == arr.shape
+
+
+def test_feature_map_metrics_can_include_real_lpips(tmp_path, monkeypatch):
+    image = np.tile(np.linspace(0, 255, 32, dtype=np.uint8), (32, 1))
+    ref = tmp_path / "ref.png"
+    pred = tmp_path / "pred.png"
+    io.imsave(ref, image)
+    io.imsave(pred, image)
+    include_lpips_calls = []
+
+    def fake_calculate_metrics(ref_path, pred_path, include_lpips=True):
+        include_lpips_calls.append(include_lpips)
+        return {
+            "MSE": 0.0,
+            "PSNR": 99.0,
+            "SSIM": 1.0,
+            "MS-SSIM": 1.0,
+            "VIF": 1.0,
+            "LPIPS": 0.12 if include_lpips else float("nan"),
+            "LPIPS_PROXY": 0.01,
+        }
+
+    monkeypatch.setattr(eval_maps, "calculate_metrics", fake_calculate_metrics)
+    row = eval_maps.evaluate_feature_map_metrics(ref, pred, tmp_path / "ref_maps", tmp_path / "pred_maps", include_lpips=True)
+
+    assert include_lpips_calls == [True, True, True]
+    assert row["OAC_LPIPS"] == 0.12
+    assert row["SC_LPIPS"] == 0.12
+    assert row["RSC_LPIPS"] == 0.12
+
+
+def test_challenge_summary_reports_official_median_score():
+    rows = [
+        {
+            "fold": 0,
+            "sample": 0,
+            "archive_path": "a.png",
+            "method": "candidate",
+            "evidence_source": "hosted_api_true_scanner",
+            "evidence_scope": "grouped_validation_2fold_1perfold",
+            "Struct_evaluation_region": "full_frame",
+            "generation_seconds": 1.0,
+            "Struct_MS-SSIM": 0.6,
+            "Struct_LPIPS": 0.2,
+            "OAC_MS-SSIM": 0.5,
+            "OAC_LPIPS": 0.3,
+            "SC_MS-SSIM": 0.4,
+            "SC_LPIPS": 0.4,
+            "RSC_MS-SSIM": 0.7,
+            "RSC_LPIPS": 0.1,
+        },
+        {
+            "fold": 1,
+            "sample": 0,
+            "archive_path": "b.png",
+            "method": "candidate",
+            "evidence_source": "hosted_api_true_scanner",
+            "evidence_scope": "grouped_validation_2fold_1perfold",
+            "Struct_evaluation_region": "full_frame",
+            "generation_seconds": 1.5,
+            "Struct_MS-SSIM": 0.8,
+            "Struct_LPIPS": 0.4,
+            "OAC_MS-SSIM": 0.7,
+            "OAC_LPIPS": 0.5,
+            "SC_MS-SSIM": 0.6,
+            "SC_LPIPS": 0.2,
+            "RSC_MS-SSIM": 0.9,
+            "RSC_LPIPS": 0.3,
+        },
+    ]
+
+    summary = summarize_challenge_metrics(rows)
+    assert summary[0]["official_metric_complete"] == 1
+    assert summary[0]["official_missing_metrics"] == ""
+    assert summary[0]["Struct_MS-SSIM_median"] == 0.7
+    assert summary[0]["Struct_LPIPS_median"] == 0.30000000000000004
+    assert np.isclose(summary[0]["official_score"], 0.675)

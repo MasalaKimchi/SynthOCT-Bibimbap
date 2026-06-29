@@ -7,9 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
-from skimage import io
 
-from .dataset import iter_records, load_scan_from_zip, make_grouped_folds
+from .dataset import iter_records, make_grouped_folds, write_scan_png_from_zip
 from .evaluation import calculate_metrics, competition_proxy_score, evaluate_feature_map_metrics, profile_scores, summarize_rows, write_rows
 from .scanners import render_with_api, write_api_config
 from .submission import to_gray_png
@@ -105,8 +104,7 @@ def run_candidate_search(
             selected = sorted(folded[fold_idx], key=lambda r: r.archive_path)[:max_per_fold]
             for sample_idx, record in enumerate(selected):
                 ref_path = tmp / f"fold{fold_idx}_sample{sample_idx}_ref.png"
-                arr = load_scan_from_zip(zip_path, record.archive_path)
-                io.imsave(ref_path, np.clip(arr, 0, 255).astype(np.uint8))
+                write_scan_png_from_zip(zip_path, record.archive_path, ref_path)
                 for candidate in candidates:
                     sample_dir = out_dir / "samples" / f"fold_{fold_idx}" / f"sample_{sample_idx}" / candidate.name
                     phantom_path = sample_dir / "phantom.txt"

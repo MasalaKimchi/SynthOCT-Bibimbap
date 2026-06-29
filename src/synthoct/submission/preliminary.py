@@ -10,7 +10,7 @@ from typing import Iterable
 import numpy as np
 from skimage import io
 
-from synthoct.dataset import load_scan_from_zip
+from synthoct.dataset import write_scan_png_from_zip
 from synthoct.evaluation import calculate_metrics, metric_evaluation_metadata
 from synthoct.scanners import render_with_api, resolve_api_key, write_api_config
 
@@ -31,12 +31,7 @@ _to_gray_png = to_gray_png
 
 
 def _write_reference(zip_path: str | Path, archive_path: str, out_path: Path) -> Path:
-    arr = load_scan_from_zip(zip_path, archive_path)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    if arr.max(initial=0) <= 1.0:
-        arr = arr * 255.0
-    io.imsave(out_path, np.clip(arr, 0, 255).astype(np.uint8))
-    return out_path
+    return write_scan_png_from_zip(zip_path, archive_path, out_path)
 
 
 def _iter_manifest_rows(manifest_path: Path, limit: int | None = None) -> Iterable[dict[str, str]]:
@@ -248,7 +243,7 @@ def prepare_preliminary_png_pairs(upload_plan_csv: str | Path, out_dir: str | Pa
         for row in rows:
             order = int(row["upload_order"])
             stem = Path(row["source_archive_path"]).stem
-            synthetic_src = Path(row["synthetic_png"])
+            synthetic_src = Path(row.get("synthetic_gray_png") or row["synthetic_png"])
             reference_src = Path(row["reference_png"])
             synthetic_dst = synthetic_dir / f"{order:03d}_{stem}_synthetic.png"
             reference_dst = reference_dir / f"{order:03d}_{stem}_reference.png"

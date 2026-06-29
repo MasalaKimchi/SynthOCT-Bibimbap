@@ -19,7 +19,7 @@ Every generated phantom must match the baseline format:
 - `Energy` within `[0, 100]`, interpreted by the scanner as reflection amplitude `sqrt(Energy / 100)`;
 - default package size of `300000` scatterers per B-scan unless a smoke-test count is explicitly requested.
 
-The challenge-facing metrics are MS-SSIM and LPIPS after scanner rendering. OAC, speckle contrast, refined speckle contrast, and depth-profile agreement are internal guardrails for physical plausibility.
+The challenge-facing metrics are MS-SSIM and LPIPS after scanner rendering. The local challenge handout describes the main final score as the mean of median MS-SSIM and median inverted LPIPS (`1 - LPIPS`) across four categories: Structural intensity, OAC, SC, and RSC. Depth-profile agreement and related profile diagnostics are internal guardrails for physical plausibility.
 
 ## Baseline Ladder
 
@@ -30,7 +30,7 @@ The repository keeps several challenge-safe generator families:
 3. Physics-guided phantoms: sample density and energy fields from intensity, OAC, speckle, layer boundary, and smoothing features.
 4. API-facing hypotheses: selected H-series parameterizations that still emit only `X Y Z Energy` scatterers.
 
-The current final method is `H61_api_low_depth_prelim`. `H67_coarse_to_fine_crisp` and `H68_layer_map_prior` remain candidate methods for hosted API or Windows scanner comparison, not automatic replacements.
+The legacy `baseline final` method is `H61_api_low_depth_prelim`. The current promoted local submission candidate is `learned-prior-sparse-p140-t32`, which packages an empirical prior artifact and has beaten H61 on grouped hosted true-scanner validation with real LPIPS. `H67_coarse_to_fine_crisp` and `H68_layer_map_prior` remain candidate methods for hosted API or Windows scanner comparison, not automatic replacements.
 
 ## Physics Model
 
@@ -49,6 +49,8 @@ The active approach models tissue as an inhomogeneous point process:
 Offline ranking was useful for brainstorming, but it is not a trustworthy final signal. Promote a method only when scanner renders improve challenge-facing metrics across grouped folds or a matched official-scanner subset.
 
 The official final ranking is stronger than local validation: the organizers run the submitted code/model on a hidden hold-out test dataset. A local hosted-API score on one public B-scan, even if produced by the true scanner, is not a competition-wide score. Local surrogate scanners and preview renderers are useful only for triage; they are not proof of challenge performance.
+
+The current ML/DL assessment is recorded in [ml_dl_expert_review.md](ml_dl_expert_review.md). In short: the neural branch has higher theoretical ceiling and improves the Structural LPIPS bottleneck, but the current standalone and hybrid neural models do not yet beat `learned-prior-sparse-p140-t32` on broader true-scanner official-score evidence.
 
 Recommended hosted API triage:
 
@@ -91,6 +93,6 @@ Kill a candidate when it loses clearly on both mean score and per-sample wins. I
 
 ## Current Decision
 
-Use `H61_api_low_depth_prelim` as the conservative final method unless a newer hosted API or Windows `Part2_Scanner.exe` run supersedes it. Treat older H11/H41/H56 results as historical priors only.
+Use `learned-prior-sparse-p140-t32` as the current local submission candidate when its prior artifact and real-LPIPS evidence file are included. Use `H61_api_low_depth_prelim` as the conservative fallback if learned-prior packaging or evidence validation fails. Treat older H11/H41/H56 results as historical priors only. The current promoted evidence includes complete Struct/OAC/SC/RSC true-scanner metrics, but it still fails the preliminary LPIPS threshold and is not hidden-holdout proof.
 
-See [winning_strategy.md](winning_strategy.md) for the current rules interpretation, scanner vocabulary, and promotion gate.
+See [winning_strategy.md](winning_strategy.md) for the current rules interpretation, scanner vocabulary, and promotion gate. See [rules_provenance.md](rules_provenance.md) for the local evidence sources and the explicit `surrogate_scanner_is_true_scanner=false` policy.

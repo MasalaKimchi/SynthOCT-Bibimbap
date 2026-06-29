@@ -18,7 +18,7 @@ from .correction_refinement import (
 from .direct_lattice import run_direct_lattice_refinement
 from .energy_ratio_refinement import DEFAULT_ENERGY_RATIO_EXPONENTS, run_energy_ratio_refinement
 from .empirical_basis import run_empirical_basis_refinement
-from .evaluation import audit_challenge_evidence, calculate_metrics, decide_candidate_promotion, select_best_candidate
+from .evaluation import audit_challenge_evidence, calculate_metrics, challenge_readiness_report, decide_candidate_promotion, select_best_candidate
 from .features import generate_maps
 from .flow_refinement import DEFAULT_FLOW_VARIANTS, run_flow_refinement
 from .generators import (
@@ -28,12 +28,16 @@ from .generators import (
     VISUAL_PIPELINE_CONFIGS,
     final_phantom,
     heuristic_layer_phantom,
+    hybrid_neural_prior_phantom,
     hypothesis_phantom,
+    learned_prior_phantom,
     official_baseline_phantom,
     pipeline_phantom,
     physics_guided_phantom,
 )
+from .learned_prior import LEARNED_PRIOR_CONFIGS, train_empirical_phantom_prior
 from .learned_surrogate import run_learned_surrogate_refinement
+from .neural_prior import HYBRID_PRIOR_CONFIGS, neural_prior_phantom, train_neural_phantom_prior
 from .patch_basis import run_patch_basis_refinement
 from .dataset import iter_records, prepare_dataset
 from .optimizer import run_candidate_search
@@ -47,7 +51,7 @@ from .submission import (
 )
 from .texture_refinement import DEFAULT_TEXTURE_VARIANTS, run_texture_refinement
 from .transfer_refinement import DEFAULT_TRANSFER_EXPONENTS, run_selective_transfer_refinement
-from .validation import METHOD_WAVES, METHODS, plot_hypothesis_progress, resolve_method_wave, run_internal_validation
+from .validation import METHOD_CHOICES, METHOD_WAVES, METHODS, plot_hypothesis_progress, resolve_method_wave, run_internal_validation
 
 
 def _add_common_baseline_args(parser: argparse.ArgumentParser) -> None:
@@ -95,6 +99,28 @@ def build_parser() -> argparse.ArgumentParser:
         default="P06_visual_surface_dark_body",
     )
     _add_common_baseline_args(pipeline)
+    learned_prior = base_sub.add_parser("learned-prior")
+    learned_prior.add_argument("--input", required=True)
+    learned_prior.add_argument("--artifact", required=True, help="Empirical phantom prior .npz from train-phantom-prior.")
+    learned_prior.add_argument("--target-blend", type=float, default=0.62)
+    learned_prior.add_argument("--prior-blend", type=float, default=0.38)
+    learned_prior.add_argument("--texture-weight", type=float, default=0.24)
+    _add_common_baseline_args(learned_prior)
+    neural_prior = base_sub.add_parser("neural-prior")
+    neural_prior.add_argument("--input", required=True)
+    neural_prior.add_argument("--artifact", required=True, help="Neural phantom prior .pt from train-neural-phantom-prior.")
+    neural_prior.add_argument("--density-power", type=float, default=1.0)
+    neural_prior.add_argument("--target-detail-blend", type=float, default=0.10)
+    neural_prior.add_argument("--energy-floor", type=float, default=0.002)
+    neural_prior.add_argument("--energy-ceiling", type=float, default=0.075)
+    _add_common_baseline_args(neural_prior)
+    hybrid_prior = base_sub.add_parser("hybrid-neural-prior")
+    hybrid_prior.add_argument("--input", required=True)
+    hybrid_prior.add_argument("--learned-artifact", required=True, help="Empirical learned-prior .npz artifact.")
+    hybrid_prior.add_argument("--neural-artifact", required=True, help="Neural phantom prior .pt artifact.")
+    hybrid_prior.add_argument("--neural-density-blend", type=float, default=0.10)
+    hybrid_prior.add_argument("--neural-energy-blend", type=float, default=0.0)
+    _add_common_baseline_args(hybrid_prior)
     final = base_sub.add_parser("final")
     final.add_argument("--input", required=True)
     _add_common_baseline_args(final)
@@ -126,10 +152,13 @@ def build_parser() -> argparse.ArgumentParser:
     validate = sub.add_parser("validate-internal", help="Hosted-API validation against Zenodo reference scans.")
     validate.add_argument("--zip", required=True, dest="zip_path")
     validate.add_argument("--out", default="outputs/internal_validation")
-    validate.add_argument("--methods", nargs="+", choices=METHODS)
+    validate.add_argument("--methods", nargs="+", choices=METHOD_CHOICES)
     validate.add_argument("--wave", choices=METHOD_WAVES, help="Named method set for staged hypothesis triage.")
+    validate.add_argument("--learned-prior-artifact", help="Required when validating method learned-prior.")
+    validate.add_argument("--neural-prior-artifact", help="Required when validating method neural-prior.")
     validate.add_argument("--folds", type=int, default=3)
     validate.add_argument("--max-per-fold", type=int, default=4)
+    validate.add_argument("--sample-offset", type=int, default=0, help="Skip this many sorted records per fold before validation.")
     validate.add_argument("--scatterers-count", type=int, default=300_000)
     validate.add_argument("--no-maps", action="store_true")
     validate.add_argument("--include-lpips", action="store_true")
@@ -169,6 +198,19 @@ def build_parser() -> argparse.ArgumentParser:
     select_best.add_argument("--max-generation-seconds", type=float, default=600.0)
     select_best.add_argument("--max-guardrail-regression", type=float, default=0.0)
     select_best.add_argument("--strict", action="store_true", help="Exit nonzero unless a candidate is selected.")
+
+    readiness = sub.add_parser("challenge-readiness", help="Summarize whether local evidence supports the current challenge candidate.")
+    readiness.add_argument("--metrics", required=True, help="Challenge metrics summary CSV to audit and rank.")
+    readiness.add_argument("--baseline", required=True, help="Baseline/current-final method name.")
+    readiness.add_argument("--method", help="Candidate/submission method expected to be selected.")
+    readiness.add_argument("--submission-dir", help="Optional prepared submission directory to check.")
+    readiness.add_argument("--min-samples-per-method", type=int, default=2)
+    readiness.add_argument("--require-real-lpips", action="store_true")
+    readiness.add_argument("--min-ms-ssim-delta", type=float, default=0.0)
+    readiness.add_argument("--max-lpips-delta", type=float, default=0.0)
+    readiness.add_argument("--max-generation-seconds", type=float, default=600.0)
+    readiness.add_argument("--max-guardrail-regression", type=float, default=0.0)
+    readiness.add_argument("--strict", action="store_true", help="Exit nonzero unless local candidate readiness passes.")
 
     optimize = sub.add_parser("optimize-physics", help="Hosted-API candidate search; expensive because each candidate is rendered by the challenge scanner.")
     optimize.add_argument("--zip", required=True, dest="zip_path")
@@ -306,6 +348,25 @@ def build_parser() -> argparse.ArgumentParser:
     learned.add_argument("--texture-strengths", nargs="+", type=float, default=[0.0, 0.45])
     learned.add_argument("--holdout-fraction", type=float, default=0.2)
 
+    prior = sub.add_parser("train-phantom-prior", help="Distill true-scanner phantom/render pairs into a reusable empirical prior artifact.")
+    prior.add_argument("--outputs-dir", default="outputs", help="Directory containing hosted-scanner metrics and artifacts.")
+    prior.add_argument("--out", required=True, help="Output .npz prior artifact.")
+    prior.add_argument("--shape", nargs=2, type=int, default=[128, 256], metavar=("ROWS", "COLS"))
+    prior.add_argument("--pair-limit", type=int, default=64)
+    prior.add_argument("--temperature", type=float, default=0.08)
+
+    neural_train = sub.add_parser(
+        "train-neural-phantom-prior",
+        help="Train a scanner-compatible CNN phantom-field generator from true-scanner validation rows.",
+    )
+    neural_train.add_argument("--outputs-dir", default="outputs", help="Directory containing hosted-scanner metrics and artifacts.")
+    neural_train.add_argument("--out", required=True, help="Output .pt neural prior artifact.")
+    neural_train.add_argument("--shape", nargs=2, type=int, default=[128, 256], metavar=("ROWS", "COLS"))
+    neural_train.add_argument("--pair-limit", type=int, default=128)
+    neural_train.add_argument("--epochs", type=int, default=80)
+    neural_train.add_argument("--learning-rate", type=float, default=2e-3)
+    neural_train.add_argument("--seed", type=int, default=37)
+
     empirical = sub.add_parser(
         "optimize-empirical-basis",
         help="Use existing hosted scanner renders as a nonnegative empirical inverse basis.",
@@ -377,9 +438,17 @@ def build_parser() -> argparse.ArgumentParser:
     submit.add_argument("--seed", type=int, default=7)
     submit.add_argument(
         "--method",
-        choices=tuple(HYPOTHESIS_CONFIGS.keys()) + tuple(PROMISING_PIPELINE_CONFIGS.keys()) + tuple(VISUAL_PIPELINE_CONFIGS.keys()),
+        choices=tuple(HYPOTHESIS_CONFIGS.keys())
+        + tuple(PROMISING_PIPELINE_CONFIGS.keys())
+        + tuple(VISUAL_PIPELINE_CONFIGS.keys())
+        + ("learned-prior",)
+        + tuple(LEARNED_PRIOR_CONFIGS.keys())
+        + ("neural-prior",)
+        + tuple(HYBRID_PRIOR_CONFIGS.keys()),
         help="Named H- or P-series method to package.",
     )
+    submit.add_argument("--learned-prior-artifact", help="Required when preparing --method learned-prior.")
+    submit.add_argument("--neural-prior-artifact", help="Required when preparing --method neural-prior.")
     submit.add_argument("--evidence-metrics", help="Optional challenge_metrics_summary.csv used to write submission_readiness_report.json.")
     submit.add_argument("--baseline", help="Baseline/current-final method for evidence-backed readiness checks.")
     submit.add_argument("--min-samples-per-method", type=int, default=2)
@@ -442,6 +511,40 @@ def main(argv: list[str] | None = None) -> int:
             path = hypothesis_phantom(args.input, args.out, args.name, seed=args.seed, scatterers_count=args.scatterers_count)
         elif args.baseline_command == "pipeline":
             path = pipeline_phantom(args.input, args.out, args.name, seed=args.seed, scatterers_count=args.scatterers_count)
+        elif args.baseline_command == "learned-prior":
+            path = learned_prior_phantom(
+                args.input,
+                args.out,
+                args.artifact,
+                seed=args.seed,
+                scatterers_count=args.scatterers_count,
+                target_blend=args.target_blend,
+                prior_blend=args.prior_blend,
+                texture_weight=args.texture_weight,
+            )
+        elif args.baseline_command == "neural-prior":
+            path = neural_prior_phantom(
+                args.input,
+                args.out,
+                args.artifact,
+                seed=args.seed,
+                scatterers_count=args.scatterers_count,
+                density_power=args.density_power,
+                target_detail_blend=args.target_detail_blend,
+                energy_floor=args.energy_floor,
+                energy_ceiling=args.energy_ceiling,
+            )
+        elif args.baseline_command == "hybrid-neural-prior":
+            path = hybrid_neural_prior_phantom(
+                args.input,
+                args.out,
+                args.learned_artifact,
+                args.neural_artifact,
+                seed=args.seed,
+                scatterers_count=args.scatterers_count,
+                neural_density_blend=args.neural_density_blend,
+                neural_energy_blend=args.neural_energy_blend,
+            )
         elif args.baseline_command == "final":
             path = final_phantom(args.input, args.out, seed=args.seed, scatterers_count=args.scatterers_count)
         else:
@@ -511,6 +614,7 @@ def main(argv: list[str] | None = None) -> int:
             methods=methods,
             folds=args.folds,
             max_per_fold=args.max_per_fold,
+            sample_offset=args.sample_offset,
             scatterers_count=args.scatterers_count,
             include_maps=not args.no_maps,
             include_lpips=args.include_lpips,
@@ -519,6 +623,8 @@ def main(argv: list[str] | None = None) -> int:
             poll_interval_seconds=args.poll_interval_seconds,
             max_polls=args.max_polls,
             skip_existing=not args.rerun_existing,
+            learned_prior_artifact=args.learned_prior_artifact,
+            neural_prior_artifact=args.neural_prior_artifact,
         )
         result = {
             "challenge_metrics": str(Path(args.out).resolve() / "challenge_metrics_summary.csv"),
@@ -569,6 +675,22 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(json.dumps(report, sort_keys=True))
         return 0 if (not args.strict or report["promote"]) else 2
+
+    if args.command == "challenge-readiness":
+        report = challenge_readiness_report(
+            args.metrics,
+            baseline=args.baseline,
+            method=args.method,
+            submission_dir=args.submission_dir,
+            min_samples_per_method=args.min_samples_per_method,
+            require_real_lpips=args.require_real_lpips,
+            min_ms_ssim_delta=args.min_ms_ssim_delta,
+            max_lpips_delta=args.max_lpips_delta,
+            max_generation_seconds=args.max_generation_seconds,
+            max_guardrail_regression=args.max_guardrail_regression,
+        )
+        print(json.dumps(report, sort_keys=True))
+        return 0 if (not args.strict or report["local_candidate_ready"]) else 2
 
     if args.command == "optimize-physics":
         detail, summary, best_config = run_candidate_search(
@@ -726,6 +848,30 @@ def main(argv: list[str] | None = None) -> int:
         print(metrics_path)
         return 0
 
+    if args.command == "train-phantom-prior":
+        path = train_empirical_phantom_prior(
+            args.outputs_dir,
+            args.out,
+            shape=tuple(args.shape),
+            pair_limit=args.pair_limit,
+            temperature=args.temperature,
+        )
+        print(path)
+        return 0
+
+    if args.command == "train-neural-phantom-prior":
+        path = train_neural_phantom_prior(
+            args.outputs_dir,
+            args.out,
+            shape=tuple(args.shape),
+            pair_limit=args.pair_limit,
+            epochs=args.epochs,
+            learning_rate=args.learning_rate,
+            seed=args.seed,
+        )
+        print(path)
+        return 0
+
     if args.command == "optimize-empirical-basis":
         metrics_path = run_empirical_basis_refinement(
             args.ref,
@@ -800,6 +946,8 @@ def main(argv: list[str] | None = None) -> int:
             limit=args.limit,
             seed=args.seed,
             method=args.method or FINAL_CONFIG_NAME,
+            learned_prior_artifact=args.learned_prior_artifact,
+            neural_prior_artifact=args.neural_prior_artifact,
             evidence_metrics=args.evidence_metrics,
             baseline=args.baseline,
             min_samples_per_method=args.min_samples_per_method,

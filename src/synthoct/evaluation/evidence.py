@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import csv
+import json
 from collections import Counter, defaultdict
 from pathlib import Path
 
 from .summaries import HIGHER_IS_BETTER_GUARDRAILS, LOWER_IS_BETTER_GUARDRAILS, finite_float
 
 TRUE_SCANNER_SOURCES = {"hosted_api_true_scanner", "official_windows_true_scanner"}
+NON_CHALLENGE_SCANNER_SOURCES = {"learned_surrogate_preview", "learned_surrogate_holdout", "preview_renderer"}
 GROUPED_VALIDATION_PREFIX = "grouped_validation_"
 
 
@@ -64,11 +66,22 @@ def audit_challenge_evidence(
         issues.append(f"non-full-frame evaluation region present: {', '.join(evaluation_regions)}")
 
     has_real_lpips = _has_real_lpips(fieldnames, rows)
-    has_lpips_proxy = _has_metric(fieldnames, rows, ("LPIPS_or_proxy_mean", "Struct_LPIPS_PROXY", "LPIPS_PROXY"))
+    has_lpips_proxy = _has_lpips_proxy(fieldnames, rows)
+    official_missing_metrics = _official_ranking_missing_metrics(fieldnames, rows)
+    official_metric_complete = not official_missing_metrics
     if require_real_lpips and not has_real_lpips:
         issues.append("missing finite real LPIPS metric")
     elif not has_real_lpips and has_lpips_proxy:
         warnings.append("LPIPS appears to be proxy/fallback rather than real LPIPS")
+    if official_missing_metrics:
+        warnings.append(
+            "official ranking metric set is incomplete; missing "
+            + ", ".join(official_missing_metrics)
+            + ". Hidden-holdout ranking uses median MS-SSIM and 1-LPIPS over Struct/OAC/SC/RSC."
+        )
+    preliminary_failures = _preliminary_threshold_failures(fieldnames, rows)
+    if preliminary_failures:
+        warnings.append("preliminary threshold gate is not fully proven/passed: " + "; ".join(preliminary_failures))
 
     runtime_values = _generation_seconds_by_method(rows)
     if not runtime_values:
@@ -102,10 +115,16 @@ def audit_challenge_evidence(
         "evidence_scope_counts": dict(scope_counts),
         "evaluation_regions": evaluation_regions,
         "true_scanner_evidence": true_scanner,
+        "surrogate_scanner_is_true_scanner": False,
+        "true_scanner_sources": sorted(TRUE_SCANNER_SOURCES),
+        "non_challenge_scanner_sources": sorted(NON_CHALLENGE_SCANNER_SOURCES),
         "grouped_validation_evidence": grouped_validation,
         "has_ms_ssim": _has_metric(fieldnames, rows, ("MS-SSIM_mean", "Struct_MS-SSIM", "MS-SSIM")),
         "has_real_lpips": has_real_lpips,
         "has_lpips_proxy": has_lpips_proxy,
+        "official_ranking_metric_complete": official_metric_complete,
+        "official_ranking_metric_missing": official_missing_metrics,
+        "preliminary_threshold_failures": preliminary_failures,
         "max_generation_seconds": max_generation_seconds,
         "generation_seconds_max_by_method": dict(sorted(runtime_values.items())),
         "issues": issues,
@@ -168,26 +187,36 @@ def decide_candidate_promotion(
     base_lpips_wins = int(finite_float(baseline_row.get("LPIPS_wins"), 0.0))
     cand_generation_max = finite_float(candidate_row.get("generation_seconds_max"), float("inf"))
     base_generation_max = finite_float(baseline_row.get("generation_seconds_max"), float("inf"))
+    cand_official = finite_float(candidate_row.get("official_score"))
+    base_official = finite_float(baseline_row.get("official_score"))
     ms_delta = cand_ms - base_ms
     lpips_delta = cand_lpips - base_lpips
     generation_delta = cand_generation_max - base_generation_max
+    official_delta = cand_official - base_official if cand_official == cand_official and base_official == base_official else float("nan")
     ms_pass = ms_delta > min_ms_ssim_delta
     lpips_pass = lpips_delta <= max_lpips_delta
     wins_pass = cand_ms_wins >= base_ms_wins and cand_lpips_wins >= base_lpips_wins
     runtime_pass = cand_generation_max <= max_generation_seconds
+    official_metric_complete = bool(audit.get("official_ranking_metric_complete"))
+    official_pass = not official_metric_complete or (official_delta == official_delta and official_delta > 0.0)
     guardrail_deltas = _guardrail_deltas(candidate_row, baseline_row)
     guardrail_failures = _guardrail_failures(guardrail_deltas, max_guardrail_regression=max_guardrail_regression)
     guardrails_pass = not guardrail_failures
-    promote = bool(audit.get("promotion_ready")) and ms_pass and lpips_pass and wins_pass and runtime_pass and guardrails_pass
-    if not ms_pass:
+    if official_metric_complete:
+        promote = bool(audit.get("promotion_ready")) and runtime_pass and official_pass
+    else:
+        promote = bool(audit.get("promotion_ready")) and ms_pass and lpips_pass and wins_pass and runtime_pass and guardrails_pass
+    if not official_metric_complete and not ms_pass:
         warnings.append(f"candidate MS-SSIM delta {ms_delta:.6g} does not exceed {min_ms_ssim_delta:.6g}")
-    if not lpips_pass:
+    if not official_metric_complete and not lpips_pass:
         warnings.append(f"candidate LPIPS/proxy delta {lpips_delta:.6g} exceeds {max_lpips_delta:.6g}")
-    if not wins_pass:
+    if not official_metric_complete and not wins_pass:
         warnings.append("candidate does not match or exceed baseline per-sample MS-SSIM and LPIPS wins")
     if not runtime_pass:
         warnings.append(f"candidate generation runtime {cand_generation_max:.6g}s exceeds {max_generation_seconds:.6g}s")
-    if guardrail_failures:
+    if not official_pass:
+        warnings.append(f"candidate official score delta {official_delta:.6g} does not exceed 0")
+    if not official_metric_complete and guardrail_failures:
         warnings.append(f"candidate regresses physical guardrail(s): {_format_guardrail_failures(guardrail_failures)}")
 
     return {
@@ -210,6 +239,10 @@ def decide_candidate_promotion(
         "candidate_generation_seconds_max": cand_generation_max,
         "baseline_generation_seconds_max": base_generation_max,
         "generation_seconds_delta": generation_delta,
+        "candidate_official_score": cand_official,
+        "baseline_official_score": base_official,
+        "official_score_delta": official_delta,
+        "official_ranking_metric_complete": official_metric_complete,
         "max_generation_seconds": max_generation_seconds,
         "guardrail_deltas": guardrail_deltas,
         "guardrail_failures": guardrail_failures,
@@ -270,6 +303,9 @@ def select_best_candidate(
                 "candidate_MS-SSIM_wins": decision.get("candidate_MS-SSIM_wins"),
                 "candidate_LPIPS_wins": decision.get("candidate_LPIPS_wins"),
                 "candidate_generation_seconds_max": decision.get("candidate_generation_seconds_max"),
+                "candidate_official_score": decision.get("candidate_official_score"),
+                "official_score_delta": decision.get("official_score_delta"),
+                "official_ranking_metric_complete": decision.get("official_ranking_metric_complete"),
                 "guardrail_deltas": decision.get("guardrail_deltas", {}),
                 "guardrail_failures": decision.get("guardrail_failures", {}),
                 "warnings": decision.get("warnings", []),
@@ -279,6 +315,122 @@ def select_best_candidate(
         ],
         "best_decision": best,
         "interpretation": _selection_interpretation(bool(best and best.get("promote"))),
+    }
+
+
+def challenge_readiness_report(
+    metrics_csv: str | Path,
+    *,
+    baseline: str,
+    method: str | None = None,
+    submission_dir: str | Path | None = None,
+    min_samples_per_method: int = 2,
+    require_real_lpips: bool = False,
+    min_ms_ssim_delta: float = 0.0,
+    max_lpips_delta: float = 0.0,
+    max_generation_seconds: float = 600.0,
+    max_guardrail_regression: float = 0.0,
+) -> dict[str, object]:
+    """Summarize whether local evidence is ready for challenge submission.
+
+    This report intentionally separates local readiness from official victory:
+    the hidden hold-out final score can only be established by organizer
+    execution of the submitted generator/model.
+    """
+    metrics_csv = Path(metrics_csv)
+    audit = audit_challenge_evidence(
+        metrics_csv,
+        min_samples_per_method=min_samples_per_method,
+        require_real_lpips=require_real_lpips,
+        max_generation_seconds=max_generation_seconds,
+    )
+    selection = select_best_candidate(
+        metrics_csv,
+        baseline=baseline,
+        min_samples_per_method=min_samples_per_method,
+        require_real_lpips=require_real_lpips,
+        min_ms_ssim_delta=min_ms_ssim_delta,
+        max_lpips_delta=max_lpips_delta,
+        max_generation_seconds=max_generation_seconds,
+        max_guardrail_regression=max_guardrail_regression,
+    )
+    selected = selection.get("selected")
+    issues: list[str] = []
+    warnings: list[str] = ["hidden hold-out final score is not locally proven"]
+    issues.extend(str(issue) for issue in audit.get("issues", []))
+    best_decision = selection.get("best_decision")
+    if isinstance(best_decision, dict):
+        issues.extend(str(issue) for issue in best_decision.get("issues", []))
+        warnings.extend(str(warning) for warning in best_decision.get("warnings", []))
+
+    method_matches_selection = None
+    if method is not None:
+        method_matches_selection = bool(selection.get("promote")) and selected == method
+        if not method_matches_selection:
+            issues.append(f"method {method!r} is not the selected promoted candidate")
+
+    submission_report = None
+    submission_validation_present = None
+    submission_readiness_present = None
+    if submission_dir is not None:
+        submission_dir = Path(submission_dir)
+        validation_path = submission_dir / "submission_validation.csv"
+        readiness_path = submission_dir / "submission_readiness_report.json"
+        submission_validation_present = validation_path.exists()
+        submission_readiness_present = readiness_path.exists()
+        if not submission_validation_present:
+            issues.append(f"missing submission validation CSV: {validation_path}")
+        if not submission_readiness_present:
+            issues.append(f"missing submission readiness report: {readiness_path}")
+        else:
+            submission_report = _load_submission_readiness(readiness_path, issues)
+            if isinstance(submission_report, dict):
+                if submission_report.get("status") != "ready":
+                    issues.append("submission readiness report is not ready")
+                packaged_method = submission_report.get("packaged_method")
+                if method is not None and packaged_method != method:
+                    issues.append(f"submission packaged method {packaged_method!r} does not match requested method {method!r}")
+                if selection.get("promote") and packaged_method != selected:
+                    issues.append(f"submission packaged method {packaged_method!r} does not match selected method {selected!r}")
+
+    local_candidate_ready = bool(selection.get("promote")) and (method_matches_selection is not False)
+    if submission_dir is not None:
+        local_candidate_ready = (
+            local_candidate_ready
+            and submission_validation_present is True
+            and submission_readiness_present is True
+            and isinstance(submission_report, dict)
+            and submission_report.get("status") == "ready"
+        )
+    status = "local_candidate_ready" if local_candidate_ready and not issues else "not_ready"
+
+    return {
+        "status": status,
+        "local_candidate_ready": status == "local_candidate_ready",
+        "hidden_holdout_final_score": False,
+        "official_final_ranking_proven": False,
+        "metrics_csv": str(metrics_csv),
+        "baseline": baseline,
+        "method": method,
+        "selected_method": selected,
+        "submission_dir": str(submission_dir) if submission_dir is not None else None,
+        "submission_validation_present": submission_validation_present,
+        "submission_readiness_present": submission_readiness_present,
+        "submission_readiness_report": submission_report,
+        "gates": {
+            "true_scanner_grouped_full_frame_evidence": bool(audit.get("promotion_ready")),
+            "candidate_beats_baseline": bool(selection.get("promote")),
+            "method_matches_selection": method_matches_selection,
+            "submission_validation_present": submission_validation_present,
+            "submission_readiness_present": submission_readiness_present,
+            "official_ranking_metric_complete": bool(audit.get("official_ranking_metric_complete")),
+            "hidden_holdout_final_score": False,
+        },
+        "issues": _dedupe(issues),
+        "warnings": _dedupe(warnings),
+        "evidence_audit": audit,
+        "selection": selection,
+        "interpretation": _readiness_interpretation(status),
     }
 
 
@@ -339,6 +491,46 @@ def _has_real_lpips(fieldnames: list[str], rows: list[dict[str, str]]) -> bool:
     return _has_metric(fieldnames, rows, ("Struct_LPIPS", "LPIPS"))
 
 
+def _has_lpips_proxy(fieldnames: list[str], rows: list[dict[str, str]]) -> bool:
+    if "LPIPS_metric" in fieldnames:
+        return any(
+            str(row.get("LPIPS_metric", "")).upper() != "LPIPS"
+            and finite_float(row.get("LPIPS_or_proxy_mean")) == finite_float(row.get("LPIPS_or_proxy_mean"))
+            for row in rows
+        )
+
+    real_keys = [key for key in ("Struct_LPIPS", "LPIPS") if key in fieldnames]
+    proxy_keys = [key for key in ("Struct_LPIPS_PROXY", "LPIPS_PROXY") if key in fieldnames]
+    for row in rows:
+        has_real = any(finite_float(row.get(key)) == finite_float(row.get(key)) for key in real_keys)
+        has_proxy = any(finite_float(row.get(key)) == finite_float(row.get(key)) for key in proxy_keys)
+        if has_proxy and not has_real:
+            return True
+    return False
+
+
+def _official_ranking_missing_metrics(fieldnames: list[str], rows: list[dict[str, str]]) -> list[str]:
+    missing: list[str] = []
+    for map_name in ("Struct", "OAC", "SC", "RSC"):
+        ms_keys = (f"{map_name}_MS-SSIM_median", f"{map_name}_MS-SSIM_mean", f"{map_name}_MS-SSIM")
+        lpips_keys = (f"{map_name}_LPIPS_median", f"{map_name}_LPIPS_mean", f"{map_name}_LPIPS")
+        if not _has_metric(fieldnames, rows, ms_keys):
+            missing.append(f"{map_name}_MS-SSIM")
+        if not _has_metric(fieldnames, rows, lpips_keys):
+            missing.append(f"{map_name}_LPIPS")
+    return missing
+
+
+def _preliminary_threshold_failures(fieldnames: list[str], rows: list[dict[str, str]]) -> list[str]:
+    if "preliminary_threshold_failures" in fieldnames:
+        failures = sorted({str(row.get("preliminary_threshold_failures", "")) for row in rows if row.get("preliminary_threshold_failures", "")})
+        return [failure for failure in failures if failure]
+    if "preliminary_threshold_pass" in fieldnames:
+        failing = [str(row.get("method", "")) or "<missing>" for row in rows if int(finite_float(row.get("preliminary_threshold_pass"), 0.0)) != 1]
+        return [f"method threshold failure: {method}" for method in failing]
+    return []
+
+
 def _format_counts(counts: dict[str, int]) -> str:
     return ", ".join(f"{method}={count}" for method, count in sorted(counts.items()))
 
@@ -359,13 +551,14 @@ def _interpretation(status: str) -> str:
     return "Rows are not reliable challenge evidence for promotion."
 
 
-def _promotion_rank_key(decision: dict[str, object]) -> tuple[float, float, int, int, float]:
+def _promotion_rank_key(decision: dict[str, object]) -> tuple[float, float, float, float, int, float]:
     return (
         1.0 if decision.get("promote") else 0.0,
-        float(decision.get("MS-SSIM_delta", float("-inf"))),
-        -float(decision.get("LPIPS_or_proxy_delta", float("inf"))),
+        finite_float(decision.get("official_score_delta"), float("-inf")),
+        finite_float(decision.get("MS-SSIM_delta"), float("-inf")),
+        -finite_float(decision.get("LPIPS_or_proxy_delta"), float("inf")),
         int(decision.get("candidate_MS-SSIM_wins", 0)),
-        -float(decision.get("candidate_generation_seconds_max", float("inf"))),
+        -finite_float(decision.get("candidate_generation_seconds_max"), float("inf")),
     )
 
 
@@ -379,3 +572,28 @@ def _selection_interpretation(promote: bool) -> str:
     if promote:
         return "Selected candidate is the best local promoted method under the fair-evidence gate; hidden-holdout organizer execution is still required for final ranking."
     return "No candidate beats the baseline under the local fair-evidence gate."
+
+
+def _load_submission_readiness(path: Path, issues: list[str]) -> dict[str, object] | None:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        issues.append(f"invalid submission readiness report JSON: {exc}")
+    return None
+
+
+def _dedupe(values: list[str]) -> list[str]:
+    out: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        out.append(value)
+    return out
+
+
+def _readiness_interpretation(status: str) -> str:
+    if status == "local_candidate_ready":
+        return "Local evidence supports this candidate for submission preparation; official hidden-holdout execution is still required to establish final ranking."
+    return "Local evidence is not sufficient to treat this as the current fair challenge submission candidate."

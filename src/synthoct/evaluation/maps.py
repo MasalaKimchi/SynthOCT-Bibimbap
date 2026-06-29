@@ -52,15 +52,17 @@ def evaluate_feature_map_metrics(
     pred_path: str | Path,
     ref_output_dir: str | Path,
     pred_output_dir: str | Path,
+    *,
+    include_lpips: bool = False,
 ) -> dict[str, float]:
     """Generate and compare OAC, SC, and RSC maps for rendered OCT PNGs."""
     ref_maps = generate_maps(ref_path, output_dir=ref_output_dir)
     pred_maps = generate_maps(pred_path, output_dir=pred_output_dir)
     row: dict[str, float] = {}
     for map_name in ("OAC", "SC", "RSC"):
-        map_metrics = calculate_metrics(ref_maps[map_name], pred_maps[map_name], include_lpips=False)
-        row[f"{map_name}_SSIM"] = map_metrics["SSIM"]
-        row[f"{map_name}_MS-SSIM"] = map_metrics["MS-SSIM"]
+        map_metrics = calculate_metrics(ref_maps[map_name], pred_maps[map_name], include_lpips=include_lpips)
+        for key, value in map_metrics.items():
+            row[f"{map_name}_{key}"] = value
     return row
 
 

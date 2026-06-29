@@ -6,9 +6,12 @@ import json
 import zipfile
 
 import numpy as np
+import pytest
 from skimage import io as skio
 
 from synthoct.cli import main
+from synthoct.neural_prior import train_neural_phantom_prior
+from synthoct.phantom import ExperimentConfig, generate_two_layers, save_phantom
 from synthoct.scanners import resolve_api_key
 from synthoct.submission import prepare_preliminary_png_pairs, prepare_submission_bundle, validate_phantom_submission, write_preliminary_upload_plan
 
@@ -42,9 +45,44 @@ def test_prepare_submission_bundle_writes_official_artifacts(tmp_path):
     assert bundle.code_zip.exists()
     assert bundle.readme.exists()
     assert bundle.validation_csv.exists()
+    assert bundle.artifact_manifest is not None
+    assert bundle.artifact_manifest.exists()
+    assert "SHA-256" in bundle.artifact_manifest.read_text(encoding="utf-8")
     validation = list(csv.DictReader(bundle.validation_csv.open()))
     assert validation[0]["columns"] == "4"
     assert validation[0]["row_count_ok"] == "1"
+
+
+def test_prepare_submission_scales_float_png_references(tmp_path, monkeypatch):
+    import synthoct.submission.packaging as packaging
+
+    archive = tmp_path / "dataset.zip"
+    _make_nested_png_dataset(archive)
+    observed = []
+
+    def fake_final_phantom(ref_path, phantom_path, *, seed=7, scatterers_count=300_000):
+        del seed
+        image = skio.imread(ref_path, as_gray=True)
+        observed.append(float(image.max()))
+        save_phantom(
+            generate_two_layers(ExperimentConfig(scatterers_count=scatterers_count), seed=3),
+            phantom_path,
+            ExperimentConfig(scatterers_count=scatterers_count),
+        )
+        return phantom_path
+
+    monkeypatch.setattr(packaging, "final_phantom", fake_final_phantom)
+
+    prepare_submission_bundle(
+        archive,
+        tmp_path,
+        tmp_path / "submission_scaled",
+        scatterers_count=32,
+        limit=1,
+    )
+
+    assert observed
+    assert observed[0] > 1.0
 
 
 def test_cli_prepare_submission_reports_artifacts(tmp_path):
@@ -83,6 +121,95 @@ def test_prepare_submission_can_package_candidate_method(tmp_path):
 
     assert bundle.phantom_zip.name == "synthoct_h68_phantoms.zip"
     assert "H68_layer_map_prior" in bundle.readme.read_text(encoding="utf-8")
+
+
+def test_prepare_submission_can_package_learned_prior_artifact(tmp_path):
+    archive = tmp_path / "dataset.zip"
+    _make_nested_png_dataset(archive)
+    artifact = tmp_path / "prior.npz"
+    np.savez_compressed(
+        artifact,
+        density_prior=np.ones((16, 24), dtype=np.float32),
+        energy_prior=np.ones((16, 24), dtype=np.float32) * 0.5,
+    )
+
+    bundle = prepare_submission_bundle(
+        archive,
+        tmp_path,
+        tmp_path / "submission_learned_prior",
+        scatterers_count=32,
+        limit=1,
+        method="learned-prior-balanced",
+        learned_prior_artifact=artifact,
+    )
+
+    assert bundle.phantom_zip.name == "synthoct_learned-prior-balanced_phantoms.zip"
+    assert "learned-prior-balanced" in bundle.readme.read_text(encoding="utf-8")
+    with zipfile.ZipFile(bundle.code_zip) as zf:
+        names = zf.namelist()
+        assert "artifacts/prior.npz" in names
+        assert not any("__pycache__" in name or name.endswith(".pyc") for name in names)
+
+
+def test_prepare_submission_can_package_neural_prior_artifact(tmp_path):
+    pytest.importorskip("torch")
+    archive = tmp_path / "dataset.zip"
+    _make_nested_png_dataset(archive)
+    outputs = tmp_path / "outputs" / "neural_training"
+    outputs.mkdir(parents=True)
+    reference = outputs / "reference.npy"
+    rendered = outputs / "rendered.npy"
+    source_phantom = outputs / "source_phantom.txt"
+    np.save(reference, np.tile(np.linspace(0.1, 0.8, 32, dtype=np.float32)[:, None], (1, 48)))
+    np.save(rendered, np.tile(np.linspace(0.1, 0.7, 32, dtype=np.float32)[:, None], (1, 48)))
+    save_phantom(
+        generate_two_layers(ExperimentConfig(scatterers_count=64), seed=19),
+        source_phantom,
+        ExperimentConfig(scatterers_count=64),
+    )
+    metrics = outputs / "internal_validation_detail.csv"
+    with metrics.open("w", newline="") as fobj:
+        writer = csv.DictWriter(
+            fobj,
+            fieldnames=[
+                "method",
+                "evidence_source",
+                "reference_png",
+                "phantom_path",
+                "synthetic_gray_png",
+                "Struct_MS-SSIM",
+                "Struct_LPIPS",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "method": "scanner_pair",
+                "evidence_source": "hosted_api_true_scanner",
+                "reference_png": str(reference),
+                "phantom_path": str(source_phantom),
+                "synthetic_gray_png": str(rendered),
+                "Struct_MS-SSIM": "0.70",
+                "Struct_LPIPS": "0.35",
+            }
+        )
+    artifact = tmp_path / "neural_prior.pt"
+    train_neural_phantom_prior(tmp_path / "outputs", artifact, shape=(16, 24), epochs=1)
+
+    bundle = prepare_submission_bundle(
+        archive,
+        tmp_path,
+        tmp_path / "submission_neural_prior",
+        scatterers_count=32,
+        limit=1,
+        method="neural-prior",
+        neural_prior_artifact=artifact,
+    )
+
+    assert bundle.phantom_zip.name == "synthoct_neural-prior_phantoms.zip"
+    assert "neural-prior" in bundle.readme.read_text(encoding="utf-8")
+    with zipfile.ZipFile(bundle.code_zip) as zf:
+        assert "artifacts/neural_prior.pt" in zf.namelist()
 
 
 def _write_selection_metrics(path, promoted_method="H68_layer_map_prior"):
@@ -148,8 +275,28 @@ def test_prepare_submission_writes_readiness_report_for_selected_method(tmp_path
     report = json.loads(bundle.readiness_report.read_text(encoding="utf-8"))
     assert report["status"] == "ready"
     assert report["packaged_method"] == "H68_layer_map_prior"
+    artifact_text = bundle.artifact_manifest.read_text(encoding="utf-8") if bundle.artifact_manifest else ""
+    assert "Readiness status: `ready`" in artifact_text
+    assert "submission_readiness_report.json" in artifact_text
     with zipfile.ZipFile(bundle.phantom_zip) as zf:
         assert "submission_readiness_report.json" in zf.namelist()
+    assert (
+        main(
+            [
+                "challenge-readiness",
+                "--metrics",
+                str(metrics),
+                "--baseline",
+                "H61_api_low_depth_prelim",
+                "--method",
+                "H68_layer_map_prior",
+                "--submission-dir",
+                str(tmp_path / "submission_h68_ready"),
+                "--strict",
+            ]
+        )
+        == 0
+    )
 
 
 def test_prepare_submission_strict_evidence_rejects_unselected_method(tmp_path):
@@ -243,8 +390,10 @@ def test_write_preliminary_upload_plan_sorts_by_ms_ssim(tmp_path):
 
 def test_prepare_preliminary_png_pairs_copies_ranked_files(tmp_path):
     synthetic = tmp_path / "source_synthetic.png"
+    synthetic_gray = tmp_path / "source_synthetic_gray.png"
     reference = tmp_path / "source_reference.png"
     synthetic.write_bytes(b"synthetic")
+    synthetic_gray.write_bytes(b"synthetic-gray")
     reference.write_bytes(b"reference")
     plan = tmp_path / "plan.csv"
     with plan.open("w", newline="") as f:
@@ -256,6 +405,7 @@ def test_prepare_preliminary_png_pairs_copies_ranked_files(tmp_path):
                 "evidence_scope",
                 "source_archive_path",
                 "synthetic_png",
+                "synthetic_gray_png",
                 "reference_png",
                 "MS-SSIM",
                 "SSIM",
@@ -270,6 +420,7 @@ def test_prepare_preliminary_png_pairs_copies_ranked_files(tmp_path):
                 "evidence_scope": "submission_manifest_render",
                 "source_archive_path": "DATASET_PNG/Female/scan_frame1.png",
                 "synthetic_png": str(synthetic),
+                "synthetic_gray_png": str(synthetic_gray),
                 "reference_png": str(reference),
                 "MS-SSIM": "0.5",
             }
@@ -280,5 +431,5 @@ def test_prepare_preliminary_png_pairs_copies_ranked_files(tmp_path):
     assert len(rows) == 1
     assert rows[0]["evidence_source"] == "hosted_api_true_scanner"
     assert rows[0]["evidence_scope"] == "submission_manifest_render"
-    assert (tmp_path / "pairs" / "synthetic_scans" / "001_scan_frame1_synthetic.png").read_bytes() == b"synthetic"
+    assert (tmp_path / "pairs" / "synthetic_scans" / "001_scan_frame1_synthetic.png").read_bytes() == b"synthetic-gray"
     assert (tmp_path / "pairs" / "real_reference_scans" / "001_scan_frame1_reference.png").read_bytes() == b"reference"

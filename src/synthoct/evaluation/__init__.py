@@ -9,7 +9,7 @@ from .maps import (
     safe_corr,
 )
 from .metrics import calculate_metrics, lpips_proxy, metric_evaluation_metadata, multiscale_ssim_fallback
-from .evidence import audit_challenge_evidence, decide_candidate_promotion, select_best_candidate
+from .evidence import audit_challenge_evidence, challenge_readiness_report, decide_candidate_promotion, select_best_candidate
 from .summaries import (
     challenge_lpips_key,
     finite_float,
@@ -28,6 +28,7 @@ __all__ = [
     "metric_evaluation_metadata",
     "multiscale_ssim_fallback",
     "audit_challenge_evidence",
+    "challenge_readiness_report",
     "decide_candidate_promotion",
     "select_best_candidate",
     "profile_scores",

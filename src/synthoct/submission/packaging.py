@@ -1,18 +1,27 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import tempfile
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
-import numpy as np
-from skimage import io
-
-from synthoct.dataset import iter_records, load_scan_from_zip
+from synthoct.dataset import iter_records, write_scan_png_from_zip
 from synthoct.evaluation import select_best_candidate
-from synthoct.generators import FINAL_CONFIG_NAME, PROMISING_PIPELINE_CONFIGS, VISUAL_PIPELINE_CONFIGS, final_phantom, hypothesis_phantom, pipeline_phantom
+from synthoct.generators import (
+    FINAL_CONFIG_NAME,
+    PROMISING_PIPELINE_CONFIGS,
+    VISUAL_PIPELINE_CONFIGS,
+    final_phantom,
+    hybrid_neural_prior_phantom,
+    hypothesis_phantom,
+    learned_prior_phantom,
+    pipeline_phantom,
+)
+from synthoct.learned_prior import LEARNED_PRIOR_CONFIGS
+from synthoct.neural_prior import HYBRID_PRIOR_CONFIGS, HYBRID_PRIOR_METHODS, NEURAL_PRIOR_METHODS, neural_prior_phantom
 from synthoct.phantom import ExperimentConfig, load_phantom
 
 
@@ -27,6 +36,7 @@ class SubmissionArtifact:
     readme: Path
     validation_csv: Path
     readiness_report: Path | None = None
+    artifact_manifest: Path | None = None
 
 
 def safe_stem(archive_path: str) -> str:
@@ -84,6 +94,11 @@ def validate_phantom_submission(out_dir: str | Path, scatterers_count: int = 300
 def write_submission_readme(out_dir: str | Path, scatterers_count: int = 300_000, method: str = FINAL_CONFIG_NAME) -> Path:
     out_dir = Path(out_dir)
     tag = method_tag(method)
+    artifact_line = (
+        "- `artifacts/`: learned-prior/model artifacts included in the code submission zip."
+        if method.startswith("learned-prior") or method in NEURAL_PRIOR_METHODS or method in HYBRID_PRIOR_METHODS
+        else ""
+    )
     readme = out_dir / "SUBMISSION_README.md"
     readme.write_text(
         "\n".join(
@@ -106,6 +121,7 @@ def write_submission_readme(out_dir: str | Path, scatterers_count: int = 300_000
                 "- `submission_validation.csv`: local schema/bounds check for every phantom.",
                 f"- `synthoct_{tag}_phantoms.zip`: challenge-format phantom archive.",
                 "- `synthoct_bibimbap_code_submission.zip`: source package for final code/model review.",
+                artifact_line,
                 "",
                 "## Preliminary Portal PNG Pairs",
                 "",
@@ -134,6 +150,8 @@ def prepare_phantom_submission(
     limit: int | None = None,
     seed: int = 7,
     method: str = FINAL_CONFIG_NAME,
+    learned_prior_artifact: str | Path | None = None,
+    neural_prior_artifact: str | Path | None = None,
 ) -> tuple[Path, Path]:
     out_dir = Path(out_dir)
     tag = method_tag(method)
@@ -161,12 +179,46 @@ def prepare_phantom_submission(
         )
         writer.writeheader()
         for idx, record in enumerate(records):
-            arr = load_scan_from_zip(zip_path, record.archive_path)
             ref_path = tmp / f"{idx:04d}.png"
-            io.imsave(ref_path, np.clip(arr, 0, 255).astype(np.uint8))
+            write_scan_png_from_zip(zip_path, record.archive_path, ref_path)
             phantom_path = phantom_dir / f"{safe_stem(record.archive_path)}__{tag.upper()}.txt"
             if method == FINAL_CONFIG_NAME:
                 final_phantom(ref_path, phantom_path, seed=seed + idx, scatterers_count=scatterers_count)
+            elif method == "learned-prior" or method in LEARNED_PRIOR_CONFIGS:
+                if learned_prior_artifact is None:
+                    raise ValueError(f"--learned-prior-artifact is required when --method {method}.")
+                learned_prior_phantom(
+                    ref_path,
+                    phantom_path,
+                    learned_prior_artifact,
+                    seed=seed + idx,
+                    scatterers_count=scatterers_count,
+                    **LEARNED_PRIOR_CONFIGS.get(method, {}),
+                )
+            elif method in NEURAL_PRIOR_METHODS:
+                if neural_prior_artifact is None:
+                    raise ValueError(f"--neural-prior-artifact is required when --method {method}.")
+                neural_prior_phantom(
+                    ref_path,
+                    phantom_path,
+                    neural_prior_artifact,
+                    seed=seed + idx,
+                    scatterers_count=scatterers_count,
+                )
+            elif method in HYBRID_PRIOR_METHODS:
+                if learned_prior_artifact is None:
+                    raise ValueError(f"--learned-prior-artifact is required when --method {method}.")
+                if neural_prior_artifact is None:
+                    raise ValueError(f"--neural-prior-artifact is required when --method {method}.")
+                hybrid_neural_prior_phantom(
+                    ref_path,
+                    phantom_path,
+                    learned_prior_artifact,
+                    neural_prior_artifact,
+                    seed=seed + idx,
+                    scatterers_count=scatterers_count,
+                    **HYBRID_PRIOR_CONFIGS[method],
+                )
             elif method in PROMISING_PIPELINE_CONFIGS or method in VISUAL_PIPELINE_CONFIGS:
                 pipeline_phantom(ref_path, phantom_path, method, seed=seed + idx, scatterers_count=scatterers_count)
             else:
@@ -196,7 +248,7 @@ def prepare_phantom_submission(
     return manifest_path, zip_out
 
 
-def prepare_code_submission(repo_root: str | Path, out_dir: str | Path) -> Path:
+def prepare_code_submission(repo_root: str | Path, out_dir: str | Path, extra_files: list[str | Path] | None = None) -> Path:
     repo_root = Path(repo_root)
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -215,6 +267,10 @@ def prepare_code_submission(repo_root: str | Path, out_dir: str | Path) -> Path:
             for path in base.rglob("*"):
                 if path.is_file() and "__pycache__" not in path.parts:
                     zf.write(path, path.relative_to(repo_root).as_posix())
+        for extra_file in extra_files or []:
+            path = Path(extra_file)
+            if path.exists():
+                zf.write(path, f"artifacts/{path.name}")
     return zip_out
 
 
@@ -262,6 +318,105 @@ def write_submission_readiness_report(
     return report_path
 
 
+def write_submission_artifact_manifest(
+    out_dir: str | Path,
+    *,
+    method: str,
+    manifest: str | Path,
+    validation_csv: str | Path,
+    phantom_zip: str | Path,
+    code_zip: str | Path,
+    readiness_report: str | Path | None = None,
+) -> Path:
+    """Write an output-side checksum manifest after zip files are finalized."""
+    out_dir = Path(out_dir)
+    manifest = Path(manifest)
+    validation_csv = Path(validation_csv)
+    phantom_zip = Path(phantom_zip)
+    code_zip = Path(code_zip)
+    readiness_path = Path(readiness_report) if readiness_report is not None else None
+
+    manifest_rows = _csv_row_count(manifest)
+    validation_rows = _csv_row_count(validation_csv)
+    row_count_failures = _validation_failure_count(validation_csv)
+    readiness_status = ""
+    packaged_method = method
+    selected_method = ""
+    hidden_holdout = False
+    if readiness_path is not None and readiness_path.exists():
+        report = json.loads(readiness_path.read_text(encoding="utf-8"))
+        readiness_status = str(report.get("status", ""))
+        packaged_method = str(report.get("packaged_method", packaged_method))
+        selected_method = str(report.get("selected_method", ""))
+        selection = report.get("selection", {})
+        if isinstance(selection, dict):
+            best = selection.get("best_decision", {})
+            if isinstance(best, dict):
+                hidden_holdout = bool(best.get("hidden_holdout_final_score", False))
+
+    entries = [code_zip, phantom_zip, manifest, validation_csv]
+    if readiness_path is not None:
+        entries.append(readiness_path)
+
+    lines = [
+        "# Submission Artifact Manifest",
+        "",
+        f"- Directory: `{out_dir.as_posix()}`",
+        f"- Method: `{packaged_method}`",
+        f"- Selected method: `{selected_method}`" if selected_method else "",
+        f"- Manifest rows: `{manifest_rows}`",
+        f"- Validation rows: `{validation_rows}`",
+        f"- Row-count failures: `{row_count_failures}`",
+        f"- Readiness status: `{readiness_status}`" if readiness_status else "",
+        f"- Hidden hold-out final score: `{str(hidden_holdout).lower()}`",
+        "",
+        "This is a local package-integrity manifest. It is written after the zip files are finalized so the hashes below are stable.",
+        "",
+        "## SHA-256",
+        "",
+        "```text",
+    ]
+    lines.extend(f"{_sha256_file(path)}  {path.as_posix()}" for path in entries)
+    lines.extend(
+        [
+            "```",
+            "",
+            "## Zip Integrity",
+            "",
+            "Both submission zip files should pass:",
+            "",
+            "```bash",
+            f"unzip -t {phantom_zip.as_posix()}",
+            f"unzip -t {code_zip.as_posix()}",
+            "```",
+            "",
+            "Official final ranking still requires organizer execution on hidden hold-out data.",
+            "",
+        ]
+    )
+    out = out_dir / "artifact_manifest.md"
+    out.write_text("\n".join(lines), encoding="utf-8")
+    return out
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _csv_row_count(path: Path) -> int:
+    with path.open(newline="") as f:
+        return sum(1 for _row in csv.DictReader(f))
+
+
+def _validation_failure_count(path: Path) -> int:
+    with path.open(newline="") as f:
+        return sum(1 for row in csv.DictReader(f) if str(row.get("row_count_ok", "")) != "1")
+
+
 def prepare_submission_bundle(
     zip_path: str | Path,
     repo_root: str | Path,
@@ -277,6 +432,8 @@ def prepare_submission_bundle(
     max_generation_seconds: float = 600.0,
     max_guardrail_regression: float = 0.0,
     strict_evidence: bool = False,
+    learned_prior_artifact: str | Path | None = None,
+    neural_prior_artifact: str | Path | None = None,
 ) -> SubmissionArtifact:
     manifest, phantom_zip = prepare_phantom_submission(
         zip_path,
@@ -285,8 +442,11 @@ def prepare_submission_bundle(
         limit=limit,
         seed=seed,
         method=method,
+        learned_prior_artifact=learned_prior_artifact,
+        neural_prior_artifact=neural_prior_artifact,
     )
-    code_zip = prepare_code_submission(repo_root, out_dir)
+    extra_code_files = [path for path in (learned_prior_artifact, neural_prior_artifact) if path is not None] or None
+    code_zip = prepare_code_submission(repo_root, out_dir, extra_files=extra_code_files)
     out_dir = Path(out_dir)
     readiness_report = None
     if evidence_metrics is not None:
@@ -305,6 +465,15 @@ def prepare_submission_bundle(
         )
         with zipfile.ZipFile(phantom_zip, "a", compression=zipfile.ZIP_DEFLATED) as zf:
             zf.write(readiness_report, readiness_report.name)
+    artifact_manifest = write_submission_artifact_manifest(
+        out_dir,
+        method=method,
+        manifest=manifest,
+        validation_csv=out_dir / "submission_validation.csv",
+        phantom_zip=phantom_zip,
+        code_zip=code_zip,
+        readiness_report=readiness_report,
+    )
     return SubmissionArtifact(
         manifest=manifest,
         phantom_zip=phantom_zip,
@@ -312,4 +481,5 @@ def prepare_submission_bundle(
         readme=out_dir / "SUBMISSION_README.md",
         validation_csv=out_dir / "submission_validation.csv",
         readiness_report=readiness_report,
+        artifact_manifest=artifact_manifest,
     )

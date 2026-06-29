@@ -26,7 +26,8 @@ class ScannerPair:
 def discover_scanner_pairs(outputs_dir: str | Path = "outputs", limit: int = 64) -> list[ScannerPair]:
     """Collect existing hosted-scanner phantom/render pairs from metrics CSVs."""
     pairs: dict[Path, ScannerPair] = {}
-    for metrics_path in Path(outputs_dir).glob("**/*metrics*.csv"):
+    csv_paths = sorted(set(Path(outputs_dir).glob("**/*metrics*.csv")) | set(Path(outputs_dir).glob("**/*validation_detail.csv")))
+    for metrics_path in csv_paths:
         try:
             rows = list(csv.DictReader(metrics_path.open()))
         except Exception:
@@ -41,7 +42,7 @@ def discover_scanner_pairs(outputs_dir: str | Path = "outputs", limit: int = 64)
             if not phantom_path.exists() or not rendered_path.exists():
                 continue
             try:
-                ssim = float(row.get("SSIM", "nan"))
+                ssim = float(row.get("SSIM") or row.get("Struct_SSIM") or "nan")
             except ValueError:
                 continue
             if not np.isfinite(ssim):

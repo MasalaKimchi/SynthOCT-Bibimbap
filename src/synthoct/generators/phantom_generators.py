@@ -434,6 +434,152 @@ def visual_inversion_phantom(
     raise ValueError(f"Unknown visual inversion recipe: {recipe}")
 
 
+def learned_prior_phantom(
+    input_path: str | Path,
+    output_path: str | Path,
+    artifact_path: str | Path,
+    seed: int = 7,
+    scatterers_count: int = 300_000,
+    target_blend: float = 0.62,
+    prior_blend: float = 0.38,
+    texture_weight: float = 0.24,
+    energy_scale: float = 1.0,
+    density_power: float = 1.0,
+    energy_sigma: float = 0.10,
+) -> Path:
+    """Generate a scanner-compatible phantom using an empirical learned prior artifact.
+
+    The learned artifact influences density/energy fields only. The output is
+    still a challenge-format scatterer table and must be rendered by the true
+    scanner before it counts as challenge evidence.
+    """
+    config = ExperimentConfig(scatterers_count=scatterers_count)
+    shape = (config.n_depth, config.n_lateral)
+    density, energy = learned_prior_fields(
+        input_path,
+        artifact_path,
+        shape=shape,
+        target_blend=target_blend,
+        prior_blend=prior_blend,
+        texture_weight=texture_weight,
+        energy_scale=energy_scale,
+        density_power=density_power,
+    )
+    return _sample_density_energy_fields(
+        density,
+        energy,
+        output_path,
+        seed=seed,
+        scatterers_count=scatterers_count,
+        energy_sigma=energy_sigma,
+    )
+
+
+def learned_prior_fields(
+    input_path: str | Path,
+    artifact_path: str | Path,
+    *,
+    shape: tuple[int, int],
+    target_blend: float = 0.62,
+    prior_blend: float = 0.38,
+    texture_weight: float = 0.24,
+    energy_scale: float = 1.0,
+    density_power: float = 1.0,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Compute learned-prior density and energy fields without sampling."""
+    prior = np.load(artifact_path, allow_pickle=False)
+    density_prior = _normalize(_resized_feature(prior["density_prior"], shape, sigma=(0.7, 1.1)), floor=1e-5)
+    energy_prior = _normalize(_resized_feature(prior["energy_prior"], shape, sigma=(0.7, 1.1)), floor=1e-5)
+
+    img = load_scan(input_path)
+    linear = load_and_linearize_image(input_path)
+    oac = calculate_oac(linear)
+    speckle = calculate_speckle_contrast_map(linear)
+    target = _normalize(_resized_feature(img, shape, sigma=(1.0, 2.2)), floor=1e-5)
+    detail = _normalize(_resized_feature(np.maximum(img - gaussian_filter(img, sigma=(0.8, 1.2)), 0.0), shape, sigma=0.6))
+    oac_map = _normalize(_resized_feature(oac, shape, sigma=(0.4, 1.0)))
+    speckle_map = _normalize(_resized_feature(speckle, shape, sigma=0.8))
+
+    rows = np.arange(shape[0], dtype=np.float64)[:, None]
+    boundary = estimate_layer_boundary(img)
+    boundary_bin = boundary / max(1, img.shape[0] - 1) * (shape[0] - 1)
+    tissue_gate = 1.0 / (1.0 + np.exp(-(rows - boundary_bin - 2.0) / 3.0))
+    surface_band = np.exp(-0.5 * ((rows - boundary_bin - 34.0) / max(8.0, shape[0] * 0.10)) ** 2)
+    attenuation = np.exp(-np.maximum(rows - boundary_bin, 0.0) / max(18.0, shape[0] * 0.28))
+
+    target_density = (
+        0.002
+        + (0.58 * target + 0.22 * oac_map + texture_weight * (0.65 * detail + 0.35 * speckle_map))
+        * tissue_gate
+        * (0.35 + 0.65 * attenuation)
+        * (0.55 + 0.45 * surface_band)
+    )
+    target_energy = 0.012 + 0.038 * target + 0.024 * oac_map + 0.010 * speckle_map
+    prior_blend = float(np.clip(prior_blend, 0.0, 1.0))
+    target_blend = float(np.clip(target_blend, 0.0, 1.0))
+    total = max(prior_blend + target_blend, 1e-6)
+    prior_w = prior_blend / total
+    target_w = target_blend / total
+    density = _normalize(prior_w * density_prior + target_w * target_density, floor=1e-8)
+    density = np.maximum(density, 1e-8) ** max(0.05, density_power)
+    energy = np.clip((prior_w * (0.010 + 0.055 * energy_prior) + target_w * target_energy) * energy_scale, 0.001, 0.12)
+    return density, energy
+
+
+def hybrid_neural_prior_phantom(
+    input_path: str | Path,
+    output_path: str | Path,
+    learned_artifact_path: str | Path,
+    neural_artifact_path: str | Path,
+    seed: int = 7,
+    scatterers_count: int = 300_000,
+    neural_density_blend: float = 0.10,
+    neural_energy_blend: float = 0.0,
+    target_blend: float = 0.62,
+    prior_blend: float = 0.38,
+    texture_weight: float = 0.32,
+    density_power: float = 14.0,
+    energy_sigma: float = 0.10,
+) -> Path:
+    """Blend p140-t32 learned-prior fields with neural fields before sampling.
+
+    The intent is to keep the learned-prior physical-map behavior while testing
+    whether a small neural density contribution reduces Structural LPIPS.
+    """
+    from synthoct.neural_prior import neural_prior_fields
+
+    config = ExperimentConfig(scatterers_count=scatterers_count)
+    shape = (config.n_depth, config.n_lateral)
+    learned_density, learned_energy = learned_prior_fields(
+        input_path,
+        learned_artifact_path,
+        shape=shape,
+        target_blend=target_blend,
+        prior_blend=prior_blend,
+        texture_weight=texture_weight,
+        density_power=density_power,
+    )
+    neural_density, neural_energy = neural_prior_fields(
+        input_path,
+        neural_artifact_path,
+        shape=shape,
+        density_power=1.0,
+        target_detail_blend=0.10,
+    )
+    density_blend = float(np.clip(neural_density_blend, 0.0, 1.0))
+    energy_blend = float(np.clip(neural_energy_blend, 0.0, 1.0))
+    density = _normalize((1.0 - density_blend) * learned_density + density_blend * _normalize(neural_density, floor=1e-8), floor=1e-8)
+    energy = np.clip((1.0 - energy_blend) * learned_energy + energy_blend * (0.002 + 0.073 * _normalize(neural_energy)), 0.001, 0.12)
+    return _sample_density_energy_fields(
+        density,
+        energy,
+        output_path,
+        seed=seed,
+        scatterers_count=scatterers_count,
+        energy_sigma=energy_sigma,
+    )
+
+
 def pipeline_phantom(
     input_path: str | Path,
     output_path: str | Path,

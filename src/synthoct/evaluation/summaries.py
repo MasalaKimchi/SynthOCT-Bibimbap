@@ -15,6 +15,14 @@ HIGHER_IS_BETTER_GUARDRAILS = (
     "RSC_MS-SSIM",
 )
 LOWER_IS_BETTER_GUARDRAILS = ("SCMeanAbsErr",)
+OFFICIAL_EVALUATION_MAPS = ("Struct", "OAC", "SC", "RSC")
+PRELIMINARY_MS_SSIM_THRESHOLDS = {
+    "Struct": 0.3,
+    "OAC": 0.4,
+    "SC": 0.4,
+    "RSC": 0.5,
+}
+PRELIMINARY_LPIPS_THRESHOLD = 0.4
 
 
 def challenge_lpips_key(row: dict[str, float | str], suffix: str = "") -> str:
@@ -83,6 +91,7 @@ def summarize_challenge_metrics(rows: list[dict[str, float | str]]) -> list[dict
         lpips_values = lpips_values[np.isfinite(lpips_values)]
         generation_values = generation_values[np.isfinite(generation_values)]
         guardrails = _guardrail_means(method_rows)
+        official = _official_ranking_summary(method_rows)
         out.append(
             {
                 "method": method,
@@ -101,10 +110,19 @@ def summarize_challenge_metrics(rows: list[dict[str, float | str]]) -> list[dict
                 "LPIPS_or_proxy_std": float(lpips_values.std(ddof=0)) if lpips_values.size else np.nan,
                 "MS-SSIM_wins": int(ms_wins[method]),
                 "LPIPS_wins": int(lpips_wins[method]),
+                **official,
                 **guardrails,
             }
         )
-    out.sort(key=lambda row: (finite_float(row.get("MS-SSIM_mean"), -1.0), -finite_float(row.get("LPIPS_or_proxy_mean"), np.inf)), reverse=True)
+    out.sort(
+        key=lambda row: (
+            int(finite_float(row.get("official_metric_complete"), 0.0)),
+            finite_float(row.get("official_score"), -1.0),
+            finite_float(row.get("MS-SSIM_mean"), -1.0),
+            -finite_float(row.get("LPIPS_or_proxy_mean"), np.inf),
+        ),
+        reverse=True,
+    )
     return out
 
 
@@ -125,6 +143,54 @@ def _guardrail_means(rows: list[dict[str, float | str]]) -> dict[str, float]:
         if values.size:
             out[f"{key}_mean"] = float(values.mean())
     return out
+
+
+def _official_ranking_summary(rows: list[dict[str, float | str]]) -> dict[str, float | str]:
+    """Compute the handout-described median score when all official metrics exist."""
+    out: dict[str, float | str] = {}
+    score_terms: list[float] = []
+    missing: list[str] = []
+    medians: dict[str, tuple[float, float]] = {}
+    for map_name in OFFICIAL_EVALUATION_MAPS:
+        ms_values = _finite_values(rows, f"{map_name}_MS-SSIM")
+        lpips_values = _finite_values(rows, f"{map_name}_LPIPS")
+        if ms_values.size:
+            median_ms = float(np.median(ms_values))
+            out[f"{map_name}_MS-SSIM_median"] = median_ms
+            score_terms.append(median_ms)
+        else:
+            missing.append(f"{map_name}_MS-SSIM")
+        if lpips_values.size:
+            median_lpips = float(np.median(lpips_values))
+            out[f"{map_name}_LPIPS_median"] = median_lpips
+            out[f"{map_name}_LPIPS_inverted_median"] = float(1.0 - median_lpips)
+            score_terms.append(float(1.0 - median_lpips))
+            if f"{map_name}_MS-SSIM_median" in out:
+                medians[map_name] = (float(out[f"{map_name}_MS-SSIM_median"]), median_lpips)
+        else:
+            missing.append(f"{map_name}_LPIPS")
+    complete = not missing and len(score_terms) == len(OFFICIAL_EVALUATION_MAPS) * 2
+    out["official_metric_complete"] = int(complete)
+    out["official_score"] = float(np.mean(score_terms)) if complete else np.nan
+    out["official_missing_metrics"] = ";".join(missing)
+    threshold_failures: list[str] = []
+    if complete:
+        for map_name, ms_threshold in PRELIMINARY_MS_SSIM_THRESHOLDS.items():
+            median_ms, median_lpips = medians[map_name]
+            if median_ms <= ms_threshold:
+                threshold_failures.append(f"{map_name}_MS-SSIM<={ms_threshold:g}")
+            if median_lpips >= PRELIMINARY_LPIPS_THRESHOLD:
+                threshold_failures.append(f"{map_name}_LPIPS>={PRELIMINARY_LPIPS_THRESHOLD:g}")
+    else:
+        threshold_failures.extend(missing)
+    out["preliminary_threshold_pass"] = int(complete and not threshold_failures)
+    out["preliminary_threshold_failures"] = ";".join(threshold_failures)
+    return out
+
+
+def _finite_values(rows: list[dict[str, float | str]], key: str) -> np.ndarray:
+    values = np.array([finite_float(row.get(key)) for row in rows], dtype=float)
+    return values[np.isfinite(values)]
 
 
 def summarize_sample_wins(rows: list[dict[str, float | str]], score_key: str = "Struct_MS-SSIM") -> list[dict[str, float | str]]:
