@@ -113,14 +113,14 @@ Exact-source exclusion produced no rows because the strict map-safe sources had 
 
 On 2026-06-30, hosted validation could not continue because `synthoct.com:443` timed out from this machine. Both concurrency `4` and concurrency `1` failed before request IDs were assigned, and direct `curl` checks to `https://synthoct.com/` also timed out.
 
-Partial failed-output folders from that outage are:
+Partial failed-output folders from that outage were pruned during the `outputs/` cleanup because they contained only failed rows:
 
 ```text
 outputs/residual_selector_public_teacher/probe_batch_feedback15_oac_map_safe_concurrency4
 outputs/residual_selector_public_teacher/probe_batch_feedback15_oac_map_safe_smoke4_concurrency1
 ```
 
-Rows in those partial metrics have `request_id=failed`, so they do not appear to represent spent hosted scanner jobs.
+Rows in those partial metrics had `request_id=failed`, so they did not appear to represent spent hosted scanner jobs.
 
 ## Resume Plan
 
