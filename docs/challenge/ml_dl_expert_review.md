@@ -82,3 +82,16 @@ The next ML/DL attempt should preserve `p140-t32` density stability while learni
 3. Use losses aligned to Structural, OAC, SC, and RSC maps, not only image-space reconstruction.
 4. Gate all candidates through true-scanner grouped validation with real LPIPS.
 5. Promote only if the official aggregate beats `learned-prior-sparse-p140-t32` on a broader matched split and does not merely improve Structural LPIPS in isolation.
+
+The concrete execution plan is in [next_approach.md](next_approach.md).
+
+## Residual Trainer Shape
+
+The next model should not be a direct OCT image generator and should not replace the entire density field. It should learn a compact residual policy around `p140-t32`:
+
+- input features: normalized reference intensity, OAC proxy, speckle contrast, refined speckle contrast, depth profile, body-site traits, frame traits, and current `p140-t32` metric context when available;
+- outputs: residual strength, low-frequency flow parameters, energy exponent/sigma, attenuation-normalized row energy correction, and speckle texture controls;
+- losses: official-style Struct/OAC/SC/RSC MS-SSIM and LPIPS terms, plus penalties for map-regression lower-confidence bounds;
+- validation: grouped source holdout first, hosted true-scanner confirmation second.
+
+The current OAC-aware residual selector is a teacher-data distillation tool. It can choose API probes, but the expected gain is small. If the next hosted run is flat, the right response is to train a richer residual policy from the accumulated feedback rather than broaden hand-tuned scalar sweeps.

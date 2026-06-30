@@ -56,7 +56,7 @@ The evidence supports `learned-prior-sparse-p140-t32` as the best general algori
 
 The flow+energy adaptive patch has the highest measured public-set score, but it is selected using public validation failures and per-row true-scanner feedback. That makes it valuable as a rescue layer and as evidence that residual alignment can improve many cases, but weaker as a hidden-holdout generalization claim. The conservative final-generator interpretation should therefore remain `learned-prior-sparse-p140-t32`, with the patch described separately as a public-set postprocessing extension.
 
-The main unresolved bottleneck is perceptual structural similarity. Neural-prior experiments reduced Structural LPIPS in some splits, but they degraded MS-SSIM and physical-map metrics enough that they did not replace `p140-t32`. A next-generation method should learn residual density/energy or parameter selection from true-scanner evidence while constraining OAC, SC, and RSC map preservation.
+The main unresolved bottleneck is perceptual structural similarity. Neural-prior experiments reduced Structural LPIPS in some splits, but they degraded MS-SSIM and physical-map metrics enough that they did not replace `p140-t32`. A next-generation method should learn topology-preserving residual energy, low-frequency geometry, attenuation, and speckle-statistic controls from true-scanner evidence while constraining OAC, SC, and RSC map preservation. The current next-approach plan is documented in [next_approach.md](next_approach.md).
 
 ## Conclusion
 
@@ -70,3 +70,4 @@ The current best general SynthOCT-Bibimbap method is an empirical learned-prior 
 - Conservative full package: `outputs/submission_ready_learned_prior_sparse_p140_t32_full_corrected`
 - Best measured public-set rescue package: `outputs/submission_ready_p140_t32_flow_energy_rank120_adaptive_rank36_patch`
 - Current Stage 2 residual journey and resume note: `docs/challenge/stage2_oac_residual_journey.md`
+- Next approach and promotion gate: `docs/challenge/next_approach.md`

@@ -2,6 +2,8 @@
 
 This note records the current state of the push from the stable `p140-t32` learned-prior topology toward a Stage 2 residual selector/trainer. It is written as a resume point for the next scanner-available session.
 
+The current execution plan is maintained in [next_approach.md](next_approach.md). That plan records the post-audit decision to treat the current selector as a low-risk retest, while building toward a richer residual trainer that preserves `p140-t32` topology.
+
 ## Current Position
 
 Stage 1 should stay frozen as the `learned-prior-sparse-p140-t32` density topology. The best general generator remains `learned-prior-sparse-p140-t32`, while flow and energy patches are public-set rescue layers. They are useful teacher data, but they are not hidden-holdout breakthroughs.
@@ -55,6 +57,8 @@ The better Stage 2 direction is parameter selection and residual control distill
 - use flow and energy patches as teacher data;
 - reject candidates unless uncertainty-gated and map-safe;
 - require hosted true-scanner validation before promotion.
+
+The important audit caveat is that the current selector is not expected to jump directly to `0.85` or `0.90` MS-SSIM. Its strict map-safe queue is an incremental non-harm test: the mean expected delta LCB is small, and the strict map lower-confidence bound is exactly `0.0`. It should be used to gather controlled feedback for the next residual trainer, not as a hidden-general breakthrough claim.
 
 ## Current Stage 2 Selector State
 
@@ -157,3 +161,17 @@ ruff check src/synthoct/residual_selector.py src/synthoct/cli.py tests/test_data
 ```
 
 Promotion remains blocked until a grouped true-scanner result beats the current `p140-t32` family without degrading Struct/OAC/SC/RSC or LPIPS. Do not claim hidden-holdout success from any public-set rescue row.
+
+## Next Modeling Approach
+
+The next modeling pass should preserve the `p140-t32` density topology and learn only residual controls around it:
+
+- low-frequency geometry and flow parameters;
+- attenuation-normalized energy residuals;
+- speckle texture statistics;
+- per-row and per-source correction strength;
+- uncertainty estimates for map-safe API promotion.
+
+The training target is not plain MS-SSIM. It is the official-style aggregate over median Struct/OAC/SC/RSC MS-SSIM and median inverted LPIPS, with explicit rejection of candidates that improve one structural metric while damaging OAC, SC, or RSC.
+
+See [next_approach.md](next_approach.md) for the detailed command plan, modeling plan, and promotion gate.

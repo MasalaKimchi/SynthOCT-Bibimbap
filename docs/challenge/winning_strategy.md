@@ -75,6 +75,8 @@ See [../history/experiments.md](../history/experiments.md) for the dated evidenc
 
 The latest Stage 2 residual-selector work is summarized in [stage2_oac_residual_journey.md](stage2_oac_residual_journey.md). That note records the decision to freeze Stage 1 as `p140-t32` topology, use flow+energy patches as teacher data, and require uncertainty-gated Struct/OAC/SC/RSC map safety before spending hosted API calls.
 
+The next execution plan is [next_approach.md](next_approach.md). It makes the current strategy explicit: run the map-safe selector queue as an incremental true-scanner feedback pass, then build a topology-preserving residual trainer rather than replacing the `p140-t32` density field.
+
 ## Why Prior Optimization Was Far From Competition-Optimal
 
 The strongest branch so far was coordinate-preserving energy-ratio feedback plus tiny axial and global amplitude calibration. That is a local correction method, not a general learned inverse model. Its limitations are structural:
@@ -103,6 +105,8 @@ The most credible path is a hybrid approach:
 7. Package the final generator, not a hand-tuned output folder, and verify it runs within the challenge hardware/runtime envelope.
 
 When complete official Struct/OAC/SC/RSC medians are available, local promotion should be based primarily on the official aggregate score and runtime. Structural-only mean MS-SSIM/LPIPS and internal profile guardrails remain debugging signals, but they should not veto a higher complete official score.
+
+The official-style objective should be treated as the mean of eight terms: median `MS-SSIM` and median `1 - LPIPS` for `Struct`, `OAC`, `SC`, and `RSC`. This makes single-metric optimization unsafe. A candidate that lowers Structural LPIPS but damages SC/RSC can lose even if it looks visually better.
 
 ## Promotion Gate
 
@@ -229,3 +233,5 @@ The `optimize-learned-surrogate` command writes candidate preview rows with `evi
 The `train-phantom-prior` plus `baseline learned-prior` path gives learned or empirical phantom-field artifacts a scanner-compatible generator interface. It is still candidate generation, not scoring: prior artifacts are `not_challenge_evidence`, and their generated phantoms need true-scanner grouped validation before promotion.
 
 The executable ML/DL generator lane is now `train-neural-phantom-prior` plus `baseline neural-prior`. It trains a small CNN from true-scanner validation rows that contain `reference_png`, `phantom_path`, and `synthetic_gray_png`, then predicts density/energy fields for new reference scans and samples valid scatterer tables. This is the right challenge shape for ML/DL because it outputs phantoms, not final OCT images. It does not change the evidence rule: the `.pt` model artifact is `not_challenge_evidence`, and `neural-prior` can only replace `learned-prior-sparse-p140-t32` after grouped hosted-API or official-Windows validation beats it under real Struct/OAC/SC/RSC MS-SSIM and LPIPS.
+
+The next ML/DL direction is narrower than full neural replacement: keep `p140-t32` density topology fixed, then learn residual energy, low-frequency geometry, attenuation, and speckle-statistic controls with uncertainty-gated promotion. The model may use surrogate predictions for search, but only held-out true-scanner calibration and grouped hosted validation can make it promotable.
