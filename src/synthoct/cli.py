@@ -8,7 +8,12 @@ import time
 from pathlib import Path
 
 from . import __version__
-from .adaptive_flow_batch import run_adaptive_flow_strength_batch, run_residual_selector_flow_batch
+from .adaptive_flow_batch import (
+    calibrate_energy_followup_gate,
+    enrich_residual_probe_energy_maps,
+    run_adaptive_flow_strength_batch,
+    run_residual_selector_flow_batch,
+)
 from .api_recovery import recover_api_results
 from .candidate_rendering import render_candidate_queue
 from .correction_refinement import (
@@ -51,6 +56,15 @@ from .residual_selector import (
 )
 from .scanners import render_phantom, write_api_config
 from .seed_search import run_api_seed_search
+from .stage1_residual_prior import (
+    enrich_stage1_residual_smoke_metrics,
+    plan_stage1_residual_validation_queue,
+    plan_stage2_texture_overlay_validation_queue,
+    select_stage1_residual_variants,
+    stage1_residual_prior_phantom,
+    stage2_texture_overlay_phantom,
+    train_stage1_residual_prior,
+)
 from .submission import (
     benchmark_submission_api,
     prepare_preliminary_png_pairs,
@@ -380,6 +394,115 @@ def build_parser() -> argparse.ArgumentParser:
     neural_train.add_argument("--learning-rate", type=float, default=2e-3)
     neural_train.add_argument("--seed", type=int, default=37)
 
+    stage1_train = sub.add_parser(
+        "train-stage1-residual-prior",
+        help="Train a bounded Stage 1 residual model around learned-prior-sparse-p140-t32 teacher rows.",
+    )
+    stage1_train.add_argument("--teacher-metrics", nargs="+", required=True, help="Residual teacher/probe metrics CSVs.")
+    stage1_train.add_argument("--base-api-metrics", help="Base p140/t32 API metrics CSV used to resolve current phantoms.")
+    stage1_train.add_argument("--out", required=True, help="Output .pt Stage 1 residual prior artifact.")
+    stage1_train.add_argument("--shape", nargs=2, type=int, default=[128, 256], metavar=("ROWS", "COLS"))
+    stage1_train.add_argument("--epochs", type=int, default=80)
+    stage1_train.add_argument("--learning-rate", type=float, default=2e-3)
+    stage1_train.add_argument("--seed", type=int, default=53)
+    stage1_train.add_argument("--min-positive-flow-delta", type=float, default=0.0)
+    stage1_train.add_argument("--residual-clip", type=float, default=0.55)
+    stage1_train.add_argument("--residual-scale", type=float, default=0.28)
+    stage1_train.add_argument("--no-regression-anchors", action="store_true")
+
+    stage1_apply = sub.add_parser(
+        "stage1-residual-prior-phantom",
+        help="Apply a trained Stage 1 residual prior to a p140/t32 learned-prior base field.",
+    )
+    stage1_apply.add_argument("--input", required=True, help="Reference B-scan PNG/NPY.")
+    stage1_apply.add_argument("--learned-artifact", help="Empirical learned-prior .npz artifact.")
+    stage1_apply.add_argument("--base-phantom", help="Optional existing p140/t32 base phantom to preserve as the residual anchor.")
+    stage1_apply.add_argument("--residual-artifact", required=True, help="Stage 1 residual prior .pt artifact.")
+    stage1_apply.add_argument("--out", required=True, help="Output phantom .txt path.")
+    stage1_apply.add_argument("--seed", type=int, default=7)
+    stage1_apply.add_argument("--scatterers-count", type=int, default=300_000)
+    stage1_apply.add_argument("--residual-blend", type=float, default=1.0)
+    stage1_apply.add_argument("--preserve-scatterers", action="store_true", help="Keep base scatterer coordinates and apply only learned energy residuals.")
+    stage1_apply.add_argument("--preserve-depth-profile", action="store_true", help="Renormalize residual energy per depth row to protect OAC/attenuation structure.")
+    stage1_apply.add_argument("--preserve-local-profile", action="store_true", help="Renormalize coarse local energy statistics to protect SC/RSC maps.")
+
+    stage2_overlay = sub.add_parser(
+        "stage2-texture-overlay-phantom",
+        help="Replace a small low-energy tail of a p140/t32 phantom with target-guided texture scatterers.",
+    )
+    stage2_overlay.add_argument("--input", required=True, help="Reference B-scan PNG/NPY.")
+    stage2_overlay.add_argument("--base-phantom", required=True, help="Existing p140/t32 base phantom.")
+    stage2_overlay.add_argument("--out", required=True, help="Output phantom .txt path.")
+    stage2_overlay.add_argument("--replace-fraction", type=float, default=0.015)
+    stage2_overlay.add_argument("--texture-weight", type=float, default=0.55)
+    stage2_overlay.add_argument("--energy-quantile", type=float, default=0.72)
+    stage2_overlay.add_argument("--seed", type=int, default=71)
+    stage2_overlay.add_argument("--no-match-depth-profile", action="store_true")
+
+    stage1_enrich = sub.add_parser(
+        "enrich-stage1-residual-smoke-maps",
+        help="Compare Stage 1 residual smoke renders against current p140/t32 with Struct/OAC/SC/RSC metrics.",
+    )
+    stage1_enrich.add_argument("--candidate-metrics", required=True, help="Rendered candidate_queue_metrics.csv.")
+    stage1_enrich.add_argument("--candidate-queue", required=True, help="Candidate queue CSV with source_archive_path.")
+    stage1_enrich.add_argument("--base-api-metrics", required=True, help="Current p140/t32 API metrics CSV.")
+    stage1_enrich.add_argument("--out", required=True, help="Output enriched CSV.")
+    stage1_enrich.add_argument("--maps-dir", help="Directory for generated feature maps.")
+    stage1_enrich.add_argument("--include-lpips", action="store_true")
+
+    stage1_select = sub.add_parser(
+        "select-stage1-residual-variants",
+        help="Select one Stage 1 residual variant per source under Struct/OAC/SC/RSC guardrails.",
+    )
+    stage1_select.add_argument("--enriched-metrics", nargs="+", required=True, help="Stage 1 enriched CSVs to compare.")
+    stage1_select.add_argument("--out-queue", required=True, help="Output selected queue CSV.")
+    stage1_select.add_argument("--out-summary", help="Optional output summary JSON.")
+    stage1_select.add_argument("--max-rows", type=int)
+    stage1_select.add_argument("--min-struct-delta", type=float, default=0.0)
+    stage1_select.add_argument("--min-oac-delta", type=float, default=-0.001)
+    stage1_select.add_argument("--min-sc-delta", type=float, default=-0.00025)
+    stage1_select.add_argument("--min-rsc-delta", type=float, default=-0.00025)
+    stage1_select.add_argument("--struct-weight", type=float, default=1.0)
+    stage1_select.add_argument("--oac-weight", type=float, default=1.6)
+    stage1_select.add_argument("--sc-weight", type=float, default=0.7)
+    stage1_select.add_argument("--rsc-weight", type=float, default=0.7)
+    stage1_select.add_argument("--lpips-weight", type=float, default=0.2)
+    stage1_select.add_argument("--allow-non-ok-status", action="store_true", help="Allow rows without true-scanner ok status.")
+
+    stage1_validation = sub.add_parser(
+        "plan-stage1-residual-validation-queue",
+        help="Generate held-out Stage 1 residual phantoms from base p140/t32 rows for hosted scanner validation.",
+    )
+    stage1_validation.add_argument("--base-api-metrics", required=True, help="Base p140/t32 API metrics CSV.")
+    stage1_validation.add_argument("--residual-artifact", required=True, help="Stage 1 residual prior .pt artifact.")
+    stage1_validation.add_argument("--out-queue", required=True, help="Output candidate queue CSV.")
+    stage1_validation.add_argument("--exclude-metrics", nargs="*", default=[], help="CSV rows whose source_archive_path should be excluded.")
+    stage1_validation.add_argument("--max-sources", type=int, default=8)
+    stage1_validation.add_argument("--residual-blends", nargs="+", type=float, default=[1.0])
+    stage1_validation.add_argument("--no-depth-profile-variant", action="store_true")
+    stage1_validation.add_argument("--include-local-profile-variant", action="store_true", help="Also emit coarse local energy-profile preservation variants.")
+    stage1_validation.add_argument(
+        "--variant-modes",
+        nargs="*",
+        choices=["preserve", "depth", "local", "depthlocal"],
+        help="Explicit validation modes to emit; overrides depth/local variant switches.",
+    )
+    stage1_validation.add_argument("--include-residual-training-sources", action="store_true", help="Do not exclude sources listed in the residual artifact training metadata.")
+    stage1_validation.add_argument("--min-base-ms-ssim", type=float)
+
+    stage2_validation = sub.add_parser(
+        "plan-stage2-texture-overlay-validation-queue",
+        help="Generate p140-preserving target-guided texture overlay phantoms for hosted scanner validation.",
+    )
+    stage2_validation.add_argument("--base-api-metrics", required=True, help="Base p140/t32 API metrics CSV.")
+    stage2_validation.add_argument("--out-queue", required=True, help="Output candidate queue CSV.")
+    stage2_validation.add_argument("--max-sources", type=int, default=6)
+    stage2_validation.add_argument("--replace-fractions", nargs="+", type=float, default=[0.005, 0.015, 0.035])
+    stage2_validation.add_argument("--texture-weights", nargs="+", type=float, default=[0.35, 0.65])
+    stage2_validation.add_argument("--energy-quantile", type=float, default=0.72)
+    stage2_validation.add_argument("--seed", type=int, default=71)
+    stage2_validation.add_argument("--min-base-ms-ssim", type=float)
+
     empirical = sub.add_parser(
         "optimize-empirical-basis",
         help="Use existing hosted scanner renders as a nonnegative empirical inverse basis.",
@@ -515,6 +638,19 @@ def build_parser() -> argparse.ArgumentParser:
     residual_queue.add_argument("--limit", type=int)
     residual_queue.add_argument("--min-expected-delta-lcb", type=float, default=0.0)
     residual_queue.add_argument("--row-wise-strengths", action="store_true", help="Choose a residual strength per row from local teacher neighbors.")
+    residual_queue.add_argument(
+        "--min-map-delta-lcb",
+        type=float,
+        default=-0.0005,
+        help="Minimum lower-confidence bound for each Struct/OAC/SC/RSC delta when map-safety is required.",
+    )
+    residual_queue.add_argument(
+        "--min-map-safe-win-rate",
+        type=float,
+        default=0.5,
+        help="Minimum neighbor win rate with all Struct/OAC/SC/RSC deltas above the map-safety threshold.",
+    )
+    residual_queue.add_argument("--require-map-safe", action="store_true", help="Reject rows that fail uncertainty-gated map safety.")
 
     residual_budget = sub.add_parser(
         "plan-residual-api-budget",
@@ -547,6 +683,15 @@ def build_parser() -> argparse.ArgumentParser:
         default=["sex", "age_band", "body_site"],
         help="Fields used to share true-probe feedback across similar queued candidates.",
     )
+    residual_budget.add_argument(
+        "--energy-gate-summary",
+        help="Optional calibrated energy-followup gate JSON from calibrate-energy-followup-gate.",
+    )
+    residual_budget.add_argument(
+        "--exclude-exact-probed",
+        action="store_true",
+        help="Plan only rows without exact-source true-probe feedback, for fresh active-learning batches.",
+    )
 
     residual_batch = sub.add_parser(
         "residual-selector-flow-batch",
@@ -556,6 +701,11 @@ def build_parser() -> argparse.ArgumentParser:
     residual_batch.add_argument("--out", required=True, help="Output directory for queues, phantoms, renders, and metrics.")
     residual_batch.add_argument("--max-candidates", type=int, help="Limit recommendations consumed from the selector queue.")
     residual_batch.add_argument("--max-energy-followups", type=int, help="Limit stage-2 energy API calls after flow renders.")
+    residual_batch.add_argument(
+        "--min-energy-flow-delta",
+        type=float,
+        help="Skip stage-2 energy followups when flow MS-SSIM delta falls below this threshold.",
+    )
     residual_batch.add_argument("--api-key-file", help="Optional untracked file containing the hosted scanner API key.")
     residual_batch.add_argument("--api-concurrency", type=int, default=2, help="Number of hosted API render jobs to run at once.")
     residual_batch.add_argument("--poll-interval-seconds", type=float, default=3.0)
@@ -563,6 +713,26 @@ def build_parser() -> argparse.ArgumentParser:
     residual_batch.add_argument("--flow-smooth-sigma", type=float, default=1.2)
     residual_batch.add_argument("--flow-attachment", type=float, default=6.0)
     residual_batch.add_argument("--energy-exponent", type=float, default=0.8)
+
+    energy_gate = sub.add_parser(
+        "calibrate-energy-followup-gate",
+        help="Learn a flow-delta threshold for stage-2 energy followups from true-scanner probe metrics.",
+    )
+    energy_gate.add_argument("--probe-metrics", nargs="+", required=True, help="Residual selector probe metrics CSVs.")
+    energy_gate.add_argument("--out", required=True, help="Output calibration summary JSON.")
+    energy_gate.add_argument("--min-retained-delta-fraction", type=float, default=0.995)
+    energy_gate.add_argument("--min-retained-map-delta-fraction", type=float)
+    energy_gate.add_argument("--min-energy-calls", type=int, default=1)
+    energy_gate.add_argument("--max-negative-energy-calls", type=int, default=0)
+    energy_gate.add_argument("--max-negative-map-calls", type=int)
+
+    energy_maps = sub.add_parser(
+        "enrich-residual-probe-energy-maps",
+        help="Backfill flow-energy map objective scores from rendered residual probe PNGs.",
+    )
+    energy_maps.add_argument("--probe-metrics", nargs="+", required=True, help="Residual selector probe metrics CSVs.")
+    energy_maps.add_argument("--out", required=True, help="Output enriched probe metrics CSV.")
+    energy_maps.add_argument("--maps-dir", help="Optional directory for generated feature maps.")
 
     recover_api = sub.add_parser(
         "recover-api-results",
@@ -1020,6 +1190,119 @@ def main(argv: list[str] | None = None) -> int:
         print(path)
         return 0
 
+    if args.command == "train-stage1-residual-prior":
+        path = train_stage1_residual_prior(
+            list(args.teacher_metrics),
+            args.out,
+            base_api_metrics=args.base_api_metrics,
+            shape=tuple(args.shape),
+            epochs=args.epochs,
+            learning_rate=args.learning_rate,
+            seed=args.seed,
+            min_positive_flow_delta=args.min_positive_flow_delta,
+            residual_clip=args.residual_clip,
+            residual_scale=args.residual_scale,
+            include_regression_anchors=not args.no_regression_anchors,
+        )
+        print(path)
+        return 0
+
+    if args.command == "stage1-residual-prior-phantom":
+        if not args.learned_artifact and not args.base_phantom:
+            raise SystemExit("--learned-artifact or --base-phantom is required.")
+        path = stage1_residual_prior_phantom(
+            args.input,
+            args.out,
+            args.learned_artifact,
+            args.residual_artifact,
+            base_phantom_path=args.base_phantom,
+            preserve_scatterers=args.preserve_scatterers,
+            preserve_depth_profile=args.preserve_depth_profile,
+            preserve_local_profile=args.preserve_local_profile,
+            seed=args.seed,
+            scatterers_count=args.scatterers_count,
+            residual_blend=args.residual_blend,
+        )
+        print(path)
+        return 0
+
+    if args.command == "stage2-texture-overlay-phantom":
+        path = stage2_texture_overlay_phantom(
+            args.input,
+            args.base_phantom,
+            args.out,
+            replace_fraction=args.replace_fraction,
+            texture_weight=args.texture_weight,
+            energy_quantile=args.energy_quantile,
+            seed=args.seed,
+            match_depth_profile=not args.no_match_depth_profile,
+        )
+        print(path)
+        return 0
+
+    if args.command == "enrich-stage1-residual-smoke-maps":
+        path = enrich_stage1_residual_smoke_metrics(
+            args.candidate_metrics,
+            args.candidate_queue,
+            args.base_api_metrics,
+            args.out,
+            maps_dir=args.maps_dir,
+            include_lpips=args.include_lpips,
+        )
+        print(path)
+        return 0
+
+    if args.command == "select-stage1-residual-variants":
+        path = select_stage1_residual_variants(
+            list(args.enriched_metrics),
+            args.out_queue,
+            out_summary_path=args.out_summary,
+            max_rows=args.max_rows,
+            min_struct_delta=args.min_struct_delta,
+            min_oac_delta=args.min_oac_delta,
+            min_sc_delta=args.min_sc_delta,
+            min_rsc_delta=args.min_rsc_delta,
+            struct_weight=args.struct_weight,
+            oac_weight=args.oac_weight,
+            sc_weight=args.sc_weight,
+            rsc_weight=args.rsc_weight,
+            lpips_weight=args.lpips_weight,
+            require_true_scanner=not args.allow_non_ok_status,
+        )
+        print(path)
+        return 0
+
+    if args.command == "plan-stage1-residual-validation-queue":
+        path = plan_stage1_residual_validation_queue(
+            args.base_api_metrics,
+            args.residual_artifact,
+            args.out_queue,
+            exclude_metrics_paths=list(args.exclude_metrics),
+            max_sources=args.max_sources,
+            residual_blends=list(args.residual_blends),
+            include_depth_profile_variant=not args.no_depth_profile_variant,
+            include_local_profile_variant=args.include_local_profile_variant,
+            variant_modes=list(args.variant_modes) if args.variant_modes else None,
+            exclude_residual_training_sources=not args.include_residual_training_sources,
+            min_base_ms_ssim=args.min_base_ms_ssim,
+        )
+        print(path)
+        return 0
+
+    if args.command == "plan-stage2-texture-overlay-validation-queue":
+        path = plan_stage2_texture_overlay_validation_queue(
+            args.base_api_metrics,
+            args.out_queue,
+            max_sources=args.max_sources,
+            replace_fractions=list(args.replace_fractions),
+            texture_weights=list(args.texture_weights),
+            energy_quantile=args.energy_quantile,
+            seed=args.seed,
+            min_base_ms_ssim=args.min_base_ms_ssim,
+        )
+        print(path)
+        return 0
+
     if args.command == "optimize-empirical-basis":
         metrics_path = run_empirical_basis_refinement(
             args.ref,
@@ -1156,6 +1439,9 @@ def main(argv: list[str] | None = None) -> int:
             limit=args.limit,
             min_expected_delta_lcb=args.min_expected_delta_lcb,
             row_wise_strengths=args.row_wise_strengths,
+            min_map_delta_lcb=args.min_map_delta_lcb,
+            min_map_safe_win_rate=args.min_map_safe_win_rate,
+            require_map_safe=args.require_map_safe,
         )
         print(queue_path)
         return 0
@@ -1174,6 +1460,8 @@ def main(argv: list[str] | None = None) -> int:
             max_per_stratum=args.max_per_stratum,
             probe_feedback_metrics=tuple(args.probe_feedback_metrics),
             feedback_group_fields=tuple(args.feedback_group_fields),
+            energy_gate_summary=args.energy_gate_summary,
+            exclude_exact_probed=args.exclude_exact_probed,
         )
         print(queue_path)
         return 0
@@ -1184,6 +1472,7 @@ def main(argv: list[str] | None = None) -> int:
             args.out,
             max_candidates=args.max_candidates,
             max_energy_followups=args.max_energy_followups,
+            min_energy_flow_delta=args.min_energy_flow_delta,
             api_key_file=args.api_key_file,
             api_concurrency=args.api_concurrency,
             poll_interval_seconds=args.poll_interval_seconds,
@@ -1193,6 +1482,28 @@ def main(argv: list[str] | None = None) -> int:
             energy_exponent=args.energy_exponent,
         )
         print(metrics_path)
+        return 0
+
+    if args.command == "calibrate-energy-followup-gate":
+        summary_path = calibrate_energy_followup_gate(
+            tuple(args.probe_metrics),
+            args.out,
+            min_retained_delta_fraction=args.min_retained_delta_fraction,
+            min_retained_map_delta_fraction=args.min_retained_map_delta_fraction,
+            min_energy_calls=args.min_energy_calls,
+            max_negative_energy_calls=args.max_negative_energy_calls,
+            max_negative_map_calls=args.max_negative_map_calls,
+        )
+        print(summary_path)
+        return 0
+
+    if args.command == "enrich-residual-probe-energy-maps":
+        enriched_path = enrich_residual_probe_energy_maps(
+            tuple(args.probe_metrics),
+            args.out,
+            maps_dir=args.maps_dir,
+        )
+        print(enriched_path)
         return 0
 
     if args.command == "recover-api-results":

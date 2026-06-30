@@ -2,7 +2,7 @@
 
 ## Abstract
 
-The best general submission algorithm identified so far is `learned-prior-sparse-p140-t32`, an empirical learned-prior digital phantom generator. It does not synthesize OCT images directly; instead, it converts each input B-scan into a challenge-valid scatterer table with `X Y Z Energy` columns, which must then be rendered by the SynthOCT true scanner. On grouped hosted true-scanner validation with real LPIPS and Struct/OAC/SC/RSC maps, it outperformed both the earlier `learned-prior-sparse-p140` variant and the conservative `H61_api_low_depth_prelim` baseline. The highest measured public-set artifact is a tactical extension, `p140-t32-flow-energy-rank120-adaptive-weak12-patch`, which applies optical-flow and energy-ratio corrections to selected public-set rows. That patch improves measured public-set score but should be interpreted as public-set rescue evidence, not hidden-holdout proof.
+The best general submission algorithm identified so far is `learned-prior-sparse-p140-t32`, an empirical learned-prior digital phantom generator. It does not synthesize OCT images directly; instead, it converts each input B-scan into a challenge-valid scatterer table with `X Y Z Energy` columns, which must then be rendered by the SynthOCT true scanner. On grouped hosted true-scanner validation with real LPIPS and Struct/OAC/SC/RSC maps, it outperformed both the earlier `learned-prior-sparse-p140` variant and the conservative `H61_api_low_depth_prelim` baseline. The highest measured public-set artifact is a tactical extension, `p140-t32-flow-energy-rank120-adaptive-rank36-patch`, which applies optical-flow and energy-ratio corrections to selected public-set rows. That patch improves measured public-set score but should be interpreted as public-set rescue evidence, not hidden-holdout proof.
 
 ## Introduction
 
@@ -46,7 +46,7 @@ The best measured public-set rescue artifact improved the public-set aggregate:
 
 | Artifact | n | Official score | MS-SSIM mean | Struct MS-SSIM median | Struct LPIPS median |
 |---|---:|---:|---:|---:|---:|
-| `p140-t32-flow-energy-rank120-adaptive-weak12-patch` | 120 | 0.69292 | 0.66453 | 0.66053 | 0.58804 |
+| `p140-t32-flow-energy-rank120-adaptive-rank36-patch` | 120 | 0.69400 | 0.66537 | 0.66053 | 0.58850 |
 
 Both the base and patched artifacts still fail the preliminary threshold because Structural LPIPS remains above `0.4`.
 
@@ -60,12 +60,13 @@ The main unresolved bottleneck is perceptual structural similarity. Neural-prior
 
 ## Conclusion
 
-The current best general SynthOCT-Bibimbap method is an empirical learned-prior sparse phantom generator, `learned-prior-sparse-p140-t32`, packaged with `outputs/learned_priors/goal_h_candidates_prior.npz`. The strongest measured public-set artifact adds a flow+energy rescue patch and reaches an official-style score of `0.69292`, but hidden-holdout performance remains unproven. The remaining challenge is to lower Structural LPIPS without sacrificing the physical-map gains that made the learned-prior method successful.
+The current best general SynthOCT-Bibimbap method is an empirical learned-prior sparse phantom generator, `learned-prior-sparse-p140-t32`, packaged with `outputs/learned_priors/goal_h_candidates_prior.npz`. The strongest measured public-set artifact adds a flow+energy rescue patch and reaches an official-style score of `0.6939983205067786`, but hidden-holdout performance remains unproven. The remaining challenge is to lower Structural LPIPS without sacrificing the physical-map gains that made the learned-prior method successful.
 
 ## Evidence Files
 
 - Grouped validation: `outputs/api_validation_goal_t32_p140_h61_offset1_5x1/challenge_metrics_summary.csv`
 - Full public-set base render: `outputs/api_preliminary_learned_prior_sparse_p140_t32_120_concurrent/challenge_metrics_summary.csv`
-- Full public-set rescue patch render: `outputs/api_preliminary_p140_t32_flow_energy_rank120_adaptive_weak12_patch/challenge_metrics_summary.csv`
+- Full public-set rescue patch render: `outputs/api_preliminary_p140_t32_flow_energy_rank120_adaptive_rank36_patch/challenge_metrics_summary.csv`
 - Conservative full package: `outputs/submission_ready_learned_prior_sparse_p140_t32_full_corrected`
-- Best measured public-set rescue package: `outputs/submission_ready_p140_t32_flow_energy_rank120_adaptive_weak12_patch`
+- Best measured public-set rescue package: `outputs/submission_ready_p140_t32_flow_energy_rank120_adaptive_rank36_patch`
+- Current Stage 2 residual journey and resume note: `docs/challenge/stage2_oac_residual_journey.md`

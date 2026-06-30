@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import json
 import math
 import re
 from pathlib import Path
@@ -19,6 +20,8 @@ STAGE2_CONTROL_FIELDS = [
     "residual_control_policy",
     "flow_smooth_sigma",
     "flow_attachment",
+    "energy_base_policy",
+    "energy_base_flow_delta_threshold",
     "energy_exponent",
     "energy_sigma",
     "energy_ratio_low",
@@ -28,6 +31,55 @@ STAGE2_CONTROL_FIELDS = [
     "texture_mean_exponent",
     "texture_exponent",
     "texture_deep_exponent",
+]
+
+ENERGY_GATE_SWEEP_FIELDS = [
+    "min_energy_flow_delta",
+    "energy_calls",
+    "skipped_energy_calls",
+    "negative_energy_calls",
+    "skipped_positive_energy_calls",
+    "best_delta_sum",
+    "retained_best_delta_fraction",
+    "delta_loss_vs_full_energy",
+    "delta_per_energy_call",
+    "energy_win_rate",
+    "map_objective_examples",
+    "negative_map_calls",
+    "skipped_positive_map_calls",
+    "map_delta_sum",
+    "retained_map_delta_fraction",
+    "map_delta_loss_vs_full_energy",
+    "map_delta_per_energy_call",
+    "map_win_rate",
+]
+
+ENERGY_GATE_CONTEXT_FIELDS = [
+    "energy_gate_summary",
+    "energy_gate_min_flow_delta",
+    "energy_gate_expected_status",
+    "energy_gate_score_multiplier",
+    "energy_gate_retained_delta_fraction",
+    "energy_gate_retained_map_delta_fraction",
+]
+
+ENERGY_MAP_OBJECTIVE_FIELDS = [
+    "flow_energy_map_objective_score",
+    "flow_energy_map_delta_vs_current",
+    "flow_energy_map_delta_vs_flow",
+    "flow_energy_map_objective_status",
+    "flow_energy_map_objective_error",
+]
+
+EXACT_PROBE_FEEDBACK_FIELDS = [
+    "exact_probe_feedback_source_archive_path",
+    "exact_probe_feedback_n",
+    "exact_probe_feedback_energy_n",
+    "exact_probe_feedback_best_delta_mean",
+    "exact_probe_feedback_flow_delta_mean",
+    "exact_probe_feedback_energy_delta_mean",
+    "exact_probe_feedback_status",
+    "exact_probe_feedback_score_multiplier",
 ]
 
 
@@ -53,6 +105,180 @@ def _write_rows(path: Path, rows: list[dict[str, object]], fieldnames: list[str]
         writer.writeheader()
         writer.writerows(rows)
     return path
+
+
+def _ordered_union(rows: list[dict[str, object]]) -> list[str]:
+    fields: list[str] = []
+    for row in rows:
+        for field in row:
+            if field not in fields:
+                fields.append(field)
+    return fields
+
+
+def calibrate_energy_followup_gate(
+    probe_metrics_paths: tuple[str | Path, ...],
+    out_path: str | Path,
+    *,
+    min_retained_delta_fraction: float = 0.995,
+    min_retained_map_delta_fraction: float | None = None,
+    min_energy_calls: int = 1,
+    max_negative_energy_calls: int | None = 0,
+    max_negative_map_calls: int | None = None,
+) -> Path:
+    """Learn a flow-delta gate for spending stage-2 energy calls from true-scanner probes."""
+    examples = _energy_gate_examples(probe_metrics_paths)
+    if not examples:
+        raise ValueError("No probe rows with finite flow and energy MS-SSIM metrics were found.")
+
+    full_delta_sum = sum(row["best_delta_with_energy"] for row in examples)
+    full_map_delta_sum = sum(
+        row["best_map_delta_with_energy"]
+        for row in examples
+        if math.isfinite(row["best_map_delta_with_energy"])
+    )
+    has_map_objective = any(math.isfinite(row["flow_energy_map_delta_vs_current"]) for row in examples)
+    thresholds = _energy_gate_thresholds(examples)
+    sweep_rows = [
+        _energy_gate_threshold_row(
+            examples,
+            threshold,
+            full_delta_sum=full_delta_sum,
+            full_map_delta_sum=full_map_delta_sum,
+        )
+        for threshold in thresholds
+    ]
+
+    eligible = [
+        row
+        for row in sweep_rows
+        if int(row["energy_calls"]) >= min_energy_calls
+        and float(row["retained_best_delta_fraction"]) >= min_retained_delta_fraction
+        and (
+            not has_map_objective
+            or min_retained_map_delta_fraction is None
+            or float(row["retained_map_delta_fraction"]) >= min_retained_map_delta_fraction
+        )
+        and (
+            max_negative_energy_calls is None
+            or int(row["negative_energy_calls"]) <= max_negative_energy_calls
+        )
+        and (
+            not has_map_objective
+            or max_negative_map_calls is None
+            or int(row["negative_map_calls"]) <= max_negative_map_calls
+        )
+    ]
+    selection_status = "selected_with_negative_limit"
+    if not eligible:
+        selection_status = "selected_without_negative_limit"
+        eligible = [
+            row
+            for row in sweep_rows
+            if int(row["energy_calls"]) >= min_energy_calls
+            and float(row["retained_best_delta_fraction"]) >= min_retained_delta_fraction
+            and (
+                not has_map_objective
+                or min_retained_map_delta_fraction is None
+                or float(row["retained_map_delta_fraction"]) >= min_retained_map_delta_fraction
+            )
+        ]
+    if not eligible:
+        selection_status = "selected_best_available"
+        eligible = sweep_rows
+
+    selected = max(
+        eligible,
+        key=lambda row: (
+            -int(row["energy_calls"]),
+            float(row["best_delta_sum"]),
+            -int(row["negative_energy_calls"]),
+            -int(row["negative_map_calls"]),
+            -float(row["min_energy_flow_delta"]),
+        ),
+    )
+    out = Path(out_path)
+    sweep_path = out.with_name(f"{out.stem}_threshold_sweep.csv")
+    _write_rows(sweep_path, sweep_rows, fieldnames=ENERGY_GATE_SWEEP_FIELDS)
+
+    summary = {
+        "model_type": "flow_delta_energy_followup_gate",
+        "probe_metrics_paths": [str(path) for path in probe_metrics_paths],
+        "observed_energy_examples": len(examples),
+        "observed_map_objective_examples": sum(
+            1 for row in examples if math.isfinite(row["flow_energy_map_delta_vs_current"])
+        ),
+        "full_energy_best_delta_sum": full_delta_sum,
+        "full_energy_map_delta_sum": full_map_delta_sum if has_map_objective else "",
+        "min_retained_delta_fraction": min_retained_delta_fraction,
+        "min_retained_map_delta_fraction": min_retained_map_delta_fraction if has_map_objective else "",
+        "min_energy_calls": min_energy_calls,
+        "max_negative_energy_calls": max_negative_energy_calls,
+        "max_negative_map_calls": max_negative_map_calls if has_map_objective else "",
+        "selection_status": selection_status,
+        "recommended_min_energy_flow_delta": selected["min_energy_flow_delta"],
+        "selected": selected,
+        "sweep_csv": str(sweep_path),
+        "evidence_scope": "true_scanner_probe_calibration_not_hidden_holdout",
+        "promotion_allowed_without_true_scanner": False,
+        "hidden_holdout_final_score": False,
+    }
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return out
+
+
+def enrich_residual_probe_energy_maps(
+    probe_metrics_paths: tuple[str | Path, ...],
+    out_path: str | Path,
+    *,
+    maps_dir: str | Path | None = None,
+) -> Path:
+    """Backfill flow-energy map objective scores from rendered probe PNGs."""
+    out = Path(out_path)
+    maps_root = Path(maps_dir) if maps_dir is not None else out.with_name(f"{out.stem}_maps")
+    enriched: list[dict[str, object]] = []
+    for metrics_path in probe_metrics_paths:
+        path = Path(metrics_path)
+        for row_index, row in enumerate(_read_rows(path), start=1):
+            enriched_row: dict[str, object] = {**row, "probe_metrics_path": str(path)}
+            energy_score, energy_status, energy_error = _stage_map_objective(
+                row.get("reference_png", ""),
+                row.get("flow_energy_synthetic_gray_png", ""),
+                maps_root / f"{path.stem}_row_{row_index:04d}" / "flow_energy",
+            )
+            current_score = _finite(row.get("current_map_objective_score"))
+            flow_score = _finite(row.get("flow_map_objective_score"))
+            enriched_row.update(
+                {
+                    "flow_energy_map_objective_score": energy_score,
+                    "flow_energy_map_delta_vs_current": _delta(energy_score, current_score),
+                    "flow_energy_map_delta_vs_flow": _delta(energy_score, flow_score),
+                    "flow_energy_map_objective_status": energy_status,
+                    "flow_energy_map_objective_error": energy_error,
+                }
+            )
+            enriched.append(enriched_row)
+    fieldnames = _ordered_union(enriched)
+    _write_rows(out, enriched, fieldnames=fieldnames)
+    rows_with_energy_map = sum(
+        1 for row in enriched if math.isfinite(_finite(row.get("flow_energy_map_objective_score")))
+    )
+    summary = {
+        "probe_metrics_paths": [str(Path(path)) for path in probe_metrics_paths],
+        "enriched_metrics": str(out),
+        "row_count": len(enriched),
+        "rows_with_flow_energy_map_objective": rows_with_energy_map,
+        "maps_dir": str(maps_root),
+        "evidence_scope": "residual_probe_map_enrichment_not_challenge_evidence",
+        "promotion_allowed_without_true_scanner": False,
+        "hidden_holdout_final_score": False,
+    }
+    out.with_name(f"{out.stem}_summary.json").write_text(
+        json.dumps(summary, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return out
 
 
 def run_adaptive_flow_strength_batch(
@@ -251,6 +477,7 @@ def run_residual_selector_flow_batch(
     *,
     max_candidates: int | None = None,
     max_energy_followups: int | None = None,
+    min_energy_flow_delta: float | None = None,
     api_key_file: str | Path | None = None,
     api_concurrency: int = 2,
     poll_interval_seconds: float = 3.0,
@@ -377,6 +604,26 @@ def run_residual_selector_flow_batch(
             }
         )
 
+        flow_delta = _delta(flow_ms, current_ms)
+        if (
+            min_energy_flow_delta is not None
+            and math.isfinite(flow_delta)
+            and flow_delta < float(min_energy_flow_delta)
+        ):
+            best_stage = "flow" if flow_ms >= current_ms else "current"
+            combined.append(
+                _combined_probe_row(
+                    flow_row,
+                    flow_metric,
+                    {},
+                    flow_status="ok",
+                    energy_status="deferred_flow_regression",
+                    best_stage=best_stage,
+                    best_ms_ssim=max(_finite_or_floor(current_ms), _finite_or_floor(flow_ms)),
+                )
+            )
+            continue
+
         strength_label = f"s{float(flow_row['selected_strength']):.3f}".replace(".", "p").replace("-", "n")
         row_energy_exponent = _finite(flow_row.get("energy_exponent"))
         if not math.isfinite(row_energy_exponent):
@@ -392,8 +639,16 @@ def run_residual_selector_flow_batch(
         texture_enabled = any(
             abs(value) > 1e-12 for value in (texture_mean_exponent, texture_exponent, texture_deep_exponent)
         )
+        energy_base_stage, energy_base_phantom, energy_base_render = _select_energy_base(
+            flow_row,
+            flow_metric,
+            flow_delta=flow_delta,
+        )
         flow_row.update(
             {
+                "energy_base_stage": energy_base_stage,
+                "energy_base_phantom_path": energy_base_phantom,
+                "energy_base_synthetic_gray_png": energy_base_render,
                 "energy_exponent": row_energy_exponent,
                 "energy_sigma": row_energy_sigma,
                 "energy_ratio_low": row_energy_ratio_low,
@@ -406,6 +661,8 @@ def run_residual_selector_flow_batch(
             }
         )
         energy_label = f"e{row_energy_exponent:.3f}_sig{row_energy_sigma:.2f}".replace(".", "p")
+        if energy_base_stage != "flow":
+            energy_label = f"base{energy_base_stage}_{energy_label}"
         if texture_enabled:
             texture_label = f"tex{texture_exponent:.2f}_deep{texture_deep_exponent:.2f}".replace(".", "p")
             energy_label = f"{energy_label}_{texture_label}"
@@ -427,8 +684,8 @@ def run_residual_selector_flow_batch(
                     ratio_path = ratio_dir / f"{energy_path.stem}_ratio.txt"
                 write_energy_ratio_phantom(
                     str(flow_row["reference_png"]),
-                    str(flow_row["phantom_path"]),
-                    flow_metric["synthetic_gray_png"],
+                    energy_base_phantom,
+                    energy_base_render,
                     ratio_path,
                     exponent=row_energy_exponent,
                     sigma=row_energy_sigma,
@@ -441,7 +698,7 @@ def run_residual_selector_flow_batch(
                     write_texture_matched_phantom(
                         str(flow_row["reference_png"]),
                         ratio_path,
-                        flow_metric["synthetic_gray_png"],
+                        energy_base_render,
                         energy_path,
                         mean_exponent=texture_mean_exponent,
                         texture_exponent=texture_exponent,
@@ -469,6 +726,9 @@ def run_residual_selector_flow_batch(
                 "phantom_path": str(energy_path),
                 "flow_phantom_path": flow_row["phantom_path"],
                 "flow_synthetic_gray_png": flow_metric["synthetic_gray_png"],
+                "energy_base_stage": energy_base_stage,
+                "energy_base_phantom_path": energy_base_phantom,
+                "energy_base_synthetic_gray_png": energy_base_render,
                 "flow_ms_ssim": flow_metric["MS-SSIM"],
                 "flow_request_id": flow_metric.get("request_id", ""),
                 "flow_error": flow_metric.get("error", ""),
@@ -516,6 +776,22 @@ def run_residual_selector_flow_batch(
             current_ms = _finite(energy_row.get("current_ms_ssim"))
             flow_ms = _finite(energy_row.get("flow_ms_ssim"))
             energy_ms = _finite(energy_metric.get("MS-SSIM"))
+            energy_map_score, energy_map_status, energy_map_error = _stage_map_objective(
+                energy_row.get("reference_png", ""),
+                energy_metric.get("synthetic_gray_png", ""),
+                out_dir / "energy_followup_objectives" / f"p{energy_row['priority']}_flow_energy",
+            )
+            current_map_score = _finite(energy_row.get("current_map_objective_score"))
+            flow_map_score = _finite(energy_row.get("flow_map_objective_score"))
+            energy_row.update(
+                {
+                    "flow_energy_map_objective_score": energy_map_score,
+                    "flow_energy_map_delta_vs_current": _delta(energy_map_score, current_map_score),
+                    "flow_energy_map_delta_vs_flow": _delta(energy_map_score, flow_map_score),
+                    "flow_energy_map_objective_status": energy_map_status,
+                    "flow_energy_map_objective_error": energy_map_error,
+                }
+            )
             best_stage, best_ms = _best_stage(current_ms, flow_ms, energy_ms)
             combined.append(
                 _combined_probe_row(
@@ -568,12 +844,30 @@ def _selector_context(row: dict[str, str], idx: int) -> dict[str, object]:
         "true_probe_feedback_best_delta_mean": row.get("true_probe_feedback_best_delta_mean", ""),
         "true_probe_feedback_energy_delta_mean": row.get("true_probe_feedback_energy_delta_mean", ""),
         "true_probe_feedback_flow_delta_mean": row.get("true_probe_feedback_flow_delta_mean", ""),
+        "true_probe_feedback_flow_negative_rate": row.get("true_probe_feedback_flow_negative_rate", ""),
+        "true_probe_feedback_flow_regression_rate": row.get("true_probe_feedback_flow_regression_rate", ""),
         "true_probe_feedback_energy_win_rate": row.get("true_probe_feedback_energy_win_rate", ""),
         "true_probe_feedback_status": row.get("true_probe_feedback_status", ""),
         "true_probe_feedback_score_multiplier": row.get("true_probe_feedback_score_multiplier", ""),
+        "exact_probe_feedback_source_archive_path": row.get("exact_probe_feedback_source_archive_path", ""),
+        "exact_probe_feedback_n": row.get("exact_probe_feedback_n", ""),
+        "exact_probe_feedback_energy_n": row.get("exact_probe_feedback_energy_n", ""),
+        "exact_probe_feedback_best_delta_mean": row.get("exact_probe_feedback_best_delta_mean", ""),
+        "exact_probe_feedback_flow_delta_mean": row.get("exact_probe_feedback_flow_delta_mean", ""),
+        "exact_probe_feedback_energy_delta_mean": row.get("exact_probe_feedback_energy_delta_mean", ""),
+        "exact_probe_feedback_status": row.get("exact_probe_feedback_status", ""),
+        "exact_probe_feedback_score_multiplier": row.get("exact_probe_feedback_score_multiplier", ""),
+        "energy_gate_summary": row.get("energy_gate_summary", ""),
+        "energy_gate_min_flow_delta": row.get("energy_gate_min_flow_delta", ""),
+        "energy_gate_expected_status": row.get("energy_gate_expected_status", ""),
+        "energy_gate_score_multiplier": row.get("energy_gate_score_multiplier", ""),
+        "energy_gate_retained_delta_fraction": row.get("energy_gate_retained_delta_fraction", ""),
+        "energy_gate_retained_map_delta_fraction": row.get("energy_gate_retained_map_delta_fraction", ""),
         "residual_control_policy": row.get("residual_control_policy", ""),
         "flow_smooth_sigma": row.get("flow_smooth_sigma", ""),
         "flow_attachment": row.get("flow_attachment", ""),
+        "energy_base_policy": row.get("energy_base_policy", ""),
+        "energy_base_flow_delta_threshold": row.get("energy_base_flow_delta_threshold", ""),
         "energy_exponent": row.get("energy_exponent", ""),
         "energy_sigma": row.get("energy_sigma", ""),
         "energy_ratio_low": row.get("energy_ratio_low", ""),
@@ -662,12 +956,27 @@ def _combined_probe_row(
         "true_probe_feedback_best_delta_mean": row.get("true_probe_feedback_best_delta_mean", ""),
         "true_probe_feedback_energy_delta_mean": row.get("true_probe_feedback_energy_delta_mean", ""),
         "true_probe_feedback_flow_delta_mean": row.get("true_probe_feedback_flow_delta_mean", ""),
+        "true_probe_feedback_flow_negative_rate": row.get("true_probe_feedback_flow_negative_rate", ""),
+        "true_probe_feedback_flow_regression_rate": row.get("true_probe_feedback_flow_regression_rate", ""),
         "true_probe_feedback_energy_win_rate": row.get("true_probe_feedback_energy_win_rate", ""),
         "true_probe_feedback_status": row.get("true_probe_feedback_status", ""),
         "true_probe_feedback_score_multiplier": row.get("true_probe_feedback_score_multiplier", ""),
+        "exact_probe_feedback_source_archive_path": row.get("exact_probe_feedback_source_archive_path", ""),
+        "exact_probe_feedback_n": row.get("exact_probe_feedback_n", ""),
+        "exact_probe_feedback_energy_n": row.get("exact_probe_feedback_energy_n", ""),
+        "exact_probe_feedback_best_delta_mean": row.get("exact_probe_feedback_best_delta_mean", ""),
+        "exact_probe_feedback_flow_delta_mean": row.get("exact_probe_feedback_flow_delta_mean", ""),
+        "exact_probe_feedback_energy_delta_mean": row.get("exact_probe_feedback_energy_delta_mean", ""),
+        "exact_probe_feedback_status": row.get("exact_probe_feedback_status", ""),
+        "exact_probe_feedback_score_multiplier": row.get("exact_probe_feedback_score_multiplier", ""),
         "residual_control_policy": row.get("residual_control_policy", ""),
         "flow_smooth_sigma": row.get("flow_smooth_sigma", ""),
         "flow_attachment": row.get("flow_attachment", ""),
+        "energy_base_policy": row.get("energy_base_policy", ""),
+        "energy_base_flow_delta_threshold": row.get("energy_base_flow_delta_threshold", ""),
+        "energy_base_stage": row.get("energy_base_stage", ""),
+        "energy_base_phantom_path": row.get("energy_base_phantom_path", ""),
+        "energy_base_synthetic_gray_png": row.get("energy_base_synthetic_gray_png", ""),
         "energy_exponent": row.get("energy_exponent", ""),
         "energy_sigma": row.get("energy_sigma", ""),
         "energy_ratio_low": row.get("energy_ratio_low", ""),
@@ -711,6 +1020,11 @@ def _combined_probe_row(
         "flow_map_delta_vs_current": row.get("flow_map_delta_vs_current", ""),
         "flow_map_objective_status": row.get("flow_map_objective_status", ""),
         "flow_map_objective_error": row.get("flow_map_objective_error", ""),
+        "flow_energy_map_objective_score": row.get("flow_energy_map_objective_score", ""),
+        "flow_energy_map_delta_vs_current": row.get("flow_energy_map_delta_vs_current", ""),
+        "flow_energy_map_delta_vs_flow": row.get("flow_energy_map_delta_vs_flow", ""),
+        "flow_energy_map_objective_status": row.get("flow_energy_map_objective_status", ""),
+        "flow_energy_map_objective_error": row.get("flow_energy_map_objective_error", ""),
         "method": energy_metric.get("method", row.get("method", "")),
         "reference_png": row.get("reference_png", ""),
         "current_phantom_path": row.get("current_phantom_path", ""),
@@ -793,6 +1107,28 @@ def _flow_metric_from_energy_row(row: dict[str, object]) -> dict[str, str]:
     }
 
 
+def _select_energy_base(
+    row: dict[str, object],
+    flow_metric: dict[str, str],
+    *,
+    flow_delta: float,
+) -> tuple[str, str, str]:
+    policy = str(row.get("energy_base_policy", "") or "flow")
+    threshold = _row_float(row, "energy_base_flow_delta_threshold", 0.0)
+    use_current = policy == "current_on_flow_regression" and math.isfinite(flow_delta) and flow_delta < threshold
+    if use_current:
+        return (
+            "current",
+            str(row.get("current_phantom_path", "")),
+            str(row.get("current_synthetic_gray_png", "")),
+        )
+    return (
+        "flow",
+        str(row.get("phantom_path", "")),
+        str(flow_metric.get("synthetic_gray_png", "")),
+    )
+
+
 def _delta(value: float, baseline: float) -> float:
     return value - baseline if math.isfinite(value) and math.isfinite(baseline) else float("nan")
 
@@ -812,6 +1148,113 @@ def _row_float(row: dict[str, object], key: str, default: float) -> float:
 
 def _finite_or_floor(value: float) -> float:
     return value if math.isfinite(value) else -1.0
+
+
+def _energy_gate_examples(probe_metrics_paths: tuple[str | Path, ...]) -> list[dict[str, float]]:
+    examples: list[dict[str, float]] = []
+    for path in probe_metrics_paths:
+        for row in _read_rows(path):
+            current_ms = _finite(row.get("current_ms_ssim"))
+            flow_ms = _finite(row.get("flow_ms_ssim"))
+            energy_ms = _finite(row.get("flow_energy_ms_ssim"))
+            if not all(math.isfinite(value) for value in (current_ms, flow_ms, energy_ms)):
+                continue
+            flow_delta = _delta(flow_ms, current_ms)
+            energy_delta = _delta(energy_ms, current_ms)
+            flow_map_delta = _finite(row.get("flow_map_delta_vs_current"))
+            energy_map_delta = _finite(row.get("flow_energy_map_delta_vs_current"))
+            best_map_with_energy = (
+                max(0.0, _finite_or_floor(flow_map_delta), _finite_or_floor(energy_map_delta))
+                if math.isfinite(energy_map_delta)
+                else float("nan")
+            )
+            best_map_without_energy = (
+                max(0.0, _finite_or_floor(flow_map_delta)) if math.isfinite(energy_map_delta) else float("nan")
+            )
+            examples.append(
+                {
+                    "current_ms_ssim": current_ms,
+                    "flow_ms_ssim": flow_ms,
+                    "flow_energy_ms_ssim": energy_ms,
+                    "flow_delta_vs_current": flow_delta,
+                    "flow_energy_delta_vs_current": energy_delta,
+                    "flow_map_delta_vs_current": flow_map_delta,
+                    "flow_energy_map_delta_vs_current": energy_map_delta,
+                    "best_delta_with_energy": max(current_ms, flow_ms, energy_ms) - current_ms,
+                    "best_delta_without_energy": max(current_ms, flow_ms) - current_ms,
+                    "best_map_delta_with_energy": best_map_with_energy,
+                    "best_map_delta_without_energy": best_map_without_energy,
+                }
+            )
+    return examples
+
+
+def _energy_gate_thresholds(examples: list[dict[str, float]]) -> list[float]:
+    flow_deltas = sorted({row["flow_delta_vs_current"] for row in examples})
+    if not flow_deltas:
+        return []
+    return [flow_deltas[0] - 1e-6, *flow_deltas, flow_deltas[-1] + 1e-6]
+
+
+def _energy_gate_threshold_row(
+    examples: list[dict[str, float]],
+    threshold: float,
+    *,
+    full_delta_sum: float,
+    full_map_delta_sum: float,
+) -> dict[str, object]:
+    energy_calls = 0
+    negative_energy_calls = 0
+    skipped_positive_energy_calls = 0
+    best_delta_sum = 0.0
+    energy_wins = 0
+    map_objective_examples = 0
+    negative_map_calls = 0
+    skipped_positive_map_calls = 0
+    map_delta_sum = 0.0
+    map_wins = 0
+    for row in examples:
+        has_map = math.isfinite(row["flow_energy_map_delta_vs_current"])
+        if has_map:
+            map_objective_examples += 1
+        if row["flow_delta_vs_current"] >= threshold:
+            energy_calls += 1
+            negative_energy_calls += int(row["flow_energy_delta_vs_current"] <= 0.0)
+            energy_wins += int(row["flow_energy_delta_vs_current"] > 0.0)
+            best_delta_sum += row["best_delta_with_energy"]
+            if has_map:
+                negative_map_calls += int(row["flow_energy_map_delta_vs_current"] <= 0.0)
+                map_wins += int(row["flow_energy_map_delta_vs_current"] > 0.0)
+                map_delta_sum += row["best_map_delta_with_energy"]
+        else:
+            skipped_positive_energy_calls += int(row["flow_energy_delta_vs_current"] > 0.0)
+            best_delta_sum += row["best_delta_without_energy"]
+            if has_map:
+                skipped_positive_map_calls += int(row["flow_energy_map_delta_vs_current"] > 0.0)
+                map_delta_sum += row["best_map_delta_without_energy"]
+    skipped_energy_calls = len(examples) - energy_calls
+    retained = best_delta_sum / full_delta_sum if full_delta_sum > 0.0 else 1.0
+    retained_map = map_delta_sum / full_map_delta_sum if full_map_delta_sum > 0.0 else 1.0
+    return {
+        "min_energy_flow_delta": threshold,
+        "energy_calls": energy_calls,
+        "skipped_energy_calls": skipped_energy_calls,
+        "negative_energy_calls": negative_energy_calls,
+        "skipped_positive_energy_calls": skipped_positive_energy_calls,
+        "best_delta_sum": best_delta_sum,
+        "retained_best_delta_fraction": retained,
+        "delta_loss_vs_full_energy": full_delta_sum - best_delta_sum,
+        "delta_per_energy_call": best_delta_sum / energy_calls if energy_calls else 0.0,
+        "energy_win_rate": energy_wins / energy_calls if energy_calls else 0.0,
+        "map_objective_examples": map_objective_examples,
+        "negative_map_calls": negative_map_calls,
+        "skipped_positive_map_calls": skipped_positive_map_calls,
+        "map_delta_sum": map_delta_sum,
+        "retained_map_delta_fraction": retained_map,
+        "map_delta_loss_vs_full_energy": full_map_delta_sum - map_delta_sum if map_objective_examples else "",
+        "map_delta_per_energy_call": map_delta_sum / energy_calls if energy_calls and map_objective_examples else "",
+        "map_win_rate": map_wins / energy_calls if energy_calls and map_objective_examples else "",
+    }
 
 
 def _priority(row: dict[str, str], idx: int) -> int:
@@ -861,12 +1304,18 @@ def _selector_manifest_fieldnames() -> list[str]:
         "true_probe_feedback_best_delta_mean",
         "true_probe_feedback_energy_delta_mean",
         "true_probe_feedback_flow_delta_mean",
+        "true_probe_feedback_flow_negative_rate",
+        "true_probe_feedback_flow_regression_rate",
         "true_probe_feedback_energy_win_rate",
         "true_probe_feedback_status",
         "true_probe_feedback_score_multiplier",
+        *EXACT_PROBE_FEEDBACK_FIELDS,
+        *ENERGY_GATE_CONTEXT_FIELDS,
         "residual_control_policy",
         "flow_smooth_sigma",
         "flow_attachment",
+        "energy_base_policy",
+        "energy_base_flow_delta_threshold",
         "energy_exponent",
         "energy_sigma",
         "energy_ratio_low",
@@ -911,6 +1360,9 @@ def _selector_energy_queue_fieldnames() -> list[str]:
         "phantom_path",
         "flow_phantom_path",
         "flow_synthetic_gray_png",
+        "energy_base_stage",
+        "energy_base_phantom_path",
+        "energy_base_synthetic_gray_png",
         "flow_ms_ssim",
         "flow_request_id",
         "flow_error",
@@ -950,12 +1402,21 @@ def _selector_probe_fieldnames() -> list[str]:
         "true_probe_feedback_best_delta_mean",
         "true_probe_feedback_energy_delta_mean",
         "true_probe_feedback_flow_delta_mean",
+        "true_probe_feedback_flow_negative_rate",
+        "true_probe_feedback_flow_regression_rate",
         "true_probe_feedback_energy_win_rate",
         "true_probe_feedback_status",
         "true_probe_feedback_score_multiplier",
+        *EXACT_PROBE_FEEDBACK_FIELDS,
+        *ENERGY_GATE_CONTEXT_FIELDS,
         "residual_control_policy",
         "flow_smooth_sigma",
         "flow_attachment",
+        "energy_base_policy",
+        "energy_base_flow_delta_threshold",
+        "energy_base_stage",
+        "energy_base_phantom_path",
+        "energy_base_synthetic_gray_png",
         "energy_exponent",
         "energy_sigma",
         "energy_ratio_low",
@@ -999,6 +1460,7 @@ def _selector_probe_fieldnames() -> list[str]:
         "flow_map_delta_vs_current",
         "flow_map_objective_status",
         "flow_map_objective_error",
+        *ENERGY_MAP_OBJECTIVE_FIELDS,
         "method",
         "reference_png",
         "current_phantom_path",

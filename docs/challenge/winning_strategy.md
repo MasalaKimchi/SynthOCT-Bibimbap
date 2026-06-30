@@ -73,6 +73,8 @@ Recent rejected or exploratory branches:
 
 See [../history/experiments.md](../history/experiments.md) for the dated evidence trail and [ml_dl_expert_review.md](ml_dl_expert_review.md) for the current ML/DL assessment.
 
+The latest Stage 2 residual-selector work is summarized in [stage2_oac_residual_journey.md](stage2_oac_residual_journey.md). That note records the decision to freeze Stage 1 as `p140-t32` topology, use flow+energy patches as teacher data, and require uncertainty-gated Struct/OAC/SC/RSC map safety before spending hosted API calls.
+
 ## Why Prior Optimization Was Far From Competition-Optimal
 
 The strongest branch so far was coordinate-preserving energy-ratio feedback plus tiny axial and global amplitude calibration. That is a local correction method, not a general learned inverse model. Its limitations are structural:

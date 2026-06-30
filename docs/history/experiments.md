@@ -984,3 +984,71 @@ Historical outputs may exist under ignored `outputs/` paths:
 - `outputs/submission_ready_h67_full/SUBMISSION_README.md`
 
 Because `outputs/` is ignored and machine-local, treat these as breadcrumbs rather than required repository files.
+
+## 2026-06-30: Stage 1 Freeze And Stage 2 OAC-Aware Residual Selector
+
+The next push tested whether the public-set flow+energy rescue behavior could become a more general two-stage residual model. The working diagnosis was:
+
+```text
+Stage 1: preserve learned-prior-sparse-p140-t32 topology and map stability.
+Stage 2: learn/select residual strength and flow/energy controls from true-scanner teacher rows.
+```
+
+Stage 1 residual attempts were useful but did not clear the map-safety bar. A no-training preserve-scatterer validation produced `24/24` hosted rows with:
+
+```text
+MS-SSIM min=0.7184612623698975
+MS-SSIM mean=0.7266535063573838
+MS-SSIM max=0.7334089110214908
+```
+
+Depth-local and strict preservation variants reduced the risk but also reduced upside. A Stage 2 target-guided texture overlay was then tried and rejected: `24/24` hosted rows rendered, but the maximum MS-SSIM was only `0.7145874710156382` and mean MS-SSIM was `0.6641879186096843`. This confirmed that replacing even a small low-energy scatterer tail with target-guided texture can disrupt the true scanner's speckle and map behavior.
+
+The code path was redirected toward an OAC-aware residual selector. The selector now records per-teacher deltas for Struct, OAC, SC, and RSC MS-SSIM and predicts lower-confidence bounds for those deltas during queue planning. A candidate can be rejected with:
+
+```bash
+synthoct plan-residual-selector-queue \
+  --require-map-safe \
+  --min-map-delta-lcb 0 \
+  --min-map-safe-win-rate 0.5
+```
+
+The current selector artifact is:
+
+```text
+outputs/residual_selector_public_teacher/selector_oac_map_safe_feedback15.json
+```
+
+It was trained from `362` teacher examples. Strict non-harm map gating retained `34` rows:
+
+```text
+queue: outputs/residual_selector_public_teacher/next_probe_queue_oac_map_safe_feedback15_strict_rowwise_limit120.csv
+rows=34
+map_safety_status=map_safe_pass for all rows
+expected_delta_lcb mean=0.0025712735633801388
+expected_map_delta_lcb_min mean=0.0
+```
+
+A stricter positive map threshold, `--min-map-delta-lcb 0.00025`, retained `0` rows. Interpretation: current teacher evidence supports map-safe non-harm candidates, but not confidently positive Struct/OAC/SC/RSC deltas.
+
+The budgeted queue for the next hosted run is:
+
+```text
+outputs/residual_selector_public_teacher/two_stage_api_budget_120_queue_oac_map_safe_feedback15_strict_repeat_source_rowwise_diverse.csv
+rows=80
+map_safety_status=map_safe_pass for all rows
+```
+
+Exact-source exclusion produced no rows because all strict map-safe sources had appeared in previous feedback. However, exact parameter overlap against recent comparable budgets was `0`, so this queue is still a new Stage 2 control set for controlled retesting.
+
+The best hosted true-scanner residual probe remains:
+
+```text
+MS-SSIM=0.734145597958592
+metrics=outputs/residual_selector_public_teacher/probe_batch_feedback11_branch_aware_smoke4_concurrency4/residual_selector_probe_metrics.csv
+method=selector_energy_basecurrent_e0p798_sig1p80_tex0p26_deep0p66_s0p380_p4_rank120_row0_l_shcheka_frame250
+```
+
+This is still single-reference public evidence. It is not a grouped or hidden-holdout result, and it does not meet the requested `0.85` or `0.90` MS-SSIM target.
+
+The hosted API was unreachable during the feedback15 validation attempt. Both `api_concurrency=4` and a `max-candidates=4`, `api_concurrency=1` smoke failed before request IDs were assigned, and direct `curl` checks to `https://synthoct.com/` timed out. Because the failures occurred before request creation, these rows are not interpreted as spent hosted jobs. Resume details are in [../challenge/stage2_oac_residual_journey.md](../challenge/stage2_oac_residual_journey.md).

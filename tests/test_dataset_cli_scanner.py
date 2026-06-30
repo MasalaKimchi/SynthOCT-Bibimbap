@@ -7,6 +7,7 @@ import zipfile
 from pathlib import Path
 
 import numpy as np
+import pytest
 from skimage import io as skio
 
 import synthoct.correction_refinement as correction_refinement
@@ -1101,6 +1102,426 @@ def test_cli_train_phantom_prior_and_generate_learned_prior(tmp_path):
     assert np.isfinite(data).all()
 
 
+def test_cli_train_and_apply_stage1_residual_prior(tmp_path):
+    pytest.importorskip("torch")
+    config = ExperimentConfig(scatterers_count=128)
+    base = generate_two_layers(config, seed=11)
+    flow_good = base.copy()
+    flow_good[:, 2] = np.clip(flow_good[:, 2] + 4.0, 0.0, config.z_max)
+    flow_bad = base.copy()
+    flow_bad[:, 0] = np.clip(flow_bad[:, 0] + 14.0, -config.x_max / 2, config.x_max / 2)
+
+    base_path = tmp_path / "base.txt"
+    flow_good_path = tmp_path / "flow_good.txt"
+    flow_bad_path = tmp_path / "flow_bad.txt"
+    save_phantom(base, base_path, config)
+    save_phantom(flow_good, flow_good_path, config)
+    save_phantom(flow_bad, flow_bad_path, config)
+
+    ref = tmp_path / "reference.png"
+    image = np.tile(np.linspace(0, 255, 96, dtype=np.uint8), (48, 1))
+    skio.imsave(ref, image)
+    teacher = tmp_path / "teacher.csv"
+    with teacher.open("w", newline="") as fobj:
+        writer = csv.DictWriter(
+            fobj,
+            fieldnames=[
+                "evidence_source",
+                "source_archive_path",
+                "reference_png",
+                "current_phantom_path",
+                "flow_phantom_path",
+                "current_ms_ssim",
+                "flow_ms_ssim",
+                "flow_delta_vs_current",
+                "flow_map_delta_vs_current",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "evidence_source": "hosted_api_true_scanner",
+                "source_archive_path": "DATASET_PNG/Female/1990-2000/Cheek/good_frame50.png",
+                "reference_png": str(ref),
+                "current_phantom_path": str(base_path),
+                "flow_phantom_path": str(flow_good_path),
+                "current_ms_ssim": "0.62",
+                "flow_ms_ssim": "0.63",
+                "flow_delta_vs_current": "0.01",
+                "flow_map_delta_vs_current": "0.004",
+            }
+        )
+        writer.writerow(
+            {
+                "evidence_source": "hosted_api_true_scanner",
+                "source_archive_path": "DATASET_PNG/Female/1990-2000/Cheek/bad_frame50.png",
+                "reference_png": str(ref),
+                "current_phantom_path": str(base_path),
+                "flow_phantom_path": str(flow_bad_path),
+                "current_ms_ssim": "0.62",
+                "flow_ms_ssim": "0.59",
+                "flow_delta_vs_current": "-0.03",
+                "flow_map_delta_vs_current": "-0.010",
+            }
+        )
+
+    artifact = tmp_path / "stage1_residual.pt"
+    assert (
+        main(
+            [
+                "train-stage1-residual-prior",
+                "--teacher-metrics",
+                str(teacher),
+                "--out",
+                str(artifact),
+                "--shape",
+                "16",
+                "24",
+                "--epochs",
+                "1",
+            ]
+        )
+        == 0
+    )
+    metadata = json.loads(artifact.with_suffix(".json").read_text(encoding="utf-8"))
+    assert metadata["example_count"] == 2
+    assert metadata["positive_example_count"] == 1
+    assert metadata["regression_anchor_count"] == 1
+    assert metadata["promotion_allowed_without_true_scanner"] is False
+
+    learned_artifact = tmp_path / "learned_prior.npz"
+    prior = np.tile(np.linspace(0.0, 1.0, 24, dtype=np.float32), (16, 1))
+    np.savez_compressed(learned_artifact, density_prior=prior + 0.01, energy_prior=np.flipud(prior) + 0.01)
+    out = tmp_path / "stage1_phantom.txt"
+    assert (
+        main(
+            [
+                "stage1-residual-prior-phantom",
+                "--input",
+                str(ref),
+                "--learned-artifact",
+                str(learned_artifact),
+                "--residual-artifact",
+                str(artifact),
+                "--out",
+                str(out),
+                "--scatterers-count",
+                "96",
+            ]
+        )
+        == 0
+    )
+    data = load_phantom(out)
+    assert data.shape == (96, 4)
+    assert np.isfinite(data).all()
+
+    base_metrics = tmp_path / "base_api_metrics.csv"
+    with base_metrics.open("w", newline="") as fobj:
+        writer = csv.DictWriter(
+            fobj,
+            fieldnames=["source_archive_path", "reference_png", "phantom_path", "MS-SSIM"],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "source_archive_path": "DATASET_PNG/Female/1990-2000/Cheek/good_frame50.png",
+                "reference_png": str(ref),
+                "phantom_path": str(base_path),
+                "MS-SSIM": "0.90",
+            }
+        )
+        writer.writerow(
+            {
+                "source_archive_path": "DATASET_PNG/Male/1950-1960/Eye_corner/heldout_frame450.png",
+                "reference_png": str(ref),
+                "phantom_path": str(base_path),
+                "MS-SSIM": "0.82",
+            }
+        )
+    heldout_queue = tmp_path / "stage1_heldout_queue.csv"
+    assert (
+        main(
+            [
+                "plan-stage1-residual-validation-queue",
+                "--base-api-metrics",
+                str(base_metrics),
+                "--residual-artifact",
+                str(artifact),
+                "--out-queue",
+                str(heldout_queue),
+                "--exclude-metrics",
+                str(teacher),
+                "--max-sources",
+                "1",
+                "--residual-blends",
+                "0.25",
+                "1.0",
+            ]
+        )
+        == 0
+    )
+    heldout_rows = list(csv.DictReader(heldout_queue.open()))
+    assert len(heldout_rows) == 4
+    assert {row["source_archive_path"] for row in heldout_rows} == {
+        "DATASET_PNG/Male/1950-1960/Eye_corner/heldout_frame450.png"
+    }
+    assert {row["preserve_depth_profile"] for row in heldout_rows} == {"False", "True"}
+    assert {row["preserve_local_profile"] for row in heldout_rows} == {"False"}
+    assert all(Path(row["phantom_path"]).exists() for row in heldout_rows)
+    heldout_summary = json.loads(heldout_queue.with_suffix(".json").read_text(encoding="utf-8"))
+    assert heldout_summary["source_count"] == 1
+    assert heldout_summary["queue_count"] == 4
+    assert heldout_summary["hidden_holdout_final_score"] is False
+
+    overlay_out = tmp_path / "stage2_overlay.txt"
+    assert (
+        main(
+            [
+                "stage2-texture-overlay-phantom",
+                "--input",
+                str(ref),
+                "--base-phantom",
+                str(base_path),
+                "--out",
+                str(overlay_out),
+                "--replace-fraction",
+                "0.05",
+                "--texture-weight",
+                "0.6",
+            ]
+        )
+        == 0
+    )
+    overlay = load_phantom(overlay_out)
+    assert overlay.shape == base.shape
+    assert np.isclose(overlay[:, 3].sum(), base[:, 3].sum(), rtol=0.02)
+
+    overlay_queue = tmp_path / "stage2_overlay_queue.csv"
+    assert (
+        main(
+            [
+                "plan-stage2-texture-overlay-validation-queue",
+                "--base-api-metrics",
+                str(base_metrics),
+                "--out-queue",
+                str(overlay_queue),
+                "--max-sources",
+                "1",
+                "--replace-fractions",
+                "0.01",
+                "0.02",
+                "--texture-weights",
+                "0.3",
+            ]
+        )
+        == 0
+    )
+    overlay_rows = list(csv.DictReader(overlay_queue.open()))
+    assert len(overlay_rows) == 2
+    assert all(Path(row["phantom_path"]).exists() for row in overlay_rows)
+    overlay_summary = json.loads(overlay_queue.with_suffix(".json").read_text(encoding="utf-8"))
+    assert overlay_summary["queue_count"] == 2
+    assert overlay_summary["promotion_allowed_without_true_scanner"] is False
+
+
+def test_cli_enrich_stage1_residual_smoke_maps(tmp_path):
+    ref = tmp_path / "reference.png"
+    current = tmp_path / "current.png"
+    stage1 = tmp_path / "stage1.png"
+    image = np.tile(np.linspace(20, 220, 64, dtype=np.uint8), (48, 1))
+    skio.imsave(ref, image)
+    skio.imsave(current, np.clip(image * 0.82, 0, 255).astype(np.uint8))
+    skio.imsave(stage1, image)
+
+    queue = tmp_path / "queue.csv"
+    with queue.open("w", newline="") as fobj:
+        writer = csv.DictWriter(fobj, fieldnames=["method", "source_archive_path", "reference_png"])
+        writer.writeheader()
+        writer.writerow(
+            {
+                "method": "stage1_residual_preserve_b1p00_01",
+                "source_archive_path": "DATASET_PNG/Female/1990-2000/Cheek/sample_frame50.png",
+                "reference_png": str(ref),
+            }
+        )
+
+    candidate_metrics = tmp_path / "candidate_queue_metrics.csv"
+    with candidate_metrics.open("w", newline="") as fobj:
+        writer = csv.DictWriter(
+            fobj,
+            fieldnames=["status", "method", "reference_png", "synthetic_gray_png", "MS-SSIM"],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "status": "ok",
+                "method": "stage1_residual_preserve_b1p00_01",
+                "reference_png": str(ref),
+                "synthetic_gray_png": str(stage1),
+                "MS-SSIM": "1.0",
+            }
+        )
+
+    base_metrics = tmp_path / "base_api_metrics.csv"
+    with base_metrics.open("w", newline="") as fobj:
+        writer = csv.DictWriter(
+            fobj,
+            fieldnames=["source_archive_path", "reference_png", "synthetic_gray_png", "MS-SSIM"],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "source_archive_path": "DATASET_PNG/Female/1990-2000/Cheek/sample_frame50.png",
+                "reference_png": str(ref),
+                "synthetic_gray_png": str(current),
+                "MS-SSIM": "0.72",
+            }
+        )
+
+    out = tmp_path / "stage1_enriched.csv"
+    assert (
+        main(
+            [
+                "enrich-stage1-residual-smoke-maps",
+                "--candidate-metrics",
+                str(candidate_metrics),
+                "--candidate-queue",
+                str(queue),
+                "--base-api-metrics",
+                str(base_metrics),
+                "--out",
+                str(out),
+            ]
+        )
+        == 0
+    )
+    rows = list(csv.DictReader(out.open()))
+    assert len(rows) == 1
+    assert rows[0]["guardrail_pass"] == "True"
+    assert float(rows[0]["delta_Struct_MS-SSIM"]) > 0.0
+    summary = json.loads(out.with_suffix(".json").read_text(encoding="utf-8"))
+    assert summary["guardrail_pass_count"] == 1
+    assert summary["hidden_holdout_final_score"] is False
+
+
+def test_cli_select_stage1_residual_variants_uses_multi_objective_gate(tmp_path):
+    headers = [
+        "status",
+        "method",
+        "source_archive_path",
+        "reference_png",
+        "phantom_path",
+        "synthetic_gray_png",
+        "MS-SSIM",
+        "current_ms_ssim",
+        "stage1_ms_ssim",
+        "current_map_enrichment_status",
+        "stage1_map_enrichment_status",
+        "delta_Struct_MS-SSIM",
+        "delta_OAC_MS-SSIM",
+        "delta_SC_MS-SSIM",
+        "delta_RSC_MS-SSIM",
+        "delta_Struct_LPIPS_PROXY",
+    ]
+    source_a = "DATASET_PNG/Female/1990-2000/Cheek/a_frame50.png"
+    source_b = "DATASET_PNG/Male/1950-1960/Eye_corner/b_frame450.png"
+    raw = tmp_path / "raw_enriched.csv"
+    depth = tmp_path / "depth_enriched.csv"
+    with raw.open("w", newline="") as fobj:
+        writer = csv.DictWriter(fobj, fieldnames=headers)
+        writer.writeheader()
+        writer.writerow(
+            {
+                "status": "ok",
+                "method": "raw_a",
+                "source_archive_path": source_a,
+                "reference_png": "ref_a.png",
+                "phantom_path": "raw_a.txt",
+                "synthetic_gray_png": "raw_a.png",
+                "MS-SSIM": "0.710",
+                "current_ms_ssim": "0.704",
+                "stage1_ms_ssim": "0.710",
+                "current_map_enrichment_status": "ok",
+                "stage1_map_enrichment_status": "ok",
+                "delta_Struct_MS-SSIM": "0.0060",
+                "delta_OAC_MS-SSIM": "-0.0018",
+                "delta_SC_MS-SSIM": "0.0120",
+                "delta_RSC_MS-SSIM": "0.0130",
+                "delta_Struct_LPIPS_PROXY": "0.0020",
+            }
+        )
+        writer.writerow(
+            {
+                "status": "ok",
+                "method": "raw_b",
+                "source_archive_path": source_b,
+                "reference_png": "ref_b.png",
+                "phantom_path": "raw_b.txt",
+                "synthetic_gray_png": "raw_b.png",
+                "MS-SSIM": "0.705",
+                "current_ms_ssim": "0.701",
+                "stage1_ms_ssim": "0.705",
+                "current_map_enrichment_status": "ok",
+                "stage1_map_enrichment_status": "ok",
+                "delta_Struct_MS-SSIM": "0.0040",
+                "delta_OAC_MS-SSIM": "-0.0002",
+                "delta_SC_MS-SSIM": "0.0030",
+                "delta_RSC_MS-SSIM": "0.0040",
+                "delta_Struct_LPIPS_PROXY": "0.0005",
+            }
+        )
+    with depth.open("w", newline="") as fobj:
+        writer = csv.DictWriter(fobj, fieldnames=headers)
+        writer.writeheader()
+        writer.writerow(
+            {
+                "status": "ok",
+                "method": "depth_a",
+                "source_archive_path": source_a,
+                "reference_png": "ref_a.png",
+                "phantom_path": "depth_a.txt",
+                "synthetic_gray_png": "depth_a.png",
+                "MS-SSIM": "0.708",
+                "current_ms_ssim": "0.704",
+                "stage1_ms_ssim": "0.708",
+                "current_map_enrichment_status": "ok",
+                "stage1_map_enrichment_status": "ok",
+                "delta_Struct_MS-SSIM": "0.0040",
+                "delta_OAC_MS-SSIM": "-0.0001",
+                "delta_SC_MS-SSIM": "0.0060",
+                "delta_RSC_MS-SSIM": "0.0050",
+                "delta_Struct_LPIPS_PROXY": "0.0010",
+            }
+        )
+
+    out_queue = tmp_path / "selected_stage1.csv"
+    assert (
+        main(
+            [
+                "select-stage1-residual-variants",
+                "--enriched-metrics",
+                str(raw),
+                str(depth),
+                "--out-queue",
+                str(out_queue),
+                "--min-oac-delta",
+                "-0.001",
+            ]
+        )
+        == 0
+    )
+    rows = list(csv.DictReader(out_queue.open()))
+    assert [row["method"] for row in rows] == ["depth_a", "raw_b"]
+    assert rows[0]["stage1_selection_status"] == "selected"
+    assert rows[0]["promotion_allowed_without_true_scanner"] == "False"
+    assert float(rows[0]["stage1_multi_objective_score"]) > float(rows[1]["stage1_multi_objective_score"])
+    summary = json.loads(out_queue.with_suffix(".json").read_text(encoding="utf-8"))
+    assert summary["candidate_count"] == 3
+    assert summary["selected_count"] == 2
+    assert summary["status_counts"]["blocked_oac_delta"] == 1
+    assert summary["hidden_holdout_final_score"] is False
+
+
 def test_cli_optimize_seeds_writes_ranked_metrics(tmp_path, monkeypatch):
     def fake_render_with_api(phantom_path, config_path, out_png, **kwargs):
         image = np.tile(np.linspace(0, 255, 512, dtype=np.uint8), (256, 1))
@@ -1648,6 +2069,8 @@ def test_cli_residual_selector_flow_batch_passes_controls(tmp_path, monkeypatch)
                 "12",
                 "--max-energy-followups",
                 "4",
+                "--min-energy-flow-delta",
+                "-0.006",
                 "--api-key-file",
                 str(key_file),
                 "--api-concurrency",
@@ -1670,6 +2093,7 @@ def test_cli_residual_selector_flow_batch_passes_controls(tmp_path, monkeypatch)
     assert captured["out_dir"] == str(tmp_path / "selector_batch")
     assert captured["max_candidates"] == 12
     assert captured["max_energy_followups"] == 4
+    assert captured["min_energy_flow_delta"] == -0.006
     assert captured["api_key_file"] == str(key_file)
     assert captured["api_concurrency"] == 3
     assert captured["poll_interval_seconds"] == 3.5
@@ -2193,15 +2617,383 @@ def test_cli_plan_residual_api_budget_uses_true_probe_feedback(tmp_path):
     )
     rows = list(csv.DictReader(out.open()))
     assert rows[0]["true_probe_feedback_status"] == "energy_single_probe_positive"
-    assert rows[1]["true_probe_feedback_status"] == "flow_negative_energy_unknown"
+    assert rows[1]["true_probe_feedback_status"] == "flow_regression_risky"
+    assert rows[1]["true_probe_feedback_flow_regression_rate"] == "1.0"
     assert rows[0]["true_probe_feedback_group_key"] == "Male|1950-1960|Eye_corner"
     assert float(rows[0]["budget_score"]) > float(rows[1]["budget_score"])
     summary = json.loads(out.with_name("feedback_budget_queue_budget_summary.json").read_text(encoding="utf-8"))
     assert summary["planned_true_probe_feedback_status"] == {
         "energy_single_probe_positive": 1,
-        "flow_negative_energy_unknown": 1,
+        "flow_regression_risky": 1,
     }
     assert summary["probe_feedback_metrics"] == [str(feedback)]
+
+
+def test_cli_plan_residual_api_budget_penalizes_exact_source_regression(tmp_path):
+    selector_queue = tmp_path / "selector_queue.csv"
+    with selector_queue.open("w", newline="") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "priority",
+                "row_index",
+                "current_rank",
+                "source_archive_path",
+                "current_ms_ssim",
+                "current_lpips",
+                "selected_strength",
+                "expected_delta_mean",
+                "expected_delta_lcb",
+                "expected_delta_uncertainty",
+                "acquisition_score",
+                "nearest_teacher_count",
+                "nearest_teacher_sources",
+                "selector_train_examples",
+                "reference_png",
+                "current_phantom_path",
+                "current_synthetic_gray_png",
+                "surrogate_gate_status",
+                "evidence_scope",
+            ],
+        )
+        writer.writeheader()
+        for priority, source in [
+            (1, "DATASET_PNG/Male/1950-1960/Cheek/retry_bad_frame50.png"),
+            (2, "DATASET_PNG/Male/1950-1960/Cheek/fresh_same_group_frame50.png"),
+        ]:
+            writer.writerow(
+                {
+                    "priority": priority,
+                    "row_index": priority - 1,
+                    "current_rank": priority,
+                    "source_archive_path": source,
+                    "current_ms_ssim": "0.64",
+                    "current_lpips": "0.58",
+                    "selected_strength": "0.38",
+                    "expected_delta_mean": "0.020",
+                    "expected_delta_lcb": "0.010",
+                    "expected_delta_uncertainty": "0.004",
+                    "acquisition_score": "0.020",
+                    "nearest_teacher_count": "12",
+                    "nearest_teacher_sources": "teacher_a;teacher_b",
+                    "selector_train_examples": "140",
+                    "reference_png": str(tmp_path / f"ref{priority}.png"),
+                    "current_phantom_path": str(tmp_path / f"base{priority}.txt"),
+                    "current_synthetic_gray_png": str(tmp_path / f"gray{priority}.png"),
+                    "surrogate_gate_status": "pass",
+                    "evidence_scope": "selector_planning_not_challenge_evidence",
+                }
+            )
+
+    feedback = tmp_path / "probe_feedback.csv"
+    with feedback.open("w", newline="") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "source_archive_path",
+                "current_ms_ssim",
+                "flow_delta_vs_current",
+                "flow_energy_delta_vs_current",
+                "best_ms_ssim",
+                "energy_status",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "source_archive_path": "DATASET_PNG/Male/1950-1960/Cheek/retry_bad_frame50.png",
+                "current_ms_ssim": "0.64",
+                "flow_delta_vs_current": "-0.019",
+                "flow_energy_delta_vs_current": "",
+                "best_ms_ssim": "0.64",
+                "energy_status": "deferred_flow_regression",
+            }
+        )
+        writer.writerow(
+            {
+                "source_archive_path": "DATASET_PNG/Male/1950-1960/Cheek/nearby_supported_frame50.png",
+                "current_ms_ssim": "0.64",
+                "flow_delta_vs_current": "0.002",
+                "flow_energy_delta_vs_current": "0.006",
+                "best_ms_ssim": "0.646",
+                "energy_status": "ok",
+            }
+        )
+
+    out = tmp_path / "exact_feedback_budget_queue.csv"
+    assert (
+        main(
+            [
+                "plan-residual-api-budget",
+                "--selector-queue",
+                str(selector_queue),
+                "--out",
+                str(out),
+                "--total-api-calls",
+                "2",
+                "--energy-followup-fraction",
+                "0",
+                "--strength-multipliers",
+                "1.0",
+                "--probe-feedback-metrics",
+                str(feedback),
+            ]
+        )
+        == 0
+    )
+    rows = list(csv.DictReader(out.open()))
+    assert rows[0]["source_archive_path"].endswith("fresh_same_group_frame50.png")
+    assert rows[0]["true_probe_feedback_status"] == "flow_regression_risky"
+    assert rows[0]["true_probe_feedback_flow_regression_rate"] == "0.5"
+    assert rows[0]["exact_probe_feedback_status"] == "not_probed"
+    assert rows[1]["source_archive_path"].endswith("retry_bad_frame50.png")
+    assert rows[1]["true_probe_feedback_status"] == "flow_regression_risky"
+    assert rows[1]["exact_probe_feedback_status"] == "exact_flow_regression"
+    assert float(rows[1]["exact_probe_feedback_score_multiplier"]) == 0.45
+    assert float(rows[0]["budget_score"]) > float(rows[1]["budget_score"])
+    summary = json.loads(out.with_name("exact_feedback_budget_queue_budget_summary.json").read_text(encoding="utf-8"))
+    assert summary["planned_exact_probe_feedback_status"] == {
+        "exact_flow_regression": 1,
+        "not_probed": 1,
+    }
+
+
+def test_cli_plan_residual_api_budget_can_exclude_exact_probed_sources(tmp_path):
+    selector_queue = tmp_path / "selector_queue.csv"
+    with selector_queue.open("w", newline="") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "priority",
+                "row_index",
+                "current_rank",
+                "source_archive_path",
+                "current_ms_ssim",
+                "current_lpips",
+                "selected_strength",
+                "expected_delta_mean",
+                "expected_delta_lcb",
+                "expected_delta_uncertainty",
+                "acquisition_score",
+                "nearest_teacher_count",
+                "nearest_teacher_sources",
+                "selector_train_examples",
+                "reference_png",
+                "current_phantom_path",
+                "current_synthetic_gray_png",
+                "surrogate_gate_status",
+                "evidence_scope",
+            ],
+        )
+        writer.writeheader()
+        for priority, source in [
+            (1, "DATASET_PNG/Male/1950-1960/Cheek/probed_positive_frame50.png"),
+            (2, "DATASET_PNG/Male/1950-1960/Cheek/probed_negative_frame50.png"),
+            (3, "DATASET_PNG/Male/1950-1960/Cheek/fresh_frame50.png"),
+        ]:
+            writer.writerow(
+                {
+                    "priority": priority,
+                    "row_index": priority - 1,
+                    "current_rank": priority,
+                    "source_archive_path": source,
+                    "current_ms_ssim": "0.64",
+                    "current_lpips": "0.58",
+                    "selected_strength": "0.38",
+                    "expected_delta_mean": "0.020",
+                    "expected_delta_lcb": "0.010",
+                    "expected_delta_uncertainty": "0.004",
+                    "acquisition_score": "0.020",
+                    "nearest_teacher_count": "12",
+                    "nearest_teacher_sources": "teacher_a;teacher_b",
+                    "selector_train_examples": "140",
+                    "reference_png": str(tmp_path / f"ref{priority}.png"),
+                    "current_phantom_path": str(tmp_path / f"base{priority}.txt"),
+                    "current_synthetic_gray_png": str(tmp_path / f"gray{priority}.png"),
+                    "surrogate_gate_status": "pass",
+                    "evidence_scope": "selector_planning_not_challenge_evidence",
+                }
+            )
+
+    feedback = tmp_path / "probe_feedback.csv"
+    with feedback.open("w", newline="") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "source_archive_path",
+                "current_ms_ssim",
+                "flow_delta_vs_current",
+                "flow_energy_delta_vs_current",
+                "best_ms_ssim",
+                "energy_status",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "source_archive_path": "DATASET_PNG/Male/1950-1960/Cheek/probed_positive_frame50.png",
+                "current_ms_ssim": "0.64",
+                "flow_delta_vs_current": "0.003",
+                "flow_energy_delta_vs_current": "0.008",
+                "best_ms_ssim": "0.648",
+                "energy_status": "ok",
+            }
+        )
+        writer.writerow(
+            {
+                "source_archive_path": "DATASET_PNG/Male/1950-1960/Cheek/probed_negative_frame50.png",
+                "current_ms_ssim": "0.64",
+                "flow_delta_vs_current": "-0.012",
+                "flow_energy_delta_vs_current": "",
+                "best_ms_ssim": "0.64",
+                "energy_status": "deferred_flow_regression",
+            }
+        )
+
+    out = tmp_path / "fresh_budget_queue.csv"
+    assert (
+        main(
+            [
+                "plan-residual-api-budget",
+                "--selector-queue",
+                str(selector_queue),
+                "--out",
+                str(out),
+                "--total-api-calls",
+                "3",
+                "--energy-followup-fraction",
+                "0",
+                "--strength-multipliers",
+                "1.0",
+                "--probe-feedback-metrics",
+                str(feedback),
+                "--exclude-exact-probed",
+            ]
+        )
+        == 0
+    )
+    rows = list(csv.DictReader(out.open()))
+    assert len(rows) == 1
+    assert rows[0]["source_archive_path"].endswith("fresh_frame50.png")
+    assert rows[0]["exact_probe_feedback_status"] == "not_probed"
+    summary = json.loads(out.with_name("fresh_budget_queue_budget_summary.json").read_text(encoding="utf-8"))
+    assert summary["exclude_exact_probed"] is True
+    assert summary["candidate_pool_size"] == 1
+
+
+def test_cli_plan_residual_api_budget_applies_energy_gate_summary(tmp_path):
+    selector_queue = tmp_path / "selector_queue.csv"
+    with selector_queue.open("w", newline="") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "priority",
+                "row_index",
+                "current_rank",
+                "source_archive_path",
+                "current_ms_ssim",
+                "current_lpips",
+                "selected_strength",
+                "expected_delta_mean",
+                "expected_delta_lcb",
+                "expected_delta_uncertainty",
+                "acquisition_score",
+                "expected_flow_delta_mean",
+                "nearest_teacher_count",
+                "nearest_teacher_sources",
+                "selector_train_examples",
+                "reference_png",
+                "current_phantom_path",
+                "current_synthetic_gray_png",
+                "surrogate_gate_status",
+                "evidence_scope",
+            ],
+        )
+        writer.writeheader()
+        for priority, acquisition, flow_delta in [
+            (1, "0.020", "-0.010"),
+            (2, "0.010", "0.002"),
+        ]:
+            writer.writerow(
+                {
+                    "priority": priority,
+                    "row_index": priority - 1,
+                    "current_rank": priority,
+                    "source_archive_path": f"DATASET_PNG/Female/1990-2000/Cheek/sample{priority}_frame50.png",
+                    "current_ms_ssim": "0.64",
+                    "current_lpips": "0.58",
+                    "selected_strength": "0.38",
+                    "expected_delta_mean": "0.020",
+                    "expected_delta_lcb": "0.010",
+                    "expected_delta_uncertainty": "0.004",
+                    "acquisition_score": acquisition,
+                    "expected_flow_delta_mean": flow_delta,
+                    "nearest_teacher_count": "12",
+                    "nearest_teacher_sources": "teacher_a;teacher_b",
+                    "selector_train_examples": "140",
+                    "reference_png": str(tmp_path / f"ref{priority}.png"),
+                    "current_phantom_path": str(tmp_path / f"base{priority}.txt"),
+                    "current_synthetic_gray_png": str(tmp_path / f"gray{priority}.png"),
+                    "surrogate_gate_status": "pass",
+                    "evidence_scope": "selector_planning_not_challenge_evidence",
+                }
+            )
+
+    gate = tmp_path / "energy_gate.json"
+    gate.write_text(
+        json.dumps(
+            {
+                "recommended_min_energy_flow_delta": -0.004,
+                "selected": {
+                    "retained_best_delta_fraction": 0.996,
+                    "retained_map_delta_fraction": 0.975,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    out = tmp_path / "gated_budget_queue.csv"
+    assert (
+        main(
+            [
+                "plan-residual-api-budget",
+                "--selector-queue",
+                str(selector_queue),
+                "--out",
+                str(out),
+                "--total-api-calls",
+                "2",
+                "--energy-followup-fraction",
+                "0",
+                "--strength-multipliers",
+                "1.0",
+                "--energy-gate-summary",
+                str(gate),
+            ]
+        )
+        == 0
+    )
+    rows = list(csv.DictReader(out.open()))
+    assert rows[0]["source_archive_path"].endswith("sample2_frame50.png")
+    assert rows[0]["energy_gate_expected_status"] == "energy_gate_pass"
+    assert rows[0]["energy_gate_min_flow_delta"] == "-0.004"
+    assert rows[0]["energy_gate_retained_map_delta_fraction"] == "0.975"
+    assert rows[1]["energy_gate_expected_status"] == "energy_gate_skip"
+    assert rows[1]["energy_gate_score_multiplier"] == "0.2"
+    assert float(rows[0]["budget_score"]) > float(rows[1]["budget_score"])
+    summary = json.loads(out.with_name("gated_budget_queue_budget_summary.json").read_text(encoding="utf-8"))
+    assert summary["energy_gate_summary"] == str(gate)
+    assert summary["energy_gate_min_flow_delta"] == -0.004
+    assert summary["energy_gate_retained_map_delta_fraction"] == 0.975
+    assert summary["candidate_energy_gate_expected_status"] == {
+        "energy_gate_pass": 1,
+        "energy_gate_skip": 1,
+    }
+    assert summary["planned_energy_gate_expected_status"] == {
+        "energy_gate_pass": 1,
+        "energy_gate_skip": 1,
+    }
+    assert summary["planned_energy_gate_eligible_followups"] == 0
 
 
 def test_residual_selector_flow_batch_skips_energy_after_failed_flow(tmp_path, monkeypatch):
@@ -2495,6 +3287,346 @@ def test_residual_selector_flow_batch_limits_energy_followups(tmp_path, monkeypa
     assert [row["priority"] for row in energy_queue_rows] == ["2"]
 
 
+def test_residual_selector_flow_batch_gates_energy_after_large_flow_regression(tmp_path, monkeypatch):
+    selector_queue = tmp_path / "budget_queue.csv"
+    with selector_queue.open("w", newline="") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "priority",
+                "row_index",
+                "current_rank",
+                "source_archive_path",
+                "selected_strength",
+                "current_ms_ssim",
+                "current_lpips",
+                "acquisition_score",
+                "reference_png",
+                "current_phantom_path",
+                "current_synthetic_gray_png",
+                "surrogate_gate_status",
+                "evidence_scope",
+            ],
+        )
+        writer.writeheader()
+        for priority in [1, 2]:
+            writer.writerow(
+                {
+                    "priority": priority,
+                    "row_index": priority - 1,
+                    "current_rank": priority,
+                    "source_archive_path": f"DATASET_PNG/Female/1990-2000/Cheek/sample{priority}_frame50.png",
+                    "selected_strength": "0.25",
+                    "current_ms_ssim": "0.62",
+                    "current_lpips": "0.58",
+                    "acquisition_score": "0.01",
+                    "reference_png": str(tmp_path / f"ref{priority}.png"),
+                    "current_phantom_path": str(tmp_path / f"base{priority}.txt"),
+                    "current_synthetic_gray_png": str(tmp_path / f"gray{priority}.png"),
+                    "surrogate_gate_status": "pass",
+                    "evidence_scope": "selector_budget_planning_not_challenge_evidence",
+                }
+            )
+
+    def fake_write_flow_transport_phantom(_ref, _phantom, _gray, output_path, **_kwargs):
+        Path(output_path).write_text("flow", encoding="utf-8")
+        return Path(output_path)
+
+    def fake_write_energy_ratio_phantom(_ref, _phantom, _gray, output_path, **_kwargs):
+        Path(output_path).write_text("energy", encoding="utf-8")
+        return Path(output_path)
+
+    def fake_render_candidate_queue(queue_csv, _reference_path, out_dir, **_kwargs):
+        queue_rows = list(csv.DictReader(Path(queue_csv).open()))
+        metrics_path = Path(out_dir) / "candidate_queue_metrics.csv"
+        metrics_path.parent.mkdir(parents=True, exist_ok=True)
+        fieldnames = [
+            "status",
+            "priority",
+            "method",
+            "request_id",
+            "reference_png",
+            "phantom_path",
+            "synthetic_gray_png",
+            "MS-SSIM",
+            "LPIPS_PROXY",
+            "error",
+        ]
+        flow_scores = {"1": "0.60", "2": "0.619"}
+        with metrics_path.open("w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            if "selector_flow_queue" in str(queue_csv):
+                for row in queue_rows:
+                    writer.writerow(
+                        {
+                            "status": "ok",
+                            "priority": row["priority"],
+                            "method": row["method"],
+                            "request_id": f"flow_{row['priority']}",
+                            "reference_png": row["reference_png"],
+                            "phantom_path": row["phantom_path"],
+                            "synthetic_gray_png": str(tmp_path / f"flow_{row['priority']}_gray.png"),
+                            "MS-SSIM": flow_scores[row["priority"]],
+                            "LPIPS_PROXY": "0.2",
+                            "error": "",
+                        }
+                    )
+            else:
+                assert [row["priority"] for row in queue_rows] == ["2"]
+                row = queue_rows[0]
+                writer.writerow(
+                    {
+                        "status": "ok",
+                        "priority": row["priority"],
+                        "method": row["method"],
+                        "request_id": "energy_2",
+                        "reference_png": row["reference_png"],
+                        "phantom_path": row["phantom_path"],
+                        "synthetic_gray_png": str(tmp_path / "energy_2_gray.png"),
+                        "MS-SSIM": "0.625",
+                        "LPIPS_PROXY": "0.18",
+                        "error": "",
+                    }
+                )
+        return metrics_path
+
+    monkeypatch.setattr(adaptive_flow_batch, "write_flow_transport_phantom", fake_write_flow_transport_phantom)
+    monkeypatch.setattr(adaptive_flow_batch, "write_energy_ratio_phantom", fake_write_energy_ratio_phantom)
+    monkeypatch.setattr(adaptive_flow_batch, "render_candidate_queue", fake_render_candidate_queue)
+
+    metrics_path = adaptive_flow_batch.run_residual_selector_flow_batch(
+        selector_queue,
+        tmp_path / "selector_batch",
+        max_energy_followups=2,
+        min_energy_flow_delta=-0.005,
+    )
+    rows = {row["priority"]: row for row in csv.DictReader(metrics_path.open())}
+    assert rows["1"]["energy_status"] == "deferred_flow_regression"
+    assert rows["1"]["best_stage"] == "current"
+    assert rows["2"]["energy_status"] == "ok"
+    assert rows["2"]["best_stage"] == "flow_energy"
+    energy_queue_rows = list(csv.DictReader((tmp_path / "selector_batch" / "selector_energy_queue_with_refs.csv").open()))
+    assert [row["priority"] for row in energy_queue_rows] == ["2"]
+
+
+def test_calibrate_energy_followup_gate_selects_true_scanner_threshold(tmp_path):
+    metrics = tmp_path / "probe_metrics.csv"
+    with metrics.open("w", newline="") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "priority",
+                "current_ms_ssim",
+                "flow_ms_ssim",
+                "flow_energy_ms_ssim",
+                "flow_delta_vs_current",
+                "flow_energy_delta_vs_current",
+            ],
+        )
+        writer.writeheader()
+        for row in [
+            {
+                "priority": 1,
+                "current_ms_ssim": "0.62",
+                "flow_ms_ssim": "0.60",
+                "flow_energy_ms_ssim": "0.61",
+                "flow_delta_vs_current": "-0.02",
+                "flow_energy_delta_vs_current": "-0.01",
+            },
+            {
+                "priority": 2,
+                "current_ms_ssim": "0.62",
+                "flow_ms_ssim": "0.617",
+                "flow_energy_ms_ssim": "0.624",
+                "flow_delta_vs_current": "-0.003",
+                "flow_energy_delta_vs_current": "0.004",
+            },
+            {
+                "priority": 3,
+                "current_ms_ssim": "0.62",
+                "flow_ms_ssim": "0.63",
+                "flow_energy_ms_ssim": "0.635",
+                "flow_delta_vs_current": "0.01",
+                "flow_energy_delta_vs_current": "0.015",
+            },
+            {
+                "priority": 4,
+                "current_ms_ssim": "0.62",
+                "flow_ms_ssim": "0.625",
+                "flow_energy_ms_ssim": "0.63",
+                "flow_delta_vs_current": "0.005",
+                "flow_energy_delta_vs_current": "0.01",
+            },
+        ]:
+            writer.writerow(row)
+
+    out = adaptive_flow_batch.calibrate_energy_followup_gate(
+        (metrics,),
+        tmp_path / "energy_gate.json",
+        min_retained_delta_fraction=0.99,
+        max_negative_energy_calls=0,
+    )
+    summary = json.loads(out.read_text())
+    selected = summary["selected"]
+
+    assert summary["recommended_min_energy_flow_delta"] == selected["min_energy_flow_delta"]
+    assert selected["energy_calls"] == 3
+    assert selected["skipped_energy_calls"] == 1
+    assert selected["negative_energy_calls"] == 0
+    assert selected["skipped_positive_energy_calls"] == 0
+    assert selected["retained_best_delta_fraction"] == 1.0
+    assert Path(summary["sweep_csv"]).exists()
+
+
+def test_calibrate_energy_followup_gate_can_require_map_objective_retention(tmp_path):
+    metrics = tmp_path / "probe_metrics.csv"
+    with metrics.open("w", newline="") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "priority",
+                "current_ms_ssim",
+                "flow_ms_ssim",
+                "flow_energy_ms_ssim",
+                "flow_map_delta_vs_current",
+                "flow_energy_map_delta_vs_current",
+            ],
+        )
+        writer.writeheader()
+        for row in [
+            {
+                "priority": 1,
+                "current_ms_ssim": "0.62",
+                "flow_ms_ssim": "0.60",
+                "flow_energy_ms_ssim": "0.61",
+                "flow_map_delta_vs_current": "-0.02",
+                "flow_energy_map_delta_vs_current": "-0.01",
+            },
+            {
+                "priority": 2,
+                "current_ms_ssim": "0.62",
+                "flow_ms_ssim": "0.617",
+                "flow_energy_ms_ssim": "0.624",
+                "flow_map_delta_vs_current": "-0.003",
+                "flow_energy_map_delta_vs_current": "0.004",
+            },
+            {
+                "priority": 3,
+                "current_ms_ssim": "0.62",
+                "flow_ms_ssim": "0.63",
+                "flow_energy_ms_ssim": "0.635",
+                "flow_map_delta_vs_current": "0.006",
+                "flow_energy_map_delta_vs_current": "0.012",
+            },
+        ]:
+            writer.writerow(row)
+
+    out = adaptive_flow_batch.calibrate_energy_followup_gate(
+        (metrics,),
+        tmp_path / "energy_map_gate.json",
+        min_retained_delta_fraction=0.99,
+        min_retained_map_delta_fraction=0.99,
+        max_negative_energy_calls=0,
+        max_negative_map_calls=0,
+    )
+    summary = json.loads(out.read_text())
+    selected = summary["selected"]
+
+    assert summary["observed_map_objective_examples"] == 3
+    assert selected["energy_calls"] == 2
+    assert selected["negative_map_calls"] == 0
+    assert selected["retained_map_delta_fraction"] == 1.0
+    sweep_rows = list(csv.DictReader(Path(summary["sweep_csv"]).open()))
+    assert "negative_map_calls" in sweep_rows[0]
+
+
+def test_cli_calibrate_energy_followup_gate_reports_summary(tmp_path):
+    metrics = tmp_path / "probe_metrics.csv"
+    metrics.write_text(
+        "\n".join(
+            [
+                "priority,current_ms_ssim,flow_ms_ssim,flow_energy_ms_ssim",
+                "1,0.62,0.60,0.61",
+                "2,0.62,0.63,0.635",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    out = tmp_path / "energy_gate.json"
+
+    assert (
+        main(
+            [
+                "calibrate-energy-followup-gate",
+                "--probe-metrics",
+                str(metrics),
+                "--out",
+                str(out),
+                "--min-retained-delta-fraction",
+                "0.9",
+            ]
+        )
+        == 0
+    )
+    summary = json.loads(out.read_text())
+    assert summary["observed_energy_examples"] == 2
+    assert summary["evidence_scope"] == "true_scanner_probe_calibration_not_hidden_holdout"
+
+
+def test_cli_enrich_residual_probe_energy_maps_backfills_objective(tmp_path):
+    ref = tmp_path / "reference.png"
+    energy = tmp_path / "energy.png"
+    base = np.tile(np.linspace(0, 255, 32, dtype=np.uint8), (32, 1))
+    skio.imsave(ref, base)
+    skio.imsave(energy, np.clip(base + 2, 0, 255).astype(np.uint8))
+
+    metrics = tmp_path / "probe_metrics.csv"
+    with metrics.open("w", newline="") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "priority",
+                "reference_png",
+                "flow_energy_synthetic_gray_png",
+                "current_map_objective_score",
+                "flow_map_objective_score",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "priority": "1",
+                "reference_png": str(ref),
+                "flow_energy_synthetic_gray_png": str(energy),
+                "current_map_objective_score": "0.50",
+                "flow_map_objective_score": "0.55",
+            }
+        )
+
+    out = tmp_path / "enriched_probe_metrics.csv"
+    assert (
+        main(
+            [
+                "enrich-residual-probe-energy-maps",
+                "--probe-metrics",
+                str(metrics),
+                "--out",
+                str(out),
+            ]
+        )
+        == 0
+    )
+    rows = list(csv.DictReader(out.open()))
+    assert rows[0]["flow_energy_map_objective_status"] == "ok"
+    assert rows[0]["flow_energy_map_objective_score"] != ""
+    assert float(rows[0]["flow_energy_map_delta_vs_current"]) != 0.0
+    summary = json.loads(out.with_name("enriched_probe_metrics_summary.json").read_text(encoding="utf-8"))
+    assert summary["rows_with_flow_energy_map_objective"] == 1
+    assert summary["promotion_allowed_without_true_scanner"] is False
+
+
 def test_residual_selector_flow_batch_prioritizes_map_delta_for_energy_followups(tmp_path, monkeypatch):
     selector_queue = tmp_path / "budget_queue.csv"
     with selector_queue.open("w", newline="") as f:
@@ -2549,6 +3681,7 @@ def test_residual_selector_flow_batch_prioritizes_map_delta_for_energy_followups
         scores = {
             "p1_current": 0.50,
             "p1_flow": 0.86,
+            "p1_flow_energy": 0.90,
             "p2_current": 0.50,
             "p2_flow": 0.55,
         }
@@ -2802,6 +3935,121 @@ def test_residual_selector_flow_batch_uses_row_wise_stage2_controls(tmp_path, mo
     assert rows[0]["flow_smooth_sigma"] == "1.62"
     assert rows[0]["energy_sigma"] == "2.55"
     assert rows[0]["texture_exponent"] == "0.42"
+
+
+def test_residual_selector_flow_batch_can_branch_energy_from_current(tmp_path, monkeypatch):
+    selector_queue = tmp_path / "branch_queue.csv"
+    with selector_queue.open("w", newline="") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "priority",
+                "row_index",
+                "current_rank",
+                "source_archive_path",
+                "selected_strength",
+                "residual_control_policy",
+                "energy_base_policy",
+                "energy_base_flow_delta_threshold",
+                "current_ms_ssim",
+                "current_lpips",
+                "reference_png",
+                "current_phantom_path",
+                "current_synthetic_gray_png",
+                "surrogate_gate_status",
+                "evidence_scope",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "priority": "1",
+                "row_index": "0",
+                "current_rank": "1",
+                "source_archive_path": "DATASET_PNG/Female/1950-1960/Cheek/mild_flow_regression_frame50.png",
+                "selected_strength": "0.38",
+                "residual_control_policy": "teacher_neighbor_feedback_distilled_v3",
+                "energy_base_policy": "current_on_flow_regression",
+                "energy_base_flow_delta_threshold": "0.0",
+                "current_ms_ssim": "0.62",
+                "current_lpips": "0.58",
+                "reference_png": str(tmp_path / "ref.png"),
+                "current_phantom_path": str(tmp_path / "base.txt"),
+                "current_synthetic_gray_png": str(tmp_path / "base_gray.png"),
+                "surrogate_gate_status": "pass",
+                "evidence_scope": "selector_budget_planning_not_challenge_evidence",
+            }
+        )
+
+    captured: dict[str, str] = {}
+
+    def fake_write_flow_transport_phantom(_ref, _phantom, _gray, output_path, **_kwargs):
+        Path(output_path).write_text("flow", encoding="utf-8")
+        return Path(output_path)
+
+    def fake_write_energy_ratio_phantom(_ref, phantom, gray, output_path, **_kwargs):
+        captured["energy_phantom"] = str(phantom)
+        captured["energy_gray"] = str(gray)
+        Path(output_path).write_text("energy", encoding="utf-8")
+        return Path(output_path)
+
+    def fake_render_candidate_queue(queue_csv, _reference_path, out_dir, **_kwargs):
+        queue_rows = list(csv.DictReader(Path(queue_csv).open()))
+        metrics_path = Path(out_dir) / "candidate_queue_metrics.csv"
+        metrics_path.parent.mkdir(parents=True, exist_ok=True)
+        with metrics_path.open("w", newline="") as f:
+            writer = csv.DictWriter(
+                f,
+                fieldnames=[
+                    "status",
+                    "priority",
+                    "method",
+                    "request_id",
+                    "reference_png",
+                    "phantom_path",
+                    "synthetic_gray_png",
+                    "MS-SSIM",
+                    "LPIPS_PROXY",
+                    "error",
+                ],
+            )
+            writer.writeheader()
+            row = queue_rows[0]
+            stage = "flow" if "selector_flow_queue" in str(queue_csv) else "energy"
+            writer.writerow(
+                {
+                    "status": "ok",
+                    "priority": row["priority"],
+                    "method": row["method"],
+                    "request_id": f"{stage}_1",
+                    "reference_png": row["reference_png"],
+                    "phantom_path": row["phantom_path"],
+                    "synthetic_gray_png": str(tmp_path / f"{stage}_gray.png"),
+                    "MS-SSIM": "0.618" if stage == "flow" else "0.64",
+                    "LPIPS_PROXY": "0.2",
+                    "error": "",
+                }
+            )
+        return metrics_path
+
+    monkeypatch.setattr(adaptive_flow_batch, "write_flow_transport_phantom", fake_write_flow_transport_phantom)
+    monkeypatch.setattr(adaptive_flow_batch, "write_energy_ratio_phantom", fake_write_energy_ratio_phantom)
+    monkeypatch.setattr(adaptive_flow_batch, "render_candidate_queue", fake_render_candidate_queue)
+
+    metrics_path = adaptive_flow_batch.run_residual_selector_flow_batch(
+        selector_queue,
+        tmp_path / "selector_branch_batch",
+        min_energy_flow_delta=-0.01,
+    )
+
+    assert captured["energy_phantom"] == str(tmp_path / "base.txt")
+    assert captured["energy_gray"] == str(tmp_path / "base_gray.png")
+    row = next(csv.DictReader(metrics_path.open()))
+    assert row["energy_base_policy"] == "current_on_flow_regression"
+    assert row["energy_base_stage"] == "current"
+    assert row["energy_base_phantom_path"] == str(tmp_path / "base.txt")
+    assert row["energy_status"] == "ok"
+    assert row["best_stage"] == "flow_energy"
 
 
 def test_cli_residual_selector_trains_and_plans_queue(tmp_path):
@@ -3570,6 +4818,304 @@ def test_cli_enrich_residual_teacher_maps_feeds_multi_objective_selector(tmp_pat
     examples = list(csv.DictReader(Path(payload["teacher_examples_csv"]).open()))
     assert examples[0]["objective_source"] == "multi_objective_maps"
     assert float(examples[0]["best_objective_delta"]) != float(examples[0]["best_delta"])
+
+
+def test_residual_selector_uses_aggregate_map_objective_fields(tmp_path):
+    teacher_metrics = tmp_path / "aggregate_probe_metrics.csv"
+    with teacher_metrics.open("w", newline="") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "source_archive_path",
+                "row_index",
+                "current_rank",
+                "selected_strength",
+                "current_ms_ssim",
+                "current_lpips",
+                "flow_ms_ssim",
+                "flow_energy_ms_ssim",
+                "best_stage",
+                "best_ms_ssim",
+                "current_map_objective_score",
+                "flow_map_objective_score",
+                "flow_energy_map_objective_score",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "source_archive_path": "DATASET_PNG/Female/1990-2000/Cheek/sample_frame50.png",
+                "row_index": "0",
+                "current_rank": "1",
+                "selected_strength": "0.38",
+                "current_ms_ssim": "0.62",
+                "current_lpips": "0.58",
+                "flow_ms_ssim": "0.63",
+                "flow_energy_ms_ssim": "0.70",
+                "best_stage": "flow_energy",
+                "best_ms_ssim": "0.70",
+                "current_map_objective_score": "0.40",
+                "flow_map_objective_score": "0.42",
+                "flow_energy_map_objective_score": "0.46",
+            }
+        )
+
+    from synthoct.residual_selector import load_residual_teacher_examples
+
+    parsed = load_residual_teacher_examples([teacher_metrics], default_strength=0.25)
+    assert parsed[0].objective_source == "multi_objective_map_objective"
+    assert parsed[0].base_objective_score == 0.40
+    assert parsed[0].flow_energy_objective_score == 0.46
+    assert abs(parsed[0].best_objective_delta - 0.06) < 1e-12
+    assert abs(parsed[0].best_delta - 0.08) < 1e-12
+
+
+def test_cli_residual_selector_can_require_uncertainty_gated_map_safety(tmp_path):
+    base_metrics = tmp_path / "base_api_metrics.csv"
+    base_metrics.write_text(
+        "source_archive_path,MS-SSIM,LPIPS,reference_png,phantom_path,synthetic_gray_png\n"
+        "DATASET_PNG/Female/1990-2000/Cheek/safe_frame50.png,0.62,0.50,safe_ref.png,safe.txt,safe_gray.png\n"
+        "DATASET_PNG/Female/1990-2000/Eye_corner/unsafe_frame50.png,0.62,0.50,unsafe_ref.png,unsafe.txt,unsafe_gray.png\n",
+        encoding="utf-8",
+    )
+    teacher_metrics = tmp_path / "map_teacher.csv"
+    fieldnames = [
+        "source_archive_path",
+        "row_index",
+        "current_rank",
+        "strength",
+        "current_ms_ssim",
+        "current_lpips",
+        "flow_ms_ssim",
+        "flow_energy_ms_ssim",
+        "best_stage",
+        "best_ms_ssim",
+        "current_Struct_MS-SSIM",
+        "current_OAC_MS-SSIM",
+        "current_SC_MS-SSIM",
+        "current_RSC_MS-SSIM",
+        "flow_energy_Struct_MS-SSIM",
+        "flow_energy_OAC_MS-SSIM",
+        "flow_energy_SC_MS-SSIM",
+        "flow_energy_RSC_MS-SSIM",
+    ]
+    with teacher_metrics.open("w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerow(
+            {
+                "source_archive_path": "DATASET_PNG/Female/1990-2000/Cheek/safe_frame50.png",
+                "row_index": "0",
+                "current_rank": "1",
+                "strength": "0.25",
+                "current_ms_ssim": "0.62",
+                "current_lpips": "0.50",
+                "flow_ms_ssim": "0.64",
+                "flow_energy_ms_ssim": "0.66",
+                "best_stage": "flow_energy",
+                "best_ms_ssim": "0.66",
+                "current_Struct_MS-SSIM": "0.70",
+                "current_OAC_MS-SSIM": "0.70",
+                "current_SC_MS-SSIM": "0.70",
+                "current_RSC_MS-SSIM": "0.70",
+                "flow_energy_Struct_MS-SSIM": "0.72",
+                "flow_energy_OAC_MS-SSIM": "0.71",
+                "flow_energy_SC_MS-SSIM": "0.715",
+                "flow_energy_RSC_MS-SSIM": "0.705",
+            }
+        )
+        writer.writerow(
+            {
+                "source_archive_path": "DATASET_PNG/Female/1990-2000/Eye_corner/unsafe_frame50.png",
+                "row_index": "1",
+                "current_rank": "2",
+                "strength": "0.25",
+                "current_ms_ssim": "0.62",
+                "current_lpips": "0.50",
+                "flow_ms_ssim": "0.65",
+                "flow_energy_ms_ssim": "0.68",
+                "best_stage": "flow_energy",
+                "best_ms_ssim": "0.68",
+                "current_Struct_MS-SSIM": "0.70",
+                "current_OAC_MS-SSIM": "0.70",
+                "current_SC_MS-SSIM": "0.70",
+                "current_RSC_MS-SSIM": "0.70",
+                "flow_energy_Struct_MS-SSIM": "0.735",
+                "flow_energy_OAC_MS-SSIM": "0.675",
+                "flow_energy_SC_MS-SSIM": "0.71",
+                "flow_energy_RSC_MS-SSIM": "0.685",
+            }
+        )
+
+    artifact = tmp_path / "selector.json"
+    assert (
+        main(
+            [
+                "train-residual-selector",
+                "--base-api-metrics",
+                str(base_metrics),
+                "--teacher-metrics",
+                str(teacher_metrics),
+                "--out",
+                str(artifact),
+                "--holdout-fraction",
+                "0",
+                "--neighbor-count",
+                "1",
+            ]
+        )
+        == 0
+    )
+    examples = list(csv.DictReader(Path(json.loads(artifact.read_text(encoding="utf-8"))["teacher_examples_csv"]).open()))
+    by_source = {row["source_archive_path"]: row for row in examples}
+    assert float(by_source["DATASET_PNG/Female/1990-2000/Cheek/safe_frame50.png"]["flow_energy_oac_delta"]) > 0
+    assert float(by_source["DATASET_PNG/Female/1990-2000/Eye_corner/unsafe_frame50.png"]["flow_energy_oac_delta"]) < 0
+
+    queue = tmp_path / "selector_queue.csv"
+    assert (
+        main(
+            [
+                "plan-residual-selector-queue",
+                "--base-api-metrics",
+                str(base_metrics),
+                "--artifact",
+                str(artifact),
+                "--out",
+                str(queue),
+                "--limit",
+                "2",
+                "--require-map-safe",
+                "--min-map-delta-lcb",
+                "0",
+                "--min-map-safe-win-rate",
+                "1.0",
+            ]
+        )
+        == 0
+    )
+    rows = list(csv.DictReader(queue.open()))
+    assert [row["source_archive_path"] for row in rows] == ["DATASET_PNG/Female/1990-2000/Cheek/safe_frame50.png"]
+    assert rows[0]["map_safety_status"] == "map_safe_pass"
+    assert float(rows[0]["expected_oac_delta_lcb"]) > 0
+    assert rows[0]["map_safe_support_n"] == "1"
+
+
+def test_residual_selector_distills_observed_stage2_controls(tmp_path):
+    base_metrics = tmp_path / "base_api_metrics.csv"
+    base_metrics.write_text(
+        "source_archive_path,MS-SSIM,SSIM,LPIPS,reference_png,phantom_path,synthetic_gray_png\n"
+        "DATASET_PNG/Female/1990-2000/Cheek/sample_frame50.png,0.62,0.08,0.58,ref.png,base.txt,base_gray.png\n",
+        encoding="utf-8",
+    )
+    teacher_metrics = tmp_path / "controlled_probe_metrics.csv"
+    with teacher_metrics.open("w", newline="") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "source_archive_path",
+                "row_index",
+                "current_rank",
+                "selected_strength",
+                "current_ms_ssim",
+                "current_lpips",
+                "flow_ms_ssim",
+                "flow_energy_ms_ssim",
+                "best_stage",
+                "best_ms_ssim",
+                "current_map_objective_score",
+                "flow_map_objective_score",
+                "flow_energy_map_objective_score",
+                "residual_control_policy",
+                "flow_smooth_sigma",
+                "flow_attachment",
+                "energy_exponent",
+                "energy_sigma",
+                "energy_ratio_low",
+                "energy_ratio_high",
+                "energy_clip_low",
+                "energy_clip_high",
+                "texture_mean_exponent",
+                "texture_exponent",
+                "texture_deep_exponent",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "source_archive_path": "DATASET_PNG/Female/1990-2000/Cheek/sample_frame50.png",
+                "row_index": "0",
+                "current_rank": "1",
+                "selected_strength": "0.38",
+                "current_ms_ssim": "0.62",
+                "current_lpips": "0.58",
+                "flow_ms_ssim": "0.64",
+                "flow_energy_ms_ssim": "0.70",
+                "best_stage": "flow_energy",
+                "best_ms_ssim": "0.70",
+                "current_map_objective_score": "0.40",
+                "flow_map_objective_score": "0.43",
+                "flow_energy_map_objective_score": "0.49",
+                "residual_control_policy": "teacher_neighbor_physics_dl_v2",
+                "flow_smooth_sigma": "1.80",
+                "flow_attachment": "4.90",
+                "energy_exponent": "1.10",
+                "energy_sigma": "2.90",
+                "energy_ratio_low": "0.57",
+                "energy_ratio_high": "1.36",
+                "energy_clip_low": "0.70",
+                "energy_clip_high": "1.24",
+                "texture_mean_exponent": "0.05",
+                "texture_exponent": "0.60",
+                "texture_deep_exponent": "1.20",
+            }
+        )
+
+    artifact = tmp_path / "selector.json"
+    assert (
+        main(
+            [
+                "train-residual-selector",
+                "--base-api-metrics",
+                str(base_metrics),
+                "--teacher-metrics",
+                str(teacher_metrics),
+                "--out",
+                str(artifact),
+                "--holdout-fraction",
+                "0",
+                "--neighbor-count",
+                "1",
+            ]
+        )
+        == 0
+    )
+    examples = list(csv.DictReader(Path(json.loads(artifact.read_text(encoding="utf-8"))["teacher_examples_csv"]).open()))
+    assert examples[0]["flow_smooth_sigma"] == "1.8"
+    assert examples[0]["texture_deep_exponent"] == "1.2"
+
+    queue = tmp_path / "selector_queue.csv"
+    assert (
+        main(
+            [
+                "plan-residual-selector-queue",
+                "--base-api-metrics",
+                str(base_metrics),
+                "--artifact",
+                str(artifact),
+                "--out",
+                str(queue),
+                "--limit",
+                "1",
+            ]
+        )
+        == 0
+    )
+    row = next(csv.DictReader(queue.open()))
+    assert row["residual_control_policy"] == "teacher_neighbor_feedback_distilled_v3"
+    assert float(row["flow_smooth_sigma"]) > 1.55
+    assert float(row["flow_attachment"]) < 5.75
+    assert float(row["energy_exponent"]) > 0.85
+    assert float(row["texture_deep_exponent"]) > 0.85
 
 
 def test_cli_optimize_empirical_basis_passes_controls(tmp_path, monkeypatch):
