@@ -16,6 +16,7 @@ from .summaries import (
     summarize_challenge_metrics,
     summarize_rows,
     summarize_sample_wins,
+    write_ms_ssim_pair_comparison,
     write_rows,
 )
 
@@ -39,5 +40,6 @@ __all__ = [
     "summarize_challenge_metrics",
     "summarize_rows",
     "summarize_sample_wins",
+    "write_ms_ssim_pair_comparison",
     "write_rows",
 ]

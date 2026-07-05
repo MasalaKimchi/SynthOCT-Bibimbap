@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import json
 from collections import defaultdict
 from pathlib import Path
 
@@ -233,9 +234,115 @@ def summarize_sample_wins(rows: list[dict[str, float | str]], score_key: str = "
     return out
 
 
+def write_ms_ssim_pair_comparison(
+    base_metrics: str | Path,
+    candidate_metrics: str | Path,
+    out_path: str | Path,
+    *,
+    base_method: str = "base",
+    candidate_method: str = "candidate",
+    model_queue: str | Path | None = None,
+) -> Path:
+    """Write a per-row MS-SSIM comparison for two matched API metrics CSVs."""
+    base_rows = _read_csv_rows(base_metrics)
+    candidate_rows = _read_csv_rows(candidate_metrics)
+    base_by_source = {str(row.get("source_archive_path", "")): row for row in base_rows}
+    queue_by_source = (
+        {str(row.get("source_archive_path", "")): row for row in _read_csv_rows(model_queue)}
+        if model_queue is not None
+        else {}
+    )
+    ranked_base = {
+        str(row.get("source_archive_path", "")): rank
+        for rank, row in enumerate(
+            sorted(base_rows, key=lambda item: finite_float(item.get("MS-SSIM"), np.inf)),
+            start=1,
+        )
+    }
+    comparison: list[dict[str, float | str | int]] = []
+    missing: list[str] = []
+    for idx, candidate in enumerate(candidate_rows, start=1):
+        source = str(candidate.get("source_archive_path", ""))
+        base = base_by_source.get(source)
+        if base is None:
+            missing.append(source)
+            continue
+        base_ms = finite_float(base.get("MS-SSIM"))
+        cand_ms = finite_float(candidate.get("MS-SSIM"))
+        delta = cand_ms - base_ms if np.isfinite(base_ms) and np.isfinite(cand_ms) else np.nan
+        queue_row = queue_by_source.get(source, {})
+        comparison.append(
+            {
+                "row": idx,
+                "base_rank_by_ms_ssim": ranked_base.get(source, ""),
+                "source_archive_path": source,
+                "base_method": base_method,
+                "candidate_method": candidate_method,
+                "base_ms_ssim": base_ms,
+                "candidate_ms_ssim": cand_ms,
+                "delta_ms_ssim": delta,
+                "winner": "candidate" if delta > 0 else "base" if delta < 0 else "tie",
+                "base_lpips": base.get("LPIPS", base.get("LPIPS_PROXY", "")),
+                "candidate_lpips": candidate.get("LPIPS", candidate.get("LPIPS_PROXY", "")),
+                "model_predicted_delta_lcb": queue_row.get("expected_delta_lcb", ""),
+                "model_selected_strength": queue_row.get("selected_strength", ""),
+                "model_residual_policy": queue_row.get("residual_control_policy", ""),
+                "model_map_safety_status": queue_row.get("map_safety_status", ""),
+            }
+        )
+    if missing:
+        raise ValueError(f"Candidate metrics contain sources missing from base metrics: {missing[:5]}")
+
+    out = Path(out_path)
+    write_rows(out, comparison)
+    finite_deltas = np.array([finite_float(row.get("delta_ms_ssim")) for row in comparison], dtype=float)
+    finite_deltas = finite_deltas[np.isfinite(finite_deltas)]
+    summary = {
+        "comparison_csv": str(out),
+        "base_api_metrics": str(Path(base_metrics)),
+        "candidate_api_metrics": str(Path(candidate_metrics)),
+        "base_method": base_method,
+        "candidate_method": candidate_method,
+        "row_count": len(comparison),
+        "base_ms_ssim_mean": _mean_from_rows(comparison, "base_ms_ssim"),
+        "candidate_ms_ssim_mean": _mean_from_rows(comparison, "candidate_ms_ssim"),
+        "delta_ms_ssim_mean": float(finite_deltas.mean()) if finite_deltas.size else np.nan,
+        "delta_ms_ssim_median": float(np.median(finite_deltas)) if finite_deltas.size else np.nan,
+        "delta_ms_ssim_min": float(finite_deltas.min()) if finite_deltas.size else np.nan,
+        "delta_ms_ssim_max": float(finite_deltas.max()) if finite_deltas.size else np.nan,
+        "candidate_wins": sum(row["winner"] == "candidate" for row in comparison),
+        "base_wins": sum(row["winner"] == "base" for row in comparison),
+        "ties": sum(row["winner"] == "tie" for row in comparison),
+        "model_queue": str(Path(model_queue)) if model_queue is not None else "",
+        "model_queue_row_count": len(queue_by_source),
+        "evidence_source": "hosted_api_true_scanner",
+        "evidence_scope": "full_public_ms_ssim_pair_comparison",
+        "hidden_holdout_final_score": False,
+    }
+    out.with_name(f"{out.stem}_summary.json").write_text(
+        json.dumps(summary, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return out
+
+
+def _read_csv_rows(path: str | Path | None) -> list[dict[str, str]]:
+    if path is None:
+        return []
+    with Path(path).open(newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def _mean_from_rows(rows: list[dict[str, float | str | int]], key: str) -> float:
+    values = np.array([finite_float(row.get(key)) for row in rows], dtype=float)
+    values = values[np.isfinite(values)]
+    return float(values.mean()) if values.size else np.nan
+
+
 def write_rows(path: Path, rows: list[dict[str, float | str]]) -> None:
     if not rows:
         return
+    path.parent.mkdir(parents=True, exist_ok=True)
     keys = sorted({key for row in rows for key in row})
     with path.open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=keys)

@@ -50,7 +50,7 @@ Offline ranking was useful for brainstorming, but it is not a trustworthy final 
 
 The official final ranking is stronger than local validation: the organizers run the submitted code/model on a hidden hold-out test dataset. A local hosted-API score on one public B-scan, even if produced by the true scanner, is not a competition-wide score. Local surrogate scanners and preview renderers are useful only for triage; they are not proof of challenge performance.
 
-The current ML/DL assessment is recorded in [ml_dl_expert_review.md](ml_dl_expert_review.md). In short: the neural branch has higher theoretical ceiling and improves the Structural LPIPS bottleneck, but the current standalone and hybrid neural models do not yet beat `learned-prior-sparse-p140-t32` on broader true-scanner official-score evidence.
+The compact current status is [current_findings.md](current_findings.md). In short: `learned-prior-sparse-p140-t32` remains the best general generator, adaptive flow/energy is the best measured public-set rescue, and Structural LPIPS remains the main bottleneck.
 
 Recommended hosted API triage:
 
@@ -95,4 +95,4 @@ Kill a candidate when it loses clearly on both mean score and per-sample wins. I
 
 Use `learned-prior-sparse-p140-t32` as the current local submission candidate when its prior artifact and real-LPIPS evidence file are included. Use `H61_api_low_depth_prelim` as the conservative fallback if learned-prior packaging or evidence validation fails. Treat older H11/H41/H56 results as historical priors only. The current promoted evidence includes complete Struct/OAC/SC/RSC true-scanner metrics, but it still fails the preliminary LPIPS threshold and is not hidden-holdout proof.
 
-See [winning_strategy.md](winning_strategy.md) for the current rules interpretation, scanner vocabulary, and promotion gate. See [rules_provenance.md](rules_provenance.md) for the local evidence sources and the explicit `surrogate_scanner_is_true_scanner=false` policy.
+See [current_findings.md](current_findings.md) for active artifacts, current evidence, and the resume point. See [rules_provenance.md](rules_provenance.md) for the local evidence sources and the explicit `surrogate_scanner_is_true_scanner=false` policy.

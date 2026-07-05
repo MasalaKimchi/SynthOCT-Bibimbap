@@ -9,6 +9,8 @@ import statistics
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+import numpy as np
+
 from .evaluation import calculate_metrics, evaluate_feature_map_metrics, profile_scores
 
 
@@ -107,6 +109,36 @@ MAP_SAFETY_FIELDS = [
     "map_safe_support_n",
     "map_safety_status",
     "map_safety_score_multiplier",
+]
+
+TOPOLOGY_CONTROL_FEATURE_FIELDS = [
+    "intercept",
+    "base_ms_ssim",
+    "base_lpips",
+    "rank_norm",
+    "frame_norm",
+    "sex_female",
+    "sex_male",
+    "age_1950_1960",
+    "age_1990_2000",
+    "site_cheek",
+    "site_eye_corner",
+    "ms_gap",
+    "lpips_load",
+]
+
+TOPOLOGY_CONTROL_TARGET_FIELDS = [
+    "selected_strength",
+    *STAGE2_NUMERIC_CONTROL_FIELDS,
+    "expected_delta_mean",
+    "expected_flow_delta_mean",
+    "expected_energy_delta_mean",
+    "expected_energy_extra_mean",
+    "expected_ms_ssim_delta_mean",
+    "expected_struct_delta_mean",
+    "expected_oac_delta_mean",
+    "expected_sc_delta_mean",
+    "expected_rsc_delta_mean",
 ]
 
 
@@ -260,6 +292,240 @@ def train_residual_parameter_selector(
         ),
     }
     out_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+    return out_path
+
+
+def train_topology_residual_control_model(
+    base_api_metrics: str | Path,
+    teacher_metrics_paths: list[str | Path],
+    out_path: str | Path,
+    *,
+    default_strength: float = 0.25,
+    holdout_fraction: float = 0.25,
+    ridge_lambda: float = 1e-3,
+    uncertainty_z: float = 1.0,
+    holdout_group_fields: tuple[str, ...] = ("sex", "age_band", "body_site"),
+) -> Path:
+    """Train a bounded residual-control model around the existing p140-t32 topology.
+
+    This is deliberately a control model, not a phantom replacement model. It
+    learns row-wise flow/geometry, energy, and texture knobs from true-scanner
+    teacher rows and leaves scatterer topology generation anchored to the
+    current base phantom.
+    """
+    base_rows = _read_rows(base_api_metrics)
+    examples = load_residual_teacher_examples(teacher_metrics_paths, default_strength=default_strength)
+    if not examples:
+        raise RuntimeError("No usable residual teacher examples found.")
+
+    train_examples, holdout_examples, holdout_groups = _split_examples(
+        examples,
+        holdout_fraction=holdout_fraction,
+        group_fields=holdout_group_fields,
+    )
+    if not train_examples:
+        train_examples = examples
+        holdout_examples = []
+        holdout_groups = []
+
+    defaults = _control_model_feature_defaults(train_examples)
+    coefficients, residual_std, train_metrics = _fit_control_model(
+        train_examples,
+        defaults=defaults,
+        ridge_lambda=ridge_lambda,
+    )
+    holdout_metrics = (
+        _evaluate_control_model(holdout_examples, coefficients, defaults=defaults, residual_std=residual_std)
+        if holdout_examples
+        else {"n": 0}
+    )
+
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    artifact = {
+        "model_type": "topology_preserving_residual_control_model_v1",
+        "evidence_source": "true_scanner_residual_teacher_rows",
+        "evidence_scope": "residual_control_model_not_challenge_evidence",
+        "promotion_allowed_without_true_scanner": False,
+        "surrogate_scanner_is_true_scanner": False,
+        "hidden_holdout_final_score": False,
+        "official_final_ranking_proven": False,
+        "base_api_metrics": str(Path(base_api_metrics)),
+        "base_row_count": len(base_rows),
+        "teacher_metrics_paths": [str(Path(path)) for path in teacher_metrics_paths],
+        "teacher_example_count": len(examples),
+        "train_example_count": len(train_examples),
+        "holdout_example_count": len(holdout_examples),
+        "holdout_group_fields": list(holdout_group_fields),
+        "holdout_group_count": len(holdout_groups),
+        "holdout_groups": holdout_groups,
+        "feature_fields": TOPOLOGY_CONTROL_FEATURE_FIELDS,
+        "target_fields": TOPOLOGY_CONTROL_TARGET_FIELDS,
+        "feature_defaults": defaults,
+        "coefficients": coefficients,
+        "residual_std": residual_std,
+        "ridge_lambda": ridge_lambda,
+        "uncertainty_z": uncertainty_z,
+        "train_metrics": train_metrics,
+        "holdout_metrics": holdout_metrics,
+        "map_objective_target_observed": _control_model_has_aggregate_map_objective(train_examples),
+        "map_target_observed": _control_model_has_map_targets(train_examples),
+        "control_bounds": {
+            "selected_strength": [0.05, 0.55],
+            **{field: list(bounds) for field, bounds in _stage2_control_bounds().items()},
+        },
+        "topology_contract": {
+            "base_topology_preserved": True,
+            "predicts_full_density_replacement": False,
+            "predicted_controls": [
+                "flow_strength",
+                "flow_smooth_sigma",
+                "flow_attachment",
+                "energy_exponent",
+                "energy_sigma",
+                "energy_ratio_low",
+                "energy_ratio_high",
+                "energy_clip_low",
+                "energy_clip_high",
+                "texture_mean_exponent",
+                "texture_exponent",
+                "texture_deep_exponent",
+            ],
+        },
+        "interpretation": (
+            "Linear ridge model for bounded residual controls around p140-t32-like "
+            "phantoms. It can plan hosted-scanner probes, but promotion still "
+            "requires grouped true-scanner validation."
+        ),
+    }
+    out_path.write_text(json.dumps(artifact, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return out_path
+
+
+def plan_topology_residual_control_queue(
+    base_api_metrics: str | Path,
+    control_model: str | Path,
+    out_path: str | Path,
+    *,
+    limit: int | None = None,
+    min_expected_delta_lcb: float | None = None,
+    min_map_delta_lcb: float = -0.0005,
+    require_map_safe: bool = False,
+    uncertainty_z: float | None = None,
+) -> Path:
+    """Predict a 120-row residual-control queue from a trained control model."""
+    base_rows = _read_rows(base_api_metrics)
+    artifact = json.loads(Path(control_model).read_text(encoding="utf-8"))
+    if artifact.get("model_type") != "topology_preserving_residual_control_model_v1":
+        raise ValueError(f"Unsupported residual control model: {artifact.get('model_type')}")
+
+    z = float(artifact.get("uncertainty_z", 1.0) if uncertainty_z is None else uncertainty_z)
+    defaults = artifact.get("feature_defaults", {})
+    coefficients = artifact.get("coefficients", {})
+    residual_std = artifact.get("residual_std", {})
+    ranked_base = sorted(enumerate(base_rows), key=lambda item: _finite(item[1].get("MS-SSIM")))
+    predictions: list[dict[str, object]] = []
+
+    for current_rank, (idx, row) in enumerate(ranked_base, start=1):
+        target_values = _predict_control_model_targets(
+            row,
+            rank=current_rank,
+            coefficients=coefficients,
+            defaults=defaults,
+        )
+        expected_delta = _finite(target_values.get("expected_delta_mean"))
+        delta_std = max(0.0, _finite(residual_std.get("expected_delta_mean")))
+        lcb = expected_delta - z * delta_std if math.isfinite(expected_delta) else float("nan")
+        uncertainty = delta_std if math.isfinite(delta_std) else float("nan")
+        map_safety = _control_model_map_safety(
+            target_values,
+            residual_std=residual_std,
+            uncertainty_z=z,
+            min_map_delta_lcb=min_map_delta_lcb,
+            map_target_observed=bool(artifact.get("map_target_observed", False)),
+        )
+        acquisition = _apply_score_multiplier(
+            lcb + 0.20 * uncertainty if math.isfinite(lcb) and math.isfinite(uncertainty) else lcb,
+            float(map_safety["map_safety_score_multiplier"]),
+        )
+        controls = _control_model_stage2_controls(target_values)
+        predictions.append(
+            {
+                "priority": 0,
+                "row_index": idx,
+                "current_rank": current_rank,
+                "source_archive_path": row.get("source_archive_path", ""),
+                "current_ms_ssim": _finite(row.get("MS-SSIM")),
+                "current_ssim": _finite(row.get("SSIM") or row.get("Struct_SSIM")),
+                "current_lpips": _finite(row.get("LPIPS") or row.get("LPIPS_PROXY")),
+                "selected_strength": target_values["selected_strength"],
+                "strength_policy": "topology_residual_control_model",
+                "evaluated_strengths": "model_predicted",
+                "strength_candidate_count": 1,
+                "selector_holdout_group_key": _diversity_stratum(row, tuple(artifact.get("holdout_group_fields", ()))),
+                "selector_holdout_group_n": artifact.get("holdout_example_count", ""),
+                "selector_holdout_group_win_rate": artifact.get("holdout_metrics", {}).get("expected_delta_mean_positive_rate", ""),
+                "selector_holdout_group_delta_mean": artifact.get("holdout_metrics", {}).get("expected_delta_mean_error_mean", ""),
+                "selector_holdout_group_status": "control_model_holdout_summary",
+                "selector_holdout_score_multiplier": 1.0,
+                **_empty_surrogate_fields("not_configured"),
+                **controls,
+                "expected_delta_mean": expected_delta,
+                "expected_delta_lcb": lcb,
+                "expected_delta_uncertainty": uncertainty,
+                "acquisition_score": acquisition,
+                **map_safety,
+                "expected_flow_delta_mean": target_values.get("expected_flow_delta_mean", ""),
+                "expected_energy_delta_mean": target_values.get("expected_energy_delta_mean", ""),
+                "expected_energy_extra_mean": target_values.get("expected_energy_extra_mean", ""),
+                "nearest_flow_win_rate": "",
+                "nearest_energy_win_rate": "",
+                "nearest_teacher_count": artifact.get("train_example_count", ""),
+                "nearest_teacher_sources": "topology_residual_control_model_v1",
+                "selector_train_examples": artifact.get("train_example_count", ""),
+                "reference_png": row.get("reference_png", ""),
+                "current_phantom_path": row.get("phantom_path", ""),
+                "current_synthetic_gray_png": row.get("synthetic_gray_png", ""),
+                "surrogate_gate_status": "not_configured",
+                "evidence_scope": "topology_residual_control_planning_not_challenge_evidence",
+            }
+        )
+
+    if min_expected_delta_lcb is not None:
+        predictions = [
+            row for row in predictions if _finite(row.get("expected_delta_lcb")) >= float(min_expected_delta_lcb)
+        ]
+    if require_map_safe:
+        predictions = [row for row in predictions if row.get("map_safety_status") == "map_safe_pass"]
+    predictions = sorted(
+        predictions,
+        key=lambda row: (_finite(row.get("acquisition_score")), -_finite(row.get("current_ms_ssim"))),
+        reverse=True,
+    )
+    if limit is not None:
+        predictions = predictions[: max(0, int(limit))]
+    for priority, row in enumerate(predictions, start=1):
+        row["priority"] = priority
+
+    out_path = Path(out_path)
+    _write_rows(out_path, predictions, fieldnames=_recommendation_fieldnames())
+    summary = {
+        "control_model": str(Path(control_model)),
+        "base_api_metrics": str(Path(base_api_metrics)),
+        "queue": str(out_path),
+        "base_row_count": len(base_rows),
+        "planned_row_count": len(predictions),
+        "require_map_safe": require_map_safe,
+        "min_expected_delta_lcb": min_expected_delta_lcb if min_expected_delta_lcb is not None else "",
+        "min_map_delta_lcb": min_map_delta_lcb,
+        "evidence_scope": "topology_residual_control_planning_not_challenge_evidence",
+        "promotion_allowed_without_true_scanner": False,
+        "hidden_holdout_final_score": False,
+    }
+    out_path.with_name(f"{out_path.stem}_summary.json").write_text(
+        json.dumps(summary, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     return out_path
 
 
@@ -2013,6 +2279,301 @@ def _budget_variant_controls(
     else:
         controls["energy_exponent"] = _variant_value(energy_exponents, variant_index, default=0.80)
     return controls
+
+
+def _control_model_feature_defaults(examples: list[ResidualTeacherExample]) -> dict[str, float]:
+    def median_or(values: list[float], fallback: float) -> float:
+        finite = [value for value in values if math.isfinite(value)]
+        return statistics.median(finite) if finite else fallback
+
+    ranks = [float(example.rank) for example in examples if example.rank > 0]
+    frames = [float(_source_traits(example.source_archive_path)["frame"]) for example in examples]
+    return {
+        "base_ms_ssim": median_or([example.base_ms_ssim for example in examples], 0.65),
+        "base_lpips": median_or([example.base_lpips for example in examples], 0.58),
+        "rank": median_or(ranks, 60.0),
+        "frame": median_or(frames, 250.0),
+    }
+
+
+def _fit_control_model(
+    examples: list[ResidualTeacherExample],
+    *,
+    defaults: dict[str, float],
+    ridge_lambda: float,
+) -> tuple[dict[str, list[float]], dict[str, float], dict[str, object]]:
+    x = np.array([_control_model_features_for_example(example, defaults) for example in examples], dtype=float)
+    y_rows = [_control_model_targets_for_example(example) for example in examples]
+    y = np.array([[row[field] for field in TOPOLOGY_CONTROL_TARGET_FIELDS] for row in y_rows], dtype=float)
+    weights = np.array(
+        [0.25 + min(max(example.best_objective_delta, 0.0), 0.05) / 0.05 for example in examples],
+        dtype=float,
+    )
+    sqrt_w = np.sqrt(weights)[:, None]
+    xw = x * sqrt_w
+    yw = y * sqrt_w
+    penalty = np.eye(x.shape[1], dtype=float) * max(float(ridge_lambda), 0.0)
+    penalty[0, 0] = 0.0
+    lhs = xw.T @ xw + penalty
+    rhs = xw.T @ yw
+    try:
+        beta = np.linalg.solve(lhs, rhs)
+    except np.linalg.LinAlgError:
+        beta = np.linalg.pinv(lhs) @ rhs
+
+    pred = x @ beta
+    residual = pred - y
+    coefficients = {
+        field: [float(value) for value in beta[:, index]]
+        for index, field in enumerate(TOPOLOGY_CONTROL_TARGET_FIELDS)
+    }
+    residual_std = {
+        field: float(np.std(residual[:, index])) if residual.shape[0] > 1 else 0.0
+        for index, field in enumerate(TOPOLOGY_CONTROL_TARGET_FIELDS)
+    }
+    metrics = _control_model_error_metrics(y, pred)
+    metrics["n"] = len(examples)
+    metrics["weighted_training"] = True
+    return coefficients, residual_std, metrics
+
+
+def _evaluate_control_model(
+    examples: list[ResidualTeacherExample],
+    coefficients: dict[str, list[float]],
+    *,
+    defaults: dict[str, float],
+    residual_std: dict[str, float],
+) -> dict[str, object]:
+    x = np.array([_control_model_features_for_example(example, defaults) for example in examples], dtype=float)
+    y_rows = [_control_model_targets_for_example(example) for example in examples]
+    y = np.array([[row[field] for field in TOPOLOGY_CONTROL_TARGET_FIELDS] for row in y_rows], dtype=float)
+    beta = np.array([coefficients[field] for field in TOPOLOGY_CONTROL_TARGET_FIELDS], dtype=float).T
+    pred = x @ beta
+    metrics = _control_model_error_metrics(y, pred)
+    metrics["n"] = len(examples)
+    for field in ("expected_delta_mean", "expected_ms_ssim_delta_mean"):
+        index = TOPOLOGY_CONTROL_TARGET_FIELDS.index(field)
+        truth_positive = y[:, index] > 0.0
+        pred_positive = pred[:, index] - float(residual_std.get(field, 0.0)) > 0.0
+        metrics[f"{field}_positive_rate"] = float(np.mean(pred_positive)) if pred_positive.size else 0.0
+        metrics[f"{field}_positive_precision"] = (
+            float(np.mean(truth_positive[pred_positive])) if np.any(pred_positive) else 0.0
+        )
+    return metrics
+
+
+def _control_model_error_metrics(y: np.ndarray, pred: np.ndarray) -> dict[str, float]:
+    metrics: dict[str, float] = {}
+    for index, field in enumerate(TOPOLOGY_CONTROL_TARGET_FIELDS):
+        err = pred[:, index] - y[:, index]
+        metrics[f"{field}_mae"] = float(np.mean(np.abs(err))) if err.size else 0.0
+        metrics[f"{field}_rmse"] = float(np.sqrt(np.mean(err * err))) if err.size else 0.0
+        metrics[f"{field}_error_mean"] = float(np.mean(err)) if err.size else 0.0
+    return metrics
+
+
+def _control_model_targets_for_example(example: ResidualTeacherExample) -> dict[str, float]:
+    flow_delta = example.flow_objective_score - example.base_objective_score
+    energy_delta = example.flow_energy_objective_score - example.base_objective_score
+    energy_extra = example.flow_energy_objective_score - max(example.base_objective_score, example.flow_objective_score)
+    map_deltas = _example_best_stage_map_deltas(example)
+    targets = {
+        "selected_strength": _clamp(example.strength if math.isfinite(example.strength) else 0.25, 0.05, 0.55),
+        "flow_smooth_sigma": _finite_or_default(example.flow_smooth_sigma, 1.2),
+        "flow_attachment": _finite_or_default(example.flow_attachment, 6.0),
+        "energy_exponent": _finite_or_default(example.energy_exponent, 0.8),
+        "energy_sigma": _finite_or_default(example.energy_sigma, 2.0),
+        "energy_ratio_low": _finite_or_default(example.energy_ratio_low, 0.65),
+        "energy_ratio_high": _finite_or_default(example.energy_ratio_high, 1.32),
+        "energy_clip_low": _finite_or_default(example.energy_clip_low, 0.78),
+        "energy_clip_high": _finite_or_default(example.energy_clip_high, 1.22),
+        "texture_mean_exponent": _finite_or_default(example.texture_mean_exponent, 0.0),
+        "texture_exponent": _finite_or_default(example.texture_exponent, 0.0),
+        "texture_deep_exponent": _finite_or_default(example.texture_deep_exponent, 0.0),
+        "expected_delta_mean": example.best_objective_delta,
+        "expected_flow_delta_mean": flow_delta,
+        "expected_energy_delta_mean": energy_delta,
+        "expected_energy_extra_mean": energy_extra,
+        "expected_ms_ssim_delta_mean": example.best_delta,
+        "expected_struct_delta_mean": _finite_or_default(map_deltas["struct"], 0.0),
+        "expected_oac_delta_mean": _finite_or_default(map_deltas["oac"], 0.0),
+        "expected_sc_delta_mean": _finite_or_default(map_deltas["sc"], 0.0),
+        "expected_rsc_delta_mean": _finite_or_default(map_deltas["rsc"], 0.0),
+    }
+    bounds = {"selected_strength": (0.05, 0.55), **_stage2_control_bounds()}
+    for field, (low, high) in bounds.items():
+        targets[field] = _clamp(targets[field], low, high)
+    return targets
+
+
+def _control_model_has_map_targets(examples: list[ResidualTeacherExample]) -> bool:
+    return any(
+        all(math.isfinite(value) for value in _example_best_stage_map_deltas(example).values())
+        for example in examples
+        if example.best_stage != "base"
+    )
+
+
+def _control_model_has_aggregate_map_objective(examples: list[ResidualTeacherExample]) -> bool:
+    return any("map_objective" in example.objective_source for example in examples)
+
+
+def _control_model_features_for_example(
+    example: ResidualTeacherExample,
+    defaults: dict[str, float],
+) -> list[float]:
+    return _control_model_features(
+        example.source_archive_path,
+        base_ms=example.base_ms_ssim,
+        base_lpips=example.base_lpips,
+        rank=example.rank,
+        defaults=defaults,
+    )
+
+
+def _control_model_features_for_row(
+    row: dict[str, str],
+    *,
+    rank: int,
+    defaults: dict[str, float],
+) -> list[float]:
+    return _control_model_features(
+        row.get("source_archive_path", ""),
+        base_ms=_finite(row.get("MS-SSIM")),
+        base_lpips=_finite(row.get("LPIPS") or row.get("LPIPS_PROXY")),
+        rank=rank,
+        defaults=defaults,
+    )
+
+
+def _control_model_features(
+    source_archive_path: str,
+    *,
+    base_ms: float,
+    base_lpips: float,
+    rank: int | float,
+    defaults: dict[str, float],
+) -> list[float]:
+    traits = _source_traits(source_archive_path)
+    base_ms = _finite_or_default(base_ms, float(defaults.get("base_ms_ssim", 0.65)))
+    base_lpips = _finite_or_default(base_lpips, float(defaults.get("base_lpips", 0.58)))
+    rank_value = _finite_or_default(float(rank), float(defaults.get("rank", 60.0)))
+    frame_value = _finite_or_default(float(traits.get("frame", -1)), float(defaults.get("frame", 250.0)))
+    sex = str(traits.get("sex", "")).lower()
+    age = str(traits.get("age_band", ""))
+    site = str(traits.get("body_site", "")).lower()
+    ms_gap = _clamp((0.78 - base_ms) / 0.20, 0.0, 1.0)
+    lpips_load = _clamp((base_lpips - 0.35) / 0.35, 0.0, 1.0)
+    return [
+        1.0,
+        base_ms,
+        base_lpips,
+        _clamp(rank_value / 120.0, 0.0, 1.25),
+        _clamp(frame_value / 500.0, 0.0, 1.25),
+        1.0 if sex == "female" else 0.0,
+        1.0 if sex == "male" else 0.0,
+        1.0 if age == "1950-1960" else 0.0,
+        1.0 if age == "1990-2000" else 0.0,
+        1.0 if "cheek" in site else 0.0,
+        1.0 if "eye" in site else 0.0,
+        ms_gap,
+        lpips_load,
+    ]
+
+
+def _predict_control_model_targets(
+    row: dict[str, str],
+    *,
+    rank: int,
+    coefficients: dict[str, list[float]],
+    defaults: dict[str, float],
+) -> dict[str, float]:
+    features = np.array(_control_model_features_for_row(row, rank=rank, defaults=defaults), dtype=float)
+    out: dict[str, float] = {}
+    for field in TOPOLOGY_CONTROL_TARGET_FIELDS:
+        beta = np.array(coefficients.get(field, [0.0] * len(TOPOLOGY_CONTROL_FEATURE_FIELDS)), dtype=float)
+        out[field] = float(features @ beta)
+    bounds = {"selected_strength": (0.05, 0.55), **_stage2_control_bounds()}
+    for field, (low, high) in bounds.items():
+        out[field] = _clamp(out[field], low, high)
+    return out
+
+
+def _control_model_stage2_controls(targets: dict[str, float]) -> dict[str, object]:
+    controls = {
+        "residual_control_policy": "topology_residual_control_model_v1",
+        "energy_base_policy": "current_on_flow_regression",
+        "energy_base_flow_delta_threshold": 0.0,
+    }
+    for field in STAGE2_NUMERIC_CONTROL_FIELDS:
+        controls[field] = round(_finite_or_default(targets.get(field), 0.0), 6)
+    return controls
+
+
+def _control_model_map_safety(
+    targets: dict[str, float],
+    *,
+    residual_std: dict[str, float],
+    uncertainty_z: float,
+    min_map_delta_lcb: float,
+    map_target_observed: bool,
+) -> dict[str, object]:
+    if not map_target_observed:
+        return _empty_map_safety_context("map_safety_not_trained", 0.65)
+    out: dict[str, object] = {}
+    lcbs: list[float] = []
+    for label, target_field in (
+        ("struct", "expected_struct_delta_mean"),
+        ("oac", "expected_oac_delta_mean"),
+        ("sc", "expected_sc_delta_mean"),
+        ("rsc", "expected_rsc_delta_mean"),
+    ):
+        mean = _finite(targets.get(target_field))
+        std = max(0.0, _finite(residual_std.get(target_field)))
+        lcb = mean - float(uncertainty_z) * std if math.isfinite(mean) else float("nan")
+        out[f"expected_{label}_delta_mean"] = mean if math.isfinite(mean) else ""
+        out[f"expected_{label}_delta_lcb"] = lcb if math.isfinite(lcb) else ""
+        if math.isfinite(lcb):
+            lcbs.append(lcb)
+    lcb_min = min(lcbs) if len(lcbs) == 4 else float("nan")
+    if not math.isfinite(lcb_min):
+        status = "map_safety_unknown"
+        multiplier = 0.65
+        safe_win_rate: float | str = ""
+    elif lcb_min < min_map_delta_lcb:
+        status = "map_safety_lcb_fail"
+        multiplier = 0.35
+        safe_win_rate = 0.0
+    else:
+        status = "map_safe_pass"
+        multiplier = 1.0
+        safe_win_rate = 1.0
+    out.update(
+        {
+            "expected_map_delta_lcb_min": lcb_min if math.isfinite(lcb_min) else "",
+            "nearest_map_safe_win_rate": safe_win_rate,
+            "map_safe_support_n": "",
+            "map_safety_status": status,
+            "map_safety_score_multiplier": multiplier,
+        }
+    )
+    return out
+
+
+def _empty_surrogate_fields(status: str) -> dict[str, object]:
+    return {
+        "surrogate_calibration_status": status,
+        "surrogate_calibration_support_n": "",
+        "surrogate_calibration_distance": "",
+        "surrogate_calibration_score_multiplier": 1.0,
+        "surrogate_calibration_training_ssim_min": "",
+        "surrogate_calibration_training_ssim_max": "",
+    }
+
+
+def _finite_or_default(value: object, default: float) -> float:
+    finite = _finite(value)
+    return finite if math.isfinite(finite) else default
 
 
 def _ordered_union(rows: list[dict[str, object]]) -> list[str]:

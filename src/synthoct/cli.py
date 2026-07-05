@@ -24,7 +24,14 @@ from .correction_refinement import (
 from .direct_lattice import run_direct_lattice_refinement
 from .energy_ratio_refinement import DEFAULT_ENERGY_RATIO_EXPONENTS, run_energy_ratio_refinement
 from .empirical_basis import run_empirical_basis_refinement
-from .evaluation import audit_challenge_evidence, calculate_metrics, challenge_readiness_report, decide_candidate_promotion, select_best_candidate
+from .evaluation import (
+    audit_challenge_evidence,
+    calculate_metrics,
+    challenge_readiness_report,
+    decide_candidate_promotion,
+    select_best_candidate,
+    write_ms_ssim_pair_comparison,
+)
 from .features import generate_maps
 from .flow_energy_batch import run_flow_energy_rank_batch
 from .flow_refinement import DEFAULT_FLOW_VARIANTS, run_flow_refinement
@@ -52,7 +59,9 @@ from .residual_selector import (
     enrich_residual_teacher_maps,
     plan_residual_api_budget,
     plan_residual_selector_queue,
+    plan_topology_residual_control_queue,
     train_residual_parameter_selector,
+    train_topology_residual_control_model,
 )
 from .scanners import render_phantom, write_api_config
 from .seed_search import run_api_seed_search
@@ -211,6 +220,14 @@ def build_parser() -> argparse.ArgumentParser:
     select_best.add_argument("--max-generation-seconds", type=float, default=600.0)
     select_best.add_argument("--max-guardrail-regression", type=float, default=0.0)
     select_best.add_argument("--strict", action="store_true", help="Exit nonzero unless a candidate is selected.")
+
+    compare_ms = sub.add_parser("compare-api-ms-ssim", help="Write a per-row MS-SSIM comparison for two matched API metric CSVs.")
+    compare_ms.add_argument("--base-metrics", required=True, help="Base api_metrics.csv.")
+    compare_ms.add_argument("--candidate-metrics", required=True, help="Candidate api_metrics.csv.")
+    compare_ms.add_argument("--out", required=True, help="Output comparison CSV.")
+    compare_ms.add_argument("--base-method", default="base")
+    compare_ms.add_argument("--candidate-method", default="candidate")
+    compare_ms.add_argument("--model-queue", help="Optional model-planned queue to annotate rows with predicted controls.")
 
     readiness = sub.add_parser("challenge-readiness", help="Summarize whether local evidence supports the current challenge candidate.")
     readiness.add_argument("--metrics", required=True, help="Challenge metrics summary CSV to audit and rank.")
@@ -498,6 +515,37 @@ def build_parser() -> argparse.ArgumentParser:
         default=["sex", "age_band", "body_site"],
         help="Fields used to keep anatomical cohorts together in selector holdout validation.",
     )
+
+    residual_control_model = sub.add_parser(
+        "train-topology-residual-control-model",
+        help="Train a bounded flow/energy/texture control model around the current topology.",
+    )
+    residual_control_model.add_argument("--base-api-metrics", required=True, help="Current/base api_metrics.csv.")
+    residual_control_model.add_argument("--teacher-metrics", nargs="+", required=True, help="Residual teacher metrics CSVs.")
+    residual_control_model.add_argument("--out", required=True, help="Output residual control model JSON.")
+    residual_control_model.add_argument("--default-strength", type=float, default=0.25)
+    residual_control_model.add_argument("--holdout-fraction", type=float, default=0.25)
+    residual_control_model.add_argument("--ridge-lambda", type=float, default=1e-3)
+    residual_control_model.add_argument("--uncertainty-z", type=float, default=1.0)
+    residual_control_model.add_argument(
+        "--holdout-group-fields",
+        nargs="*",
+        default=["sex", "age_band", "body_site"],
+        help="Fields used to keep anatomical cohorts together in control-model holdout validation.",
+    )
+
+    residual_control_queue = sub.add_parser(
+        "plan-topology-residual-control-queue",
+        help="Predict a selector-compatible residual-control queue from a trained control model.",
+    )
+    residual_control_queue.add_argument("--base-api-metrics", required=True, help="Current/base api_metrics.csv.")
+    residual_control_queue.add_argument("--model", required=True, help="Residual control model JSON.")
+    residual_control_queue.add_argument("--out", required=True, help="Output recommendation CSV.")
+    residual_control_queue.add_argument("--limit", type=int)
+    residual_control_queue.add_argument("--min-expected-delta-lcb", type=float)
+    residual_control_queue.add_argument("--min-map-delta-lcb", type=float, default=-0.0005)
+    residual_control_queue.add_argument("--require-map-safe", action="store_true")
+    residual_control_queue.add_argument("--uncertainty-z", type=float)
 
     residual_enrich = sub.add_parser(
         "enrich-residual-teacher-maps",
@@ -871,6 +919,18 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(report, sort_keys=True))
         return 0 if (not args.strict or report["promote"]) else 2
 
+    if args.command == "compare-api-ms-ssim":
+        comparison_path = write_ms_ssim_pair_comparison(
+            args.base_metrics,
+            args.candidate_metrics,
+            args.out,
+            base_method=args.base_method,
+            candidate_method=args.candidate_method,
+            model_queue=args.model_queue,
+        )
+        print(comparison_path)
+        return 0
+
     if args.command == "challenge-readiness":
         report = challenge_readiness_report(
             args.metrics,
@@ -1186,6 +1246,34 @@ def main(argv: list[str] | None = None) -> int:
             holdout_group_fields=tuple(args.holdout_group_fields),
         )
         print(artifact_path)
+        return 0
+
+    if args.command == "train-topology-residual-control-model":
+        model_path = train_topology_residual_control_model(
+            args.base_api_metrics,
+            list(args.teacher_metrics),
+            args.out,
+            default_strength=args.default_strength,
+            holdout_fraction=args.holdout_fraction,
+            ridge_lambda=args.ridge_lambda,
+            uncertainty_z=args.uncertainty_z,
+            holdout_group_fields=tuple(args.holdout_group_fields),
+        )
+        print(model_path)
+        return 0
+
+    if args.command == "plan-topology-residual-control-queue":
+        queue_path = plan_topology_residual_control_queue(
+            args.base_api_metrics,
+            args.model,
+            args.out,
+            limit=args.limit,
+            min_expected_delta_lcb=args.min_expected_delta_lcb,
+            min_map_delta_lcb=args.min_map_delta_lcb,
+            require_map_safe=args.require_map_safe,
+            uncertainty_z=args.uncertainty_z,
+        )
+        print(queue_path)
         return 0
 
     if args.command == "enrich-residual-teacher-maps":

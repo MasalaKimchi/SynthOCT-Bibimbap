@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import csv
+import json
+
 import numpy as np
 from skimage import io
 
 from synthoct.evaluation import calculate_metrics
 import synthoct.evaluation.maps as eval_maps
-from synthoct.evaluation.summaries import summarize_challenge_metrics
+from synthoct.evaluation.summaries import summarize_challenge_metrics, write_ms_ssim_pair_comparison
 from synthoct.features import calculate_oac, calculate_speckle_contrast_map, generate_maps
 
 
@@ -106,3 +109,61 @@ def test_challenge_summary_reports_official_median_score():
     assert summary[0]["Struct_MS-SSIM_median"] == 0.7
     assert summary[0]["Struct_LPIPS_median"] == 0.30000000000000004
     assert np.isclose(summary[0]["official_score"], 0.675)
+
+
+def test_write_ms_ssim_pair_comparison_outputs_rows_and_summary(tmp_path):
+    base = tmp_path / "base.csv"
+    candidate = tmp_path / "candidate.csv"
+    queue = tmp_path / "queue.csv"
+    for path, rows in [
+        (
+            base,
+            [
+                {"source_archive_path": "a.png", "MS-SSIM": "0.5", "LPIPS": "0.6"},
+                {"source_archive_path": "b.png", "MS-SSIM": "0.7", "LPIPS": "0.4"},
+            ],
+        ),
+        (
+            candidate,
+            [
+                {"source_archive_path": "a.png", "MS-SSIM": "0.55", "LPIPS": "0.58"},
+                {"source_archive_path": "b.png", "MS-SSIM": "0.7", "LPIPS": "0.4"},
+            ],
+        ),
+    ]:
+        with path.open("w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=["source_archive_path", "MS-SSIM", "LPIPS"])
+            writer.writeheader()
+            writer.writerows(rows)
+    with queue.open("w", newline="") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=["source_archive_path", "expected_delta_lcb", "selected_strength", "residual_control_policy", "map_safety_status"],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "source_archive_path": "a.png",
+                "expected_delta_lcb": "0.01",
+                "selected_strength": "0.2",
+                "residual_control_policy": "topology_residual_control_model_v1",
+                "map_safety_status": "map_safety_not_trained",
+            }
+        )
+
+    out = write_ms_ssim_pair_comparison(
+        base,
+        candidate,
+        tmp_path / "comparison.csv",
+        base_method="base",
+        candidate_method="candidate",
+        model_queue=queue,
+    )
+    rows = list(csv.DictReader(out.open()))
+    assert len(rows) == 2
+    assert rows[0]["winner"] == "candidate"
+    assert rows[0]["model_residual_policy"] == "topology_residual_control_model_v1"
+    summary = json.loads(out.with_name("comparison_summary.json").read_text(encoding="utf-8"))
+    assert summary["row_count"] == 2
+    assert summary["candidate_wins"] == 1
+    assert summary["ties"] == 1

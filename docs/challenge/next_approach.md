@@ -1,33 +1,12 @@
-# Next Approach: Stage 2 Residual Learning And Evidence Gates
+# Next Approach
 
-This document turns the current experimental audit into the next execution plan. It should guide the next scanner-available session and the next modeling pass.
+This is the compact execution plan. See [current_findings.md](current_findings.md) for the current evidence and [stage2_oac_residual_journey.md](stage2_oac_residual_journey.md) for the Stage 2 resume state.
 
-## Current Judgment
+## Objective
 
-The current direction is right, but the expected near-term gains are incremental. `learned-prior-sparse-p140-t32` remains the best general generator because it preserves density topology and physical-map behavior. Flow and energy patches should be treated as teacher data for residual control, not as proof of a hidden-general breakthrough.
+Improve the official-style aggregate while preserving Struct/OAC/SC/RSC behavior. Do not optimize a single structural metric in isolation.
 
-The best measured public-set rescue artifact is:
-
-```text
-outputs/submission_ready_p140_t32_flow_energy_rank120_adaptive_rank36_patch
-official_score=0.6939983205067786
-MS-SSIM_mean=0.6653683801220828
-Struct_MS-SSIM_median=0.6605330710784837
-Struct_LPIPS_median=0.5885020792484283
-```
-
-The best single hosted true-scanner residual probe remains:
-
-```text
-MS-SSIM=0.734145597958592
-metrics=outputs/residual_selector_public_teacher/probe_batch_feedback11_branch_aware_smoke4_concurrency4/residual_selector_probe_metrics.csv
-```
-
-Neither result is evidence that `0.85` or `0.90` MS-SSIM is reachable with the current selector alone. The current OAC-aware selector should be viewed as a low-risk API-budgeting tool, not the full breakthrough model.
-
-## Mathematical Objective
-
-Do not optimize a single structural number in isolation. The challenge-facing aggregate used locally is:
+Local aggregate:
 
 ```text
 mean(
@@ -42,32 +21,54 @@ mean(
 )
 ```
 
-The next model must therefore improve official aggregate score while protecting every physical map channel. A candidate that improves image-space MS-SSIM or Structural LPIPS but damages OAC, SC, or RSC is not a win.
+## Current Position
 
-Useful local targets:
+`learned-prior-sparse-p140-t32` remains the general model. The adaptive flow/energy rank36 patch is the best measured public-set rescue, but it is public evidence only. The next run is a controlled feedback15 selector retest, not a final promotion attempt.
 
-- raise grouped official score over `learned-prior-sparse-p140-t32`;
-- reduce Structural LPIPS without lowering Struct/OAC/SC/RSC MS-SSIM medians;
-- show per-sample wins on a grouped split, not only a single-reference maximum;
-- keep all evidence labeled as true scanner, surrogate, or preview.
+## Executable Residual-Control Model
 
-## Physics-Informed Modeling Position
+The topology-preserving model path now predicts bounded residual controls rather than replacing the phantom density field:
 
-Freeze Stage 1 as the `p140-t32` topology. Density replacement has repeatedly been fragile: neural density blends, direct texture overlays, and target-locked visual inversions improved isolated appearance signals while damaging OAC/SC/RSC behavior.
+```bash
+PYTHONPATH=src python -m synthoct.cli train-topology-residual-control-model \
+  --base-api-metrics outputs/api_preliminary_p140_t32_flow_energy_rank120_adaptive_rank36_patch/api_metrics.csv \
+  --teacher-metrics outputs/residual_selector_public_teacher/probe_batch_feedback11_branch_aware_smoke4_concurrency4/residual_selector_probe_metrics.csv \
+  --out outputs/residual_selector_public_teacher/topology_residual_control_model_v1.json \
+  --holdout-fraction 0
 
-Stage 2 should learn only residual controls around that topology:
+PYTHONPATH=src python -m synthoct.cli plan-topology-residual-control-queue \
+  --base-api-metrics outputs/api_preliminary_p140_t32_flow_energy_rank120_adaptive_rank36_patch/api_metrics.csv \
+  --model outputs/residual_selector_public_teacher/topology_residual_control_model_v1.json \
+  --out outputs/residual_selector_public_teacher/topology_residual_control_model_v1_queue120.csv
+```
 
-- low-frequency geometry and flow parameters;
-- attenuation-normalized energy residuals;
-- speckle texture statistics;
-- per-row and per-source correction strength;
-- confidence estimates for map-safe promotion.
+The first artifact observes aggregate map-objective teacher deltas, but not per-channel Struct/OAC/SC/RSC deltas:
 
-This keeps the scatterer field scanner-compatible and respects the coupling between density, attenuation, speckle contrast, and refined speckle contrast.
+```text
+map_objective_target_observed=true
+map_target_observed=false
+queue_map_safety=map_safety_not_trained
+```
 
-## Near-Term API Plan
+Use it as a control-model scaffold. Retrain with map-enriched teacher rows before treating it as map-safe or spending broad API budget.
 
-When the hosted scanner is reachable, run the current map-safe selector queue as a controlled retest:
+The 120-row MS-SSIM comparison is reproducible with:
+
+```bash
+PYTHONPATH=src python -m synthoct.cli compare-api-ms-ssim \
+  --base-metrics outputs/api_preliminary_learned_prior_sparse_p140_t32_120_concurrent/api_metrics.csv \
+  --candidate-metrics outputs/api_preliminary_p140_t32_flow_energy_rank120_adaptive_rank36_patch/api_metrics.csv \
+  --out outputs/residual_selector_public_teacher/ms_ssim_120_comparison_base_vs_adaptive_rank36_patch.csv \
+  --base-method learned-prior-sparse-p140-t32 \
+  --candidate-method p140-t32-flow-energy-rank120-adaptive-rank36-patch \
+  --model-queue outputs/residual_selector_public_teacher/topology_residual_control_model_v1_queue120.csv
+```
+
+Current summary: candidate mean MS-SSIM `0.6653683801220828` vs base `0.6555505534821618`, with `118` candidate wins, `0` base wins, and `2` ties.
+
+## Hosted Scanner Smoke
+
+Run this first when `synthoct.com` is reachable:
 
 ```bash
 PYTHONPATH=src python -m synthoct.cli residual-selector-flow-batch \
@@ -81,7 +82,9 @@ PYTHONPATH=src python -m synthoct.cli residual-selector-flow-batch \
   --max-polls 60
 ```
 
-If the smoke produces valid request IDs and completed renders, run:
+## Full Retest
+
+If the smoke produces valid request IDs and completed renders:
 
 ```bash
 PYTHONPATH=src python -m synthoct.cli residual-selector-flow-batch \
@@ -96,25 +99,13 @@ PYTHONPATH=src python -m synthoct.cli residual-selector-flow-batch \
   --max-polls 100
 ```
 
-Interpretation rules:
+## Interpretation Rules
 
-- Treat the current selector queue as a non-harm test. Its strict map-safe rows have `expected_map_delta_lcb_min=0.0`, not confident positive map improvement.
-- Promote nothing from this run unless grouped true-scanner evidence improves the official aggregate.
-- If results are flat, use the feedback to train a richer residual selector rather than widening scalar sweeps.
-
-## Breakthrough Modeling Plan
-
-The next high-ceiling model should be a two-stage residual trainer:
-
-1. Generate or load `p140-t32` base phantoms.
-2. Encode the reference B-scan into low-frequency anatomy, attenuation, speckle, and depth-profile features.
-3. Predict residual controls rather than full density replacement.
-4. Train against teacher deltas from flow+energy rows, with losses aligned to Struct/OAC/SC/RSC MS-SSIM and LPIPS.
-5. Use grouped holdout by source traits such as sex, age band, body site, and frame to reduce leakage.
-6. Calibrate uncertainty before sending candidates to the hosted scanner.
-7. Reject candidates whose lower-confidence bounds indicate likely map harm.
-
-The surrogate scanner, if added, is only a search accelerator. It must have held-out true-scanner calibration and uncertainty gating before any surrogate-selected candidate is promoted to hosted API calls.
+- Treat the queue as a map-safe non-harm test.
+- Promote nothing from a single probe.
+- Promote nothing unless grouped true-scanner evidence improves the official aggregate.
+- If results are flat, train a richer topology-preserving residual-control model rather than widening scalar sweeps.
+- Keep evidence labels explicit: true scanner, surrogate, preview, public-set rescue, or hidden-holdout final.
 
 ## Promotion Gate
 
@@ -122,18 +113,15 @@ A candidate can replace the current local candidate only if all are true:
 
 - rendered by hosted API or official Windows true scanner;
 - evaluated full-frame with real LPIPS;
-- grouped validation, not only public manifest rescue or a single-reference probe;
+- grouped validation, not only public rescue or a single-reference probe;
 - official aggregate beats `learned-prior-sparse-p140-t32`;
 - no unacceptable Struct/OAC/SC/RSC regression;
 - generation remains within the `600` second challenge budget;
 - artifact labels say `hidden_holdout_final_score=false`.
 
-Public-set rescue rows can inform training, but they do not establish hidden-holdout performance.
+## Do Not Do Next
 
-## What Not To Do Next
-
-- Do not spend API calls on direct texture overlays unless a map-aware model first predicts why they should preserve SC/RSC.
-- Do not chase preview-only values such as lattice `0.99` MS-SSIM.
-- Do not replace density topology with a neural field without a strict topology-preservation constraint.
-- Do not call a full-public public-set patch the final general model.
-- Do not optimize Structural LPIPS alone; it must be coupled to official aggregate and physical-map safety.
+- Do not spend API calls on direct texture overlays without a map-aware model.
+- Do not chase preview-only lattice or surrogate scores.
+- Do not replace density topology without strict topology-preservation evidence.
+- Do not treat full-public-set rescue as hidden-holdout proof.

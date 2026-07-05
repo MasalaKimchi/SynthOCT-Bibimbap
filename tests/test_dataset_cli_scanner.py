@@ -3961,6 +3961,170 @@ def test_cli_residual_selector_can_choose_row_wise_strengths(tmp_path):
     assert eye["strength_candidate_count"] == "2"
 
 
+def test_cli_topology_residual_control_model_trains_and_plans_queue(tmp_path):
+    base_metrics = tmp_path / "base_api_metrics.csv"
+    with base_metrics.open("w", newline="") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=["source_archive_path", "SSIM", "MS-SSIM", "LPIPS", "reference_png", "phantom_path", "synthetic_gray_png"],
+        )
+        writer.writeheader()
+        for source, ms, lpips in [
+            ("DATASET_PNG/Female/1990-2000/Cheek/a_frame50.png", "0.61", "0.59"),
+            ("DATASET_PNG/Male/1950-1960/Eye_corner/b_frame250.png", "0.67", "0.55"),
+        ]:
+            stem = Path(source).stem
+            writer.writerow(
+                {
+                    "source_archive_path": source,
+                    "SSIM": "0.60",
+                    "MS-SSIM": ms,
+                    "LPIPS": lpips,
+                    "reference_png": str(tmp_path / f"{stem}_ref.png"),
+                    "phantom_path": str(tmp_path / f"{stem}.txt"),
+                    "synthetic_gray_png": str(tmp_path / f"{stem}_gray.png"),
+                }
+            )
+
+    teacher_metrics = tmp_path / "control_teacher.csv"
+    with teacher_metrics.open("w", newline="") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "source_archive_path",
+                "row_index",
+                "current_rank",
+                "strength",
+                "current_ms_ssim",
+                "current_lpips",
+                "flow_ms_ssim",
+                "flow_energy_ms_ssim",
+                "best_stage",
+                "best_ms_ssim",
+                "flow_smooth_sigma",
+                "flow_attachment",
+                "energy_exponent",
+                "energy_sigma",
+                "energy_ratio_low",
+                "energy_ratio_high",
+                "energy_clip_low",
+                "energy_clip_high",
+                "texture_mean_exponent",
+                "texture_exponent",
+                "texture_deep_exponent",
+                "reference_png",
+                "current_phantom_path",
+                "current_synthetic_gray_png",
+                "flow_phantom_path",
+                "flow_energy_phantom_path",
+                "current_Struct_MS-SSIM",
+                "current_OAC_MS-SSIM",
+                "current_SC_MS-SSIM",
+                "current_RSC_MS-SSIM",
+                "flow_energy_Struct_MS-SSIM",
+                "flow_energy_OAC_MS-SSIM",
+                "flow_energy_SC_MS-SSIM",
+                "flow_energy_RSC_MS-SSIM",
+            ],
+        )
+        writer.writeheader()
+        for i, (source, base_ms, best_ms, strength, texture) in enumerate(
+            [
+                ("DATASET_PNG/Female/1990-2000/Cheek/a_frame50.png", 0.61, 0.64, 0.18, 0.22),
+                ("DATASET_PNG/Male/1950-1960/Eye_corner/b_frame250.png", 0.67, 0.675, 0.10, 0.10),
+                ("DATASET_PNG/Female/1990-2000/Cheek/c_frame450.png", 0.60, 0.635, 0.22, 0.28),
+            ]
+        ):
+            writer.writerow(
+                {
+                    "source_archive_path": source,
+                    "row_index": i,
+                    "current_rank": i + 1,
+                    "strength": strength,
+                    "current_ms_ssim": base_ms,
+                    "current_lpips": "0.58",
+                    "flow_ms_ssim": best_ms - 0.005,
+                    "flow_energy_ms_ssim": best_ms,
+                    "best_stage": "flow_energy",
+                    "best_ms_ssim": best_ms,
+                    "flow_smooth_sigma": "1.4",
+                    "flow_attachment": "5.8",
+                    "energy_exponent": "0.86",
+                    "energy_sigma": "2.2",
+                    "energy_ratio_low": "0.64",
+                    "energy_ratio_high": "1.30",
+                    "energy_clip_low": "0.76",
+                    "energy_clip_high": "1.20",
+                    "texture_mean_exponent": "0.02",
+                    "texture_exponent": texture,
+                    "texture_deep_exponent": "0.70",
+                    "reference_png": str(tmp_path / f"{i}_ref.png"),
+                    "current_phantom_path": str(tmp_path / f"{i}_base.txt"),
+                    "current_synthetic_gray_png": str(tmp_path / f"{i}_base.png"),
+                    "flow_phantom_path": str(tmp_path / f"{i}_flow.txt"),
+                    "flow_energy_phantom_path": str(tmp_path / f"{i}_energy.txt"),
+                    "current_Struct_MS-SSIM": "0.70",
+                    "current_OAC_MS-SSIM": "0.70",
+                    "current_SC_MS-SSIM": "0.70",
+                    "current_RSC_MS-SSIM": "0.70",
+                    "flow_energy_Struct_MS-SSIM": "0.72",
+                    "flow_energy_OAC_MS-SSIM": "0.72",
+                    "flow_energy_SC_MS-SSIM": "0.72",
+                    "flow_energy_RSC_MS-SSIM": "0.72",
+                }
+            )
+
+    model = tmp_path / "topology_control_model.json"
+    assert (
+        main(
+            [
+                "train-topology-residual-control-model",
+                "--base-api-metrics",
+                str(base_metrics),
+                "--teacher-metrics",
+                str(teacher_metrics),
+                "--out",
+                str(model),
+                "--holdout-fraction",
+                "0",
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(model.read_text(encoding="utf-8"))
+    assert payload["model_type"] == "topology_preserving_residual_control_model_v1"
+    assert payload["topology_contract"]["base_topology_preserved"] is True
+    assert payload["topology_contract"]["predicts_full_density_replacement"] is False
+
+    queue = tmp_path / "topology_control_queue.csv"
+    assert (
+        main(
+            [
+                "plan-topology-residual-control-queue",
+                "--base-api-metrics",
+                str(base_metrics),
+                "--model",
+                str(model),
+                "--out",
+                str(queue),
+                "--limit",
+                "2",
+            ]
+        )
+        == 0
+    )
+    rows = list(csv.DictReader(queue.open()))
+    assert len(rows) == 2
+    assert rows[0]["residual_control_policy"] == "topology_residual_control_model_v1"
+    assert rows[0]["strength_policy"] == "topology_residual_control_model"
+    assert float(rows[0]["selected_strength"]) > 0
+    assert rows[0]["flow_smooth_sigma"] != ""
+    assert rows[0]["energy_exponent"] != ""
+    assert rows[0]["texture_exponent"] != ""
+    assert rows[0]["expected_delta_lcb"] != ""
+    assert rows[0]["evidence_scope"] == "topology_residual_control_planning_not_challenge_evidence"
+
+
 def test_cli_residual_selector_learns_selected_strength_probe_rows(tmp_path):
     base_metrics = tmp_path / "base_api_metrics.csv"
     base_metrics.write_text(
