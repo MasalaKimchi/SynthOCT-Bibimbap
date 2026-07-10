@@ -5,7 +5,10 @@ __pycache__/
 .ruff_cache/
 .venv/
 data/
-outputs/
+outputs/*
+!outputs/
+!outputs/holographic_inverse_contract300k/
+!outputs/holographic_inverse_contract300k/**
 runs/
 secrets/
 challenge_assets/

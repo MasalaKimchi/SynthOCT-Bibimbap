@@ -1,32 +1,14 @@
-"""Scanner backend interfaces for rendering digital phantoms into OCT PNGs."""
+"""Exact local scanner and hosted SynthOCT API rendering helpers."""
 
-from .api import (
-    ApiRenderRequest,
-    ApiRenderResult,
-    HostedApiScanner,
-    poll_api_result,
-    prepare_api_render_request,
-    render_with_api,
-    resolve_api_key,
-    submit_api_render,
-)
-from .config import write_api_config, write_scanner_config
-from .core import ScannerBackend, ScannerError, render_phantom
-from .windows import WindowsExecutableScanner
+from .api import render_with_api, resolve_api_key
+from .config import write_api_config
+from .reference import render_reference_array, render_reference_scanner, scanner_wavenumbers
 
 __all__ = [
-    "ApiRenderRequest",
-    "ApiRenderResult",
-    "HostedApiScanner",
-    "poll_api_result",
-    "ScannerBackend",
-    "ScannerError",
-    "WindowsExecutableScanner",
-    "prepare_api_render_request",
-    "render_phantom",
+    "render_reference_array",
+    "render_reference_scanner",
     "render_with_api",
     "resolve_api_key",
-    "submit_api_render",
+    "scanner_wavenumbers",
     "write_api_config",
-    "write_scanner_config",
 ]

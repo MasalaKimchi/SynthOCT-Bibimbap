@@ -47,31 +47,9 @@ class ExperimentConfig:
             "Output filename": str(output_path),
         }
         path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("w") as f:
-            cfg.write(f)
+        with path.open("w", encoding="utf-8") as handle:
+            cfg.write(handle)
         return path
-
-
-def generate_uniform(config: ExperimentConfig, seed: int | None = None, amp: float = 1.0) -> np.ndarray:
-    rng = np.random.default_rng(seed)
-    count = config.scatterers_count
-    xs = (rng.random(count) - 0.5) * config.x_max
-    ys = (rng.random(count) - 0.5) * (2 * config.beam_radius)
-    zs = rng.random(count) * config.z_max
-    amps = np.full(count, amp, dtype=np.float64)
-    return np.column_stack((xs, ys, zs, amps))
-
-
-def generate_two_layers(
-    config: ExperimentConfig,
-    seed: int | None = None,
-    boundary_z_mcm: float = 500.0,
-    amp_top: float = 0.05,
-    amp_bottom: float = 2.5,
-) -> np.ndarray:
-    data = generate_uniform(config, seed=seed, amp=amp_top)
-    data[data[:, 2] > boundary_z_mcm, 3] = amp_bottom
-    return data
 
 
 def validate_phantom(data: np.ndarray, config: ExperimentConfig = ExperimentConfig()) -> None:
