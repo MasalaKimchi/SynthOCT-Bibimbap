@@ -52,14 +52,28 @@ class ExperimentConfig:
         return path
 
 
-def validate_phantom(data: np.ndarray, config: ExperimentConfig = ExperimentConfig()) -> None:
+def validate_phantom(
+    data: np.ndarray,
+    config: ExperimentConfig = ExperimentConfig(),
+    *,
+    require_exact_count: bool = False,
+    require_y_bounds: bool = False,
+) -> None:
     if data.ndim != 2 or data.shape[1] != 4:
         raise ValueError(f"Expected phantom array with shape (N, 4), got {data.shape}.")
+    if require_exact_count and data.shape[0] != config.scatterers_count:
+        raise ValueError(
+            f"Expected exactly {config.scatterers_count} scatterers, got {data.shape[0]}."
+        )
     if not np.isfinite(data).all():
         raise ValueError("Phantom contains NaN or infinite values.")
-    x, _y, z, energy = data.T
+    x, y, z, energy = data.T
     if x.min() < -config.x_max / 2 or x.max() > config.x_max / 2:
         raise ValueError("X coordinates exceed official scanner bounds.")
+    if require_y_bounds and (
+        y.min() < -config.beam_radius or y.max() > config.beam_radius
+    ):
+        raise ValueError("Y coordinates exceed the configured beam-radius bounds.")
     if z.min() < 0 or z.max() > config.z_max:
         raise ValueError("Z coordinates exceed official scanner bounds.")
     if energy.min() < 0 or energy.max() > 100:
@@ -67,16 +81,27 @@ def validate_phantom(data: np.ndarray, config: ExperimentConfig = ExperimentConf
 
 
 def save_phantom(data: np.ndarray, path: str | Path, config: ExperimentConfig = ExperimentConfig()) -> Path:
-    validate_phantom(data, config=config)
+    validate_phantom(data, config=config, require_exact_count=True)
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     np.savetxt(path, data, fmt="%.6e")
     return path
 
 
-def load_phantom(path: str | Path) -> np.ndarray:
+def load_phantom(
+    path: str | Path,
+    *,
+    config: ExperimentConfig = ExperimentConfig(),
+    require_exact_count: bool = False,
+    require_y_bounds: bool = False,
+) -> np.ndarray:
     data = np.loadtxt(path)
     if data.ndim == 1:
         data = data.reshape(1, -1)
-    validate_phantom(data)
+    validate_phantom(
+        data,
+        config=config,
+        require_exact_count=require_exact_count,
+        require_y_bounds=require_y_bounds,
+    )
     return data

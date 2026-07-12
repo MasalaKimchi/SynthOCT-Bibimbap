@@ -1,12 +1,23 @@
 from __future__ import annotations
 
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
-from skimage import transform
+from sewar.full_ref import msssim, vifp
+from skimage import io, transform
 from skimage.metrics import mean_squared_error, peak_signal_noise_ratio, structural_similarity
+from skimage.util import img_as_float
 
 from synthoct.features import load_scan
+
+
+def _load_metric_scan(path: str | Path) -> np.ndarray:
+    """Match the official Orchestrator's image loading and float precision."""
+    path = Path(path)
+    if path.suffix.lower() == ".npy":
+        return np.asarray(load_scan(path), dtype=np.float64)
+    return np.asarray(img_as_float(io.imread(path, as_gray=True)), dtype=np.float64)
 
 
 def _same_shape(ref: np.ndarray, pred: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -17,8 +28,8 @@ def _same_shape(ref: np.ndarray, pred: np.ndarray) -> tuple[np.ndarray, np.ndarr
 
 def metric_evaluation_metadata(ref_path: str | Path, pred_path: str | Path) -> dict[str, str]:
     """Describe the image extent used by full-reference metric calculations."""
-    ref = load_scan(ref_path)
-    pred = load_scan(pred_path)
+    ref = _load_metric_scan(ref_path)
+    pred = _load_metric_scan(pred_path)
     return {
         "evaluation_region": "full_frame",
         "reference_shape": _shape_label(ref.shape),
@@ -30,42 +41,54 @@ def metric_evaluation_metadata(ref_path: str | Path, pred_path: str | Path) -> d
 
 def calculate_metrics(ref_path: str | Path, pred_path: str | Path, include_lpips: bool = True) -> dict[str, float]:
     """Compare two rendered OCT PNGs or derived map PNGs."""
-    ref, pred = _same_shape(load_scan(ref_path), load_scan(pred_path))
+    ref, pred = _same_shape(_load_metric_scan(ref_path), _load_metric_scan(pred_path))
     results: dict[str, float] = {
         "MSE": float(mean_squared_error(ref, pred)),
         "PSNR": float(peak_signal_noise_ratio(ref, pred, data_range=1.0)),
         "SSIM": float(structural_similarity(ref, pred, data_range=1.0)),
     }
 
+    ref_u8 = (ref * 255).astype(np.uint8)
+    pred_u8 = (pred * 255).astype(np.uint8)
     try:
-        from sewar.full_ref import msssim, vifp
-
-        ref_u8 = (ref * 255).astype(np.uint8)
-        pred_u8 = (pred * 255).astype(np.uint8)
         results["MS-SSIM"] = float(np.real(msssim(ref_u8, pred_u8)))
+    except Exception as exc:
+        raise RuntimeError("Organizer-compatible SEWAR MS-SSIM calculation failed") from exc
+    try:
         results["VIF"] = float(vifp(ref_u8, pred_u8))
     except Exception:
-        results["MS-SSIM"] = multiscale_ssim_fallback(ref, pred)
+        # VIF is diagnostic-only and the organizer evaluates it independently;
+        # never discard a valid competition MS-SSIM because optional VIF failed.
         results["VIF"] = float("nan")
 
     results["LPIPS"] = float("nan")
     results["LPIPS_PROXY"] = lpips_proxy(ref, pred)
     if include_lpips:
         try:
-            import lpips
             import torch
 
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            loss_fn = lpips.LPIPS(net="alex", verbose=False).to(device)
+            loss_fn, device = _lpips_model()
             t_ref = torch.from_numpy(ref).float().unsqueeze(0).unsqueeze(0).repeat(1, 3, 1, 1)
             t_pred = torch.from_numpy(pred).float().unsqueeze(0).unsqueeze(0).repeat(1, 3, 1, 1)
             t_ref = (t_ref * 2 - 1).to(device)
             t_pred = (t_pred * 2 - 1).to(device)
             with torch.no_grad():
                 results["LPIPS"] = float(loss_fn(t_ref, t_pred).item())
-        except Exception:
-            pass
+        except Exception as exc:
+            raise RuntimeError(
+                "Real AlexNet LPIPS was requested but could not be calculated; "
+                "install the lpips extra and its model weights"
+            ) from exc
     return results
+
+
+@lru_cache(maxsize=1)
+def _lpips_model():
+    import lpips
+    import torch
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    return lpips.LPIPS(net="alex", verbose=False).to(device), device
 
 
 def _shape_label(shape: tuple[int, ...]) -> str:
