@@ -93,9 +93,9 @@ On the retained hosted reference, organizer-compatible metrics changed:
 | Eight-term local estimate | 0.958343 | 0.996514 | +0.038170 |
 
 The same fixed method improved all eight metric components on all four independent local strata.
-The machine-readable panel is retained under
-`outputs/holographic_inverse_v3_phase_pair_iter200_contract300k/four_case_panel/`; its local
-eight-term estimate rose from v1 `0.955140` → v3-50 `0.993074` → v3-200 `0.993781`.
+The panel's local eight-term estimate rose from v1 `0.955140` → v3-50 `0.993074` → v3-200
+`0.993781`. Detailed run artifacts are reproducible and intentionally excluded from the final
+repository; aggregate and selected-case evidence remains summarized in this document.
 
 The subsequent fixed **all-public source-equivalent local** evaluation (n=120):
 
@@ -224,7 +224,8 @@ because of the Part3 contradiction.
 
 ### 3.2 Folder semantics
 
-The retained all-120 hosted run is `outputs/hosted_api_public120_v3_200/`:
+The all-120 hosted run was generated at `outputs/hosted_api_public120_v3_200/`. Its directory
+structure was:
 
 - `raw/` — PNG payload returned by the hosted virtual-scanner API (some stored as color/RGBA even
   though the signal is grayscale).
@@ -234,15 +235,17 @@ The retained all-120 hosted run is `outputs/hosted_api_public120_v3_200/`:
   Part3 processor.
 - `maps/prediction/` — the same transformations computed from the paired hosted render.
 
-Thus `maps/reference/` is **not** an independent parametric ground-truth dataset. Unusual terminal
-rows, borders, saturated regions, and contrast differences are products of the map processor.
+Thus `maps/reference/` was **not** an independent parametric ground-truth dataset. Unusual terminal
+rows, borders, saturated regions, and contrast differences were products of the map processor. The
+large generated run was removed during final repository cleanup; the commands, aggregate results,
+and paper figures remain reproducible from the documented dataset.
 
 ### 3.3 All-120 integrity checks
 
 One-to-one inventories were verified for 120 references, phantoms, API jobs, raw PNGs, grayscale
 PNGs, and metric rows. Flattened names were reversed against reference-relative paths with no
-collisions or cross-case pairings. All **720** retained organizer map PNGs (3 map types ×
-reference/prediction × 120 cases) were regenerable from their claimed source. A deliberately
+collisions or cross-case pairings. All **720** organizer map PNGs (3 map types ×
+reference/prediction × 120 cases) were regenerated from their claimed source. A deliberately
 shifted-pairing negative control scored substantially worse, supporting the pairing audit.
 
 Retained **hosted** structural results:
@@ -259,8 +262,8 @@ Retained **hosted** structural results:
 scope — hosted cloud API vs source-equivalent local scanner; both are public-development estimates,
 not a leaderboard/hidden-test score.)*
 
-The `scientific-v1` pass on all 120 pairs (diagnostic derived-map metrics only, stored in
-`audit/scientific_v1_metrics.csv` and `audit/scientific_v1_summary.json`):
+The `scientific-v1` pass on all 120 pairs produced diagnostic derived-map metrics only. The audit
+tool writes these to `audit/scientific_v1_metrics.csv` and `audit/scientific_v1_summary.json`:
 
 | scientific-v1 (masked) | OAC | SC | RSC |
 | :--- | ---: | ---: | ---: |
@@ -323,7 +326,8 @@ leaderboard result.
 
 **2026-07-11 — Float64-aligned v1 comparison rerun.** Reran the exact retained v1 config
 (`alpha_z=0.03`, `alpha_x=0.20`, zero-phase iterations, momentum 0, single scatterer) through the
-current source-equivalent scanner/evaluator → `outputs/holographic_inverse_v1_current_public120/`.
+current source-equivalent scanner/evaluator. The run was generated at
+`outputs/holographic_inverse_v1_current_public120/`.
 Structural MS-SSIM: mean `0.955953650`, median `0.956020936`, minimum `0.933827016` (120 paired
 references). Against unchanged v3-200 rows, mean gain `0.038634109`; all 120 images and all 40
 filename-defined series improve. A 200,000-replicate series-cluster bootstrap gives 95% CI
@@ -402,8 +406,9 @@ public aggregate ≈ `0.68479`; public oracle rescue layers reached ≈ `0.69399
 selection-leaky for hidden evaluation.
 
 The regularization, conic-encoding, and early-momentum ablations are session-recorded lessons; their
-raw scratch outputs were not retained. V1/v3 hosted evidence, the all-120 comparison, and the
-four-case real-LPIPS panel do have machine-readable CSV/JSON artifacts under `outputs/`.
+raw scratch outputs were not retained. Aggregate V1/v3 hosted evidence, the all-120 comparison, and
+selected cases from the real-LPIPS panel remain in this document; bulky CSV/PNG run directories
+were removed because the CLI and dataset provenance make them reproducible.
 
 ### 4.3 Evidence rules
 

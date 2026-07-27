@@ -36,7 +36,7 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument(
         "--reference-root",
         type=Path,
-        default=Path("tmp/dataset/extracted/DATASET_PNG"),
+        default=Path("DATASET/DATASET_PNG"),
     )
     parser.add_argument(
         "--out-dir",

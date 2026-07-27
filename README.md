@@ -49,11 +49,13 @@ src/synthoct/          Installable package (the `synthoct` CLI)
 tests/                 Test suite (pytest)
 tools/                 One-off audit / batch-run scripts
 docs/                  METHODS.md, DATA.md, COMPLIANCE.md
-paper/miccai2026/      LaTeX manuscript source + figure generation
+outputs/               Output policy + one lightweight example run
 ```
 
-The raw dataset, the hosted scanner binary, and all generated outputs are **not**
-tracked in git — see [Data](#data) and [docs/DATA.md](docs/DATA.md).
+The raw dataset, hosted scanner binary, and generated outputs are **not** tracked
+in git. The sole exception is one lightweight example run that reviewers can
+inspect without rerunning the scanner. See [outputs/README.md](outputs/README.md)
+and [docs/DATA.md](docs/DATA.md).
 
 ## Installation
 
@@ -140,6 +142,11 @@ provenance), `synthoct benchmark-local` (batch scoring in a throwaway
 directory), `synthoct evidence-manifest` (build / fail-closed verify the evidence
 hash manifest). Run `synthoct <command> --help` for full options.
 
+Generated runs belong under `outputs/<run-name>/`. They are reproducible working
+artifacts, not repository source; keep only an archive/manifest pair that is
+actively being submitted. The conventions and cleanup policy are documented in
+[outputs/README.md](outputs/README.md).
+
 ## Feature-map modes
 
 The published `Part3` processor and the scanner documentation disagree on dynamic
@@ -161,7 +168,6 @@ are in [docs/METHODS.md](docs/METHODS.md#3-feature-maps-definitions--audit).
 | [docs/METHODS.md](docs/METHODS.md) | Phase-pair holographic inversion algorithm, mapping to the official baseline, feature-map definitions & audit, and the full experiment log. |
 | [docs/DATA.md](docs/DATA.md) | Dataset provenance (Zenodo `18095266`), archive checksums, directory structure, evaluation pairing, and the historical label correction. |
 | [docs/COMPLIANCE.md](docs/COMPLIANCE.md) | Code-structure compliance with the challenge baseline and the method-legitimacy assessment, with the validity boundary. |
-| [paper/miccai2026/](paper/miccai2026/) | MICCAI/SASHIMI manuscript source and figure generation. |
 
 ## Validity boundary
 

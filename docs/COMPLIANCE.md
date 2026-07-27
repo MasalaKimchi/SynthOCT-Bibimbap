@@ -190,7 +190,10 @@ This is the only substantive concern, and it is **scientific, not compliance-rel
 | Map derivation from intensity (non-independence) | Live re-execution of the full 120-case benchmark (relied on retained CSVs/JSON) |
 | Fixed-method / no-per-image-tuning claim; score-honesty labeling | |
 
-To convert the right column into evidence: (a) submit to synthoct.com for an official leaderboard number, and (b) keep the hosted-request provenance already retained under `outputs/.../api/`.
+To convert the right column into evidence: (a) submit to synthoct.com for an official leaderboard
+number, and (b) retain the resulting hosted-request manifest alongside the submission record. Large
+historical API run directories were removed from the final repository because they are generated
+artifacts; request IDs and aggregate public-development results remain documented.
 
 ## B.7 Recommendation
 
