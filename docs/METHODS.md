@@ -1,14 +1,14 @@
 # SynthOCT-Bibimbap — Methods
 
-> This document consolidates the former `phase_pair_method.md`, `baseline_mapping.md`,
-> `feature_map_audit.md`, and `experiments.md` into a single reference. It covers the core
-> phase-pair holographic-inversion algorithm, its mapping onto the official challenge baseline,
-> the feature-map definitions and the audit of how Struct/OAC/SC/RSC maps are computed, and the
-> experiment log behind the fixed method.
+This document covers the phase-pair holographic-inversion algorithm, its mapping
+to the challenge baseline, the Struct/OAC/SC/RSC feature-map audit, and the
+experiment history behind the fixed method.
 
 **Scope note on numbers.** Scores from different scopes or metric backends are not
-interchangeable. Results labeled *local* (source-equivalent scanner) or *hosted* (official cloud
-API) are public/development estimates, **never** organizer-leaderboard or hidden-test results.
+interchangeable. Results labeled *local* use this repository's implementation of
+the published forward model; results labeled *hosted* use the organizer's
+challenge service. Both use public data and are **never** organizer-leaderboard
+or hidden-test results.
 Some v1/v3-50 aggregates were computed with an older float32 metric loader and some with the
 official float64 loader; such comparisons are flagged as mixed-precision.
 
@@ -31,8 +31,8 @@ sub-wavelength depth shift. Two effects limited it:
 - A single depth shift has the desired coefficient phase only at the center wavenumber; its phase
   drifts across the scanner bandwidth.
 
-The hosted/local scanner mismatch was **not** the bottleneck: raw hosted PNGs agree with their
-source-equivalent local renders at MS-SSIM `0.999676` (v1), `0.999677` (v3-50), and `0.999672`
+The hosted/local-model mismatch was **not** the bottleneck: raw hosted PNGs agree with their
+corresponding local-model renders at MS-SSIM `0.999676` (v1), `0.999677` (v3-50), and `0.999672`
 (selected v3-200). (The older v1 value `0.999313` came from a secondary grayscale copy and is not
 used.)
 
@@ -97,7 +97,7 @@ The panel's local eight-term estimate rose from v1 `0.955140` → v3-50 `0.99307
 `0.993781`. Detailed run artifacts are reproducible and intentionally excluded from the final
 repository; aggregate and selected-case evidence remains summarized in this document.
 
-The subsequent fixed **all-public source-equivalent local** evaluation (n=120):
+The subsequent fixed **all-public local-model** evaluation (n=120):
 
 | Public Structural MS-SSIM (n=120) | v1 | v3-200 |
 |---|---:|---:|
@@ -137,7 +137,7 @@ the baseline can locate every counterpart and confirm the fixed scanner contract
 | Baseline file | Role in baseline | Type | SynthOCT-Bibimbap counterpart |
 | :--- | :--- | :--- | :--- |
 | `Part1_Generator.py` | Produces `(X, Y, Z, Energy%)` scatterers and writes the `.txt` phantom. The component participants improve. | **Editable** | `src/synthoct/holographic_inverse.py` (`holographic_inverse_phantom`), driven by `synthoct baseline holographic-inverse` (one scan) and `synthoct generate-batch` (full reference set). Phantom I/O and the numeric contract live in `src/synthoct/phantom.py`. |
-| `Part2_Scanner.exe` | Fixed coherent virtual scanner (external Windows binary); renders a phantom into a raw B-scan. | **Fixed** | Not reimplemented. Hosted scanner called via `synthoct scan` (`src/synthoct/scanners/api.py`); a source-equivalent local scanner for dev/validation only is `src/synthoct/scanners/reference.py`. The hosted/official render remains authoritative. |
+| `Part2_Scanner.exe` | Fixed coherent virtual scanner (external Windows binary); renders a phantom into a raw B-scan. | **Fixed** | Not reimplemented. The organizer-hosted scanner is called via `synthoct scan` (`src/synthoct/scanners/api.py`); `src/synthoct/scanners/reference.py` implements the published forward model for controlled local comparisons only. The organizer-hosted render remains authoritative. |
 | `Part3_Processor.py` | Fixed OAC / SC / RSC parametric maps, 40 dB linearization. | **Fixed** | `src/synthoct/features/extraction.py`, `organizer-compatible-v1` mode. Reproduces the published 40 dB `10**(P*4)` linearization and OAC/SC/RSC encoding byte-for-byte; a separate `scientific-v1` mode is audit-only and never enters a competition score. |
 | `Orchestrator.py` | Manager: `import Part1_Generator as Generator`, drives generation → scan → maps → metrics; ships in self-consistency mode. | **Manager** | `src/synthoct/cli.py` (`benchmark-local`, `evaluate`) plus `src/synthoct/benchmark.py`. The baseline's default Orchestrator is a self-consistency demo that "must be reconfigured for real/synthetic comparison"; Bibimbap pairs official Zenodo references with scanner renders directly. |
 
@@ -258,8 +258,8 @@ Retained **hosted** structural results:
 | Median LPIPS | 0.0226107640 |
 | Eight-median formula (byte-compatible path) | 0.9940789428 |
 
-*(This hosted mean `0.99428` differs from the §1.5 source-equivalent local mean `0.994588` only by
-scope — hosted cloud API vs source-equivalent local scanner; both are public-development estimates,
+*(This hosted mean `0.99428` differs from the §1.5 local-model mean `0.994588` only by
+scope — organizer challenge service vs local implementation; both are public-development estimates,
 not a leaderboard/hidden-test score.)*
 
 The `scientific-v1` pass on all 120 pairs produced diagnostic derived-map metrics only. The audit
@@ -326,7 +326,7 @@ leaderboard result.
 
 **2026-07-11 — Float64-aligned v1 comparison rerun.** Reran the exact retained v1 config
 (`alpha_z=0.03`, `alpha_x=0.20`, zero-phase iterations, momentum 0, single scatterer) through the
-current source-equivalent scanner/evaluator. The run was generated at
+current local scanner/evaluator implementation. The run was generated at
 `outputs/holographic_inverse_v1_current_public120/`.
 Structural MS-SSIM: mean `0.955953650`, median `0.956020936`, minimum `0.933827016` (120 paired
 references). Against unchanged v3-200 rows, mean gain `0.038634109`; all 120 images and all 40
@@ -398,7 +398,7 @@ float32 loader, so comparisons are labeled mixed precision with no blanket corre
 - Texture smoothing, coordinate jitter, scatterer injection, y-beam reshaping,
   gamma/high-frequency corrections.
 - Learned-surrogate inversion, anchored surrogate, and direct lattice: preview/surrogate gains did
-  not transfer to the true scanner.
+  not transfer to organizer-hosted rendering.
 - Public positive-only flow/energy patching as a hidden-general solution.
 
 Historical best before coherent inversion was the full-public **P140-t32** family: official-style

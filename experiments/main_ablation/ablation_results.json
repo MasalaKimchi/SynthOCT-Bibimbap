@@ -1,0 +1,142 @@
+{
+  "analysis_date": "2026-07-13",
+  "purpose": "full-public fixed-regularization 2x2 phase-selection by phase-encoding ablation",
+  "evidence_source": "source_equivalent_local_scanner",
+  "official_or_hidden_score": false,
+  "reference_root": "DATASET/DATASET_PNG",
+  "dataset_manifest_sha256": "7a245393fcbce95601bfe20b575364f0a489364022ff7413b96d50552f8ee55b",
+  "n_images": 120,
+  "n_filename_defined_series": 40,
+  "parameters_fixed": {
+    "axial_regularization": 0.02,
+    "dynamic_range_db": 51.0,
+    "lateral_regularization": 0.05,
+    "max_reflection_amplitude": 0.001,
+    "phase_momentum": 1.0
+  },
+  "environment": {
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "processor": "Apple M3 Pro, 11 CPU cores, 18 GB memory",
+    "gpu_used": false,
+    "python": "3.12.2",
+    "numpy": "1.26.4",
+    "scipy": "1.13.1",
+    "scikit_image": "0.24.0"
+  },
+  "configurations": {
+    "zero_single": {
+      "phase_iterations": 0,
+      "phase_encoding": "single",
+      "struct_ms_ssim": {
+        "mean": 0.8255752016258412,
+        "median": 0.8269911627222225,
+        "min": 0.7517810695017955,
+        "max": 0.8562031154321316
+      },
+      "generation_seconds": {
+        "mean": 0.5806039861249246,
+        "median": 0.5571202285000254,
+        "max": 3.5595756670008996
+      }
+    },
+    "momentum50_single": {
+      "phase_iterations": 50,
+      "phase_encoding": "single",
+      "struct_ms_ssim": {
+        "mean": 0.9369390414548208,
+        "median": 0.9375981927295283,
+        "min": 0.9246482764531858,
+        "max": 0.9475818123130137
+      },
+      "generation_seconds": {
+        "mean": 3.1362322968500242,
+        "median": 3.125129541500428,
+        "max": 3.8745688750004774
+      }
+    },
+    "zero_pair": {
+      "phase_iterations": 0,
+      "phase_encoding": "dispersion-canceling-pair",
+      "struct_ms_ssim": {
+        "mean": 0.9815559056118289,
+        "median": 0.9815249612065386,
+        "min": 0.9699391225742415,
+        "max": 0.9889970720963407
+      },
+      "generation_seconds": {
+        "mean": 0.5555650340000132,
+        "median": 0.5538271875002465,
+        "max": 0.6964244169994345
+      }
+    },
+    "momentum50_pair": {
+      "phase_iterations": 50,
+      "phase_encoding": "dispersion-canceling-pair",
+      "struct_ms_ssim": {
+        "mean": 0.9935146210329318,
+        "median": 0.9938983121137694,
+        "min": 0.984185575525862,
+        "max": 0.9974983091281278
+      },
+      "generation_seconds": {
+        "mean": 2.5581763375084394,
+        "median": 2.296203875000174,
+        "max": 3.922715042001073
+      }
+    }
+  },
+  "paired_contrasts": {
+    "phase_at_single": {
+      "mean": 0.11136383982897963,
+      "min": 0.07668602923128265,
+      "max": 0.18623702209810733,
+      "image_wins": 120,
+      "series_wins": 40,
+      "series_cluster_bootstrap_ci95": [0.10693882398582547, 0.11622844668578751],
+      "one_sided_exact_wilcoxon_p": 9.094947017729282e-13
+    },
+    "pair_at_zero": {
+      "mean": 0.15598070398598785,
+      "min": 0.12500144629979104,
+      "max": 0.2342848251003563,
+      "image_wins": 120,
+      "series_wins": 40,
+      "series_cluster_bootstrap_ci95": [0.15108904252258626, 0.1612332266631859],
+      "one_sided_exact_wilcoxon_p": 9.094947017729282e-13
+    },
+    "phase_at_pair": {
+      "mean": 0.011958715421102868,
+      "min": 0.00792822024404194,
+      "max": 0.01940395201779399,
+      "image_wins": 120,
+      "series_wins": 40,
+      "series_cluster_bootstrap_ci95": [0.011442970176822964, 0.012490152136585666],
+      "one_sided_exact_wilcoxon_p": 9.094947017729282e-13
+    },
+    "pair_at_phase50": {
+      "mean": 0.05657557957811109,
+      "min": 0.047382998169147705,
+      "max": 0.06658020195080971,
+      "image_wins": 120,
+      "series_wins": 40,
+      "series_cluster_bootstrap_ci95": [0.05581713805187934, 0.057324264260504146],
+      "one_sided_exact_wilcoxon_p": 9.094947017729282e-13
+    },
+    "combined_vs_zero_single": {
+      "mean": 0.16793941940709073,
+      "min": 0.13829677921229522,
+      "max": 0.245117238574455,
+      "image_wins": 120,
+      "series_wins": 40,
+      "series_cluster_bootstrap_ci95": [0.16322685470225592, 0.17304232629641342],
+      "one_sided_exact_wilcoxon_p": 9.094947017729282e-13
+    }
+  },
+  "inference": {
+    "unit": "mean of the three frames in each filename-defined acquisition series",
+    "bootstrap_replicates": 200000,
+    "bootstrap_seed": 20260713,
+    "interval": "two-sided percentile 95% confidence interval",
+    "test": "one-sided exact Wilcoxon signed-rank test on 40 series means"
+  }
+}

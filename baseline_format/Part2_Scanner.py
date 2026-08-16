@@ -14,10 +14,10 @@ Authentication: the API key is read from ``$SYNTHOCT_API_KEY`` /
 ``$SYNTHOCT_CHALLENGE_API_KEY`` or an ``--api-key-file``.  It is never written
 into any output artifact.
 
-Note: ``synthoct`` also ships an offline *source-equivalent* scanner
-(``synthoct.scanners.render_reference_scanner``) for development.  It agrees with
-the hosted scanner at MS-SSIM ~0.9997 but is not the organizers' binary, so it
-is intentionally not the default here.
+Note: ``synthoct`` also ships a local implementation of the published forward
+model (``synthoct.scanners.render_reference_scanner``) for development.  It
+agrees with the hosted scanner at MS-SSIM ~0.9997 but is not the organizers'
+binary, so it is intentionally not the default here.
 """
 
 from __future__ import annotations

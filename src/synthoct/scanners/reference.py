@@ -78,7 +78,7 @@ def render_reference_array(
     *,
     config: ExperimentConfig | None = None,
 ) -> np.ndarray:
-    """Render a phantom with a source-equivalent implementation of Part2."""
+    """Render a phantom with the local implementation of the published Part2 model."""
     config = config or ExperimentConfig(scatterers_count=len(phantom))
     data = np.asarray(phantom[: config.scatterers_count], dtype=np.float64)
     xs, ys, zs, energy = data.T

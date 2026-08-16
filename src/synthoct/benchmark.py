@@ -90,7 +90,7 @@ def run_local_benchmark(
     limit: int | None = None,
     map_mode: str = ORGANIZER_MAP_MODE,
 ) -> tuple[Path, Path]:
-    """Evaluate a fixed inverse on references through the source-equivalent scanner."""
+    """Evaluate references with the local implementation of the published forward model."""
     input_root = Path(input_root)
     output_dir = Path(output_dir)
     inverse = inverse or HolographicInverseConfig()

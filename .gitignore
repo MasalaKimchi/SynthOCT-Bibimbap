@@ -1,60 +1,43 @@
-# ---------------------------------------------------------------------------
-# SynthOCT-Bibimbap .gitignore
-# Repo tracks code, docs, and ONE lightweight example run.
-# Raw data, generated outputs, scanner binaries, and build cruft stay local.
-# ---------------------------------------------------------------------------
-
-# --- Python / tooling cruft ---
+# OS, Python, and tooling artifacts
+.DS_Store
 __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
+.coverage
+htmlcov/
 .venv/
-.DS_Store
 
-# --- Raw data (download from Zenodo; see docs/DATA.md) ---
+# Local datasets and challenge-only assets
 DATASET/
 data/
-
-# --- Scratch / temporary working dirs ---
-tmp/
-runs/
-output/
-
-# --- Secrets & credentials ---
-secrets/
 challenge_assets/
-*.env
-*.key
+*.exe
+*.bin
 
-# --- Archives & binaries (never committed) ---
+# Generated runs and scratch space
+outputs/
+output/
+runs/
+tmp/
+
+# Manuscript working tree and camera-ready delivery artifacts
+paper/
+final_submission/
+
+# Secrets and machine-local settings
+.claude/settings.local.json
+secrets/
+.env*
+*.env
+.synthoct_key
+*.key
+*.pem
+
+# Archives and local repository backups
 *.zip
 *.tar
 *.tar.gz
+*.tgz
 *.bundle
-*.exe
-*.bin
-Part2_Scanner.exe
-Scan_Raw.bin
-Configuration.ini
-Final_Metrics_Report.csv
-314-SynthOCT_2026_Digital_Phantoms_Simulation_for_Physics-Based_Scans_2026-04-22T16-37-10.pdf
-
-# --- Manuscript draft (local until review is complete) ---
-paper/
-
-# --- Generated outputs ---
-# Ignore everything under outputs/ ...
-outputs/*
-# Keep the output policy visible in a fresh clone.
-!outputs/README.md
-# ... then keep ONE lightweight example run (small files only).
-!outputs/holographic_inverse_contract300k/
-outputs/holographic_inverse_contract300k/*
-!outputs/holographic_inverse_contract300k/diagnostics.json
-!outputs/holographic_inverse_contract300k/local.png
-!outputs/holographic_inverse_contract300k/api_queue.csv
-!outputs/holographic_inverse_contract300k/api/
-# The 15 MB phantom.txt is intentionally excluded (regenerate via the CLI).
-outputs/holographic_inverse_contract300k/phantom.txt

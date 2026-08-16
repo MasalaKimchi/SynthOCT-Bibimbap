@@ -90,7 +90,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     benchmark = commands.add_parser(
         "benchmark-local",
-        help="Run a fixed inverse over a reference directory with the source-equivalent scanner.",
+        help=(
+            "Run a fixed inverse over a reference directory with the local "
+            "implementation of the published forward model."
+        ),
     )
     benchmark.add_argument("--input-root", required=True, type=Path)
     benchmark.add_argument("--out-dir", required=True, type=Path)

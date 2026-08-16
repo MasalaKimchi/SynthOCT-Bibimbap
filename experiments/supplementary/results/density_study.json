@@ -1,0 +1,1042 @@
+[
+  {
+    "artifact": {
+      "band_mean_display_value": 0.05930606789843296,
+      "band_row": 255,
+      "band_row_fraction_of_depth": 0.99609375,
+      "band_rows": [
+        253,
+        256
+      ],
+      "energy_fraction_in_band": 4.488596844851669e-05,
+      "image_mean_display_value": 0.10598219630045236,
+      "msssim_drop": 2.702627862527507e-05,
+      "msssim_full": 0.9968364747990552,
+      "msssim_without_band": 0.99680944852043,
+      "rows_fraction_of_image": 0.01171875
+    },
+    "scan": "l__shcheka_frame250.png",
+    "series": "Female/1950-1960/Cheek/l__shcheka",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 10.019559914455266,
+      "mean": 10.445294889197205,
+      "median": 10.354425861783398,
+      "p05": 7.961460076332059,
+      "p95": 13.231550419747533
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.06433057781820632,
+      "band_row": 255,
+      "band_row_fraction_of_depth": 0.99609375,
+      "band_rows": [
+        253,
+        256
+      ],
+      "energy_fraction_in_band": 3.1535112104574595e-05,
+      "image_mean_display_value": 0.10910130229602899,
+      "msssim_drop": 2.7290180538264153e-05,
+      "msssim_full": 0.9935646591303663,
+      "msssim_without_band": 0.993537368949828,
+      "rows_fraction_of_image": 0.01171875
+    },
+    "scan": "l_shchekka1960_frame250.png",
+    "series": "Female/1950-1960/Cheek/l_shchekka1960",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.949533122551403,
+      "mean": 10.449202443721028,
+      "median": 10.372982697020706,
+      "p05": 7.903468294764687,
+      "p95": 13.279834663825536
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.0856066200442001,
+      "band_row": 239,
+      "band_row_fraction_of_depth": 0.93359375,
+      "band_rows": [
+        237,
+        242
+      ],
+      "energy_fraction_in_band": 5.7315421770480414e-05,
+      "image_mean_display_value": 0.13095526953845749,
+      "msssim_drop": 0.013232459106267913,
+      "msssim_full": 0.9952365807793612,
+      "msssim_without_band": 0.9820041216730933,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "lev_shcheka1960_frame250.png",
+    "series": "Female/1950-1960/Cheek/lev_shcheka1960",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.987583057555748,
+      "mean": 10.437394922371626,
+      "median": 10.358987224009276,
+      "p05": 7.890720017338529,
+      "p95": 13.266972149613297
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.08267003916207613,
+      "band_row": 232,
+      "band_row_fraction_of_depth": 0.90625,
+      "band_rows": [
+        230,
+        235
+      ],
+      "energy_fraction_in_band": 0.00010840971879144448,
+      "image_mean_display_value": 0.10776687611953406,
+      "msssim_drop": 0.013159198436999087,
+      "msssim_full": 0.9931750875277116,
+      "msssim_without_band": 0.9800158890907125,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "levaya_shcheka_frame250.png",
+    "series": "Female/1950-1960/Cheek/levaya_shcheka",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.88540934685168,
+      "mean": 10.460793741010297,
+      "median": 10.367144544108612,
+      "p05": 7.952837331856409,
+      "p95": 13.301618663539978
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.07080269801899704,
+      "band_row": 238,
+      "band_row_fraction_of_depth": 0.9296875,
+      "band_rows": [
+        236,
+        241
+      ],
+      "energy_fraction_in_band": 5.576562359822036e-05,
+      "image_mean_display_value": 0.1384399751529699,
+      "msssim_drop": 0.011954820960608958,
+      "msssim_full": 0.9959974654815626,
+      "msssim_without_band": 0.9840426445209537,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "levaya_shcheka1_frame250.png",
+    "series": "Female/1950-1960/Cheek/levaya_shcheka1",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.983897479550262,
+      "mean": 10.385937001647543,
+      "median": 10.308744549764151,
+      "p05": 7.821829076567788,
+      "p95": 13.225774356047532
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.06569648888095496,
+      "band_row": 255,
+      "band_row_fraction_of_depth": 0.99609375,
+      "band_rows": [
+        253,
+        256
+      ],
+      "energy_fraction_in_band": 3.2195575015019045e-05,
+      "image_mean_display_value": 0.1158950239305021,
+      "msssim_drop": 2.8164739951042073e-05,
+      "msssim_full": 0.9920042321215249,
+      "msssim_without_band": 0.9919760673815738,
+      "rows_fraction_of_image": 0.01171875
+    },
+    "scan": "Lev_ugol_glaza_frame250.png",
+    "series": "Female/1950-1960/Eye_corner/Lev_ugol_glaza",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.893297817069433,
+      "mean": 10.435094440204024,
+      "median": 10.353863326057978,
+      "p05": 7.8878949570200625,
+      "p95": 13.26544528201642
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.061003882512826145,
+      "band_row": 255,
+      "band_row_fraction_of_depth": 0.99609375,
+      "band_rows": [
+        253,
+        256
+      ],
+      "energy_fraction_in_band": 4.227639004494187e-05,
+      "image_mean_display_value": 0.10043317288733178,
+      "msssim_drop": 2.6949146379684485e-05,
+      "msssim_full": 0.9909600431501742,
+      "msssim_without_band": 0.9909330940037945,
+      "rows_fraction_of_image": 0.01171875
+    },
+    "scan": "l__ugol_glaza_frame250.png",
+    "series": "Female/1950-1960/Eye_corner/l__ugol_glaza",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.92499512096929,
+      "mean": 10.447388982071205,
+      "median": 10.362525000684647,
+      "p05": 7.915845159725042,
+      "p95": 13.27058392317353
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.054961705021014495,
+      "band_row": 236,
+      "band_row_fraction_of_depth": 0.921875,
+      "band_rows": [
+        234,
+        239
+      ],
+      "energy_fraction_in_band": 5.261169641756516e-05,
+      "image_mean_display_value": 0.115314830906879,
+      "msssim_drop": 0.009976031231909599,
+      "msssim_full": 0.9942134890210884,
+      "msssim_without_band": 0.9842374577891788,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "lev_ugol1960_frame250.png",
+    "series": "Female/1950-1960/Eye_corner/lev_ugol1960",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.953916721700246,
+      "mean": 10.430063796048763,
+      "median": 10.345259658863844,
+      "p05": 7.883943737079651,
+      "p95": 13.256431490324003
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.059823837505791747,
+      "band_row": 204,
+      "band_row_fraction_of_depth": 0.796875,
+      "band_rows": [
+        202,
+        207
+      ],
+      "energy_fraction_in_band": 2.8223318522157554e-05,
+      "image_mean_display_value": 0.12101240300779637,
+      "msssim_drop": 0.022499236360978614,
+      "msssim_full": 0.9925197303933894,
+      "msssim_without_band": 0.9700204940324108,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "levyy_ugol_glaza_frame250.png",
+    "series": "Female/1950-1960/Eye_corner/levyy_ugol_glaza",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.961524234941358,
+      "mean": 10.453198246633894,
+      "median": 10.36724719910005,
+      "p05": 7.910912633290243,
+      "p95": 13.294897951079824
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.07197610494386027,
+      "band_row": 238,
+      "band_row_fraction_of_depth": 0.9296875,
+      "band_rows": [
+        236,
+        241
+      ],
+      "energy_fraction_in_band": 7.066875905285556e-05,
+      "image_mean_display_value": 0.1271428461001065,
+      "msssim_drop": 0.012165851901740798,
+      "msssim_full": 0.996701183443652,
+      "msssim_without_band": 0.9845353315419112,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "levyy_ugol_glaza1_frame250.png",
+    "series": "Female/1950-1960/Eye_corner/levyy_ugol_glaza1",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 10.006258649453766,
+      "mean": 10.394880516700423,
+      "median": 10.316667716970922,
+      "p05": 7.856520667774457,
+      "p95": 13.212849075585988
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.07985600714982866,
+      "band_row": 254,
+      "band_row_fraction_of_depth": 0.9921875,
+      "band_rows": [
+        252,
+        256
+      ],
+      "energy_fraction_in_band": 0.0001960260859243234,
+      "image_mean_display_value": 0.12019378400265168,
+      "msssim_drop": 9.183076511953825e-05,
+      "msssim_full": 0.9966285544741443,
+      "msssim_without_band": 0.9965367237090248,
+      "rows_fraction_of_image": 0.015625
+    },
+    "scan": "1levaya_shcheka_frame250.png",
+    "series": "Female/1990-2000/Cheek/1levaya_shcheka",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.940859615959221,
+      "mean": 10.411232435888301,
+      "median": 10.331671285788778,
+      "p05": 7.888807914758687,
+      "p95": 13.204947615597918
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.11952665763910772,
+      "band_row": 241,
+      "band_row_fraction_of_depth": 0.94140625,
+      "band_rows": [
+        239,
+        244
+      ],
+      "energy_fraction_in_band": 0.0001936668952147224,
+      "image_mean_display_value": 0.13538603306149,
+      "msssim_drop": 0.013341403290894283,
+      "msssim_full": 0.9957980423148355,
+      "msssim_without_band": 0.9824566390239412,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "2lev_shcheka_frame250.png",
+    "series": "Female/1990-2000/Cheek/2lev_shcheka",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.869727498254557,
+      "mean": 10.419355736888924,
+      "median": 10.34134490133936,
+      "p05": 7.8698277430224115,
+      "p95": 13.241732640514336
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.08481771077822486,
+      "band_row": 233,
+      "band_row_fraction_of_depth": 0.91015625,
+      "band_rows": [
+        231,
+        236
+      ],
+      "energy_fraction_in_band": 7.589399211585663e-05,
+      "image_mean_display_value": 0.14530652003312738,
+      "msssim_drop": 0.016508912084258087,
+      "msssim_full": 0.9951424462199615,
+      "msssim_without_band": 0.9786335341357034,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "3shcheka_levaya_frame250.png",
+    "series": "Female/1990-2000/Cheek/3shcheka_levaya",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.95214279547742,
+      "mean": 10.439825447021118,
+      "median": 10.358929962507075,
+      "p05": 7.903099537668646,
+      "p95": 13.271799614078247
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.08660079900637356,
+      "band_row": 228,
+      "band_row_fraction_of_depth": 0.890625,
+      "band_rows": [
+        226,
+        231
+      ],
+      "energy_fraction_in_band": 0.0001079772129933737,
+      "image_mean_display_value": 0.12644019381371763,
+      "msssim_drop": 0.022559098640176467,
+      "msssim_full": 0.9924671751863183,
+      "msssim_without_band": 0.9699080765461419,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "4levaya_shcheka_frame250.png",
+    "series": "Female/1990-2000/Cheek/4levaya_shcheka",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.883910326340319,
+      "mean": 10.433291279797821,
+      "median": 10.3552078003231,
+      "p05": 7.862164232340703,
+      "p95": 13.277499973594578
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.09210631376699893,
+      "band_row": 234,
+      "band_row_fraction_of_depth": 0.9140625,
+      "band_rows": [
+        232,
+        237
+      ],
+      "energy_fraction_in_band": 0.00012864004959277898,
+      "image_mean_display_value": 0.12813966390293174,
+      "msssim_drop": 0.020745705250879265,
+      "msssim_full": 0.991935651855133,
+      "msssim_without_band": 0.9711899466042537,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "5lev_shcheka_frame250.png",
+    "series": "Female/1990-2000/Cheek/5lev_shcheka",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.877884897034017,
+      "mean": 10.434620311060218,
+      "median": 10.352823898589463,
+      "p05": 7.878118750349756,
+      "p95": 13.275313209697426
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.10200367933521193,
+      "band_row": 241,
+      "band_row_fraction_of_depth": 0.94140625,
+      "band_rows": [
+        239,
+        244
+      ],
+      "energy_fraction_in_band": 0.00011653983261684108,
+      "image_mean_display_value": 0.13914879071784014,
+      "msssim_drop": 0.011862193713498725,
+      "msssim_full": 0.9954389294420238,
+      "msssim_without_band": 0.9835767357285251,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "2lev_ugol_glaza_frame250.png",
+    "series": "Female/1990-2000/Eye_corner/2lev_ugol_glaza",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.916030341153675,
+      "mean": 10.40121953119092,
+      "median": 10.320858350650674,
+      "p05": 7.8612041205659375,
+      "p95": 13.236505213504437
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.08536496863871434,
+      "band_row": 254,
+      "band_row_fraction_of_depth": 0.9921875,
+      "band_rows": [
+        252,
+        256
+      ],
+      "energy_fraction_in_band": 4.2319528973898015e-05,
+      "image_mean_display_value": 0.16069530842298008,
+      "msssim_drop": 9.427260874939059e-05,
+      "msssim_full": 0.9952979022304134,
+      "msssim_without_band": 0.995203629621664,
+      "rows_fraction_of_image": 0.015625
+    },
+    "scan": "3ugol_glaza_levyy_frame250.png",
+    "series": "Female/1990-2000/Eye_corner/3ugol_glaza_levyy",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.98597815755011,
+      "mean": 10.421286826337086,
+      "median": 10.34297837003368,
+      "p05": 7.880498487645628,
+      "p95": 13.246408400453724
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.08830040067982736,
+      "band_row": 254,
+      "band_row_fraction_of_depth": 0.9921875,
+      "band_rows": [
+        252,
+        256
+      ],
+      "energy_fraction_in_band": 4.988875967294135e-05,
+      "image_mean_display_value": 0.16046122064368618,
+      "msssim_drop": 9.301739120037844e-05,
+      "msssim_full": 0.9945698436469443,
+      "msssim_without_band": 0.994476826255744,
+      "rows_fraction_of_image": 0.015625
+    },
+    "scan": "3ugol_glaza_levyy_1_norm_frame250.png",
+    "series": "Female/1990-2000/Eye_corner/3ugol_glaza_levyy_1_norm",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.966291854612143,
+      "mean": 10.40831667385744,
+      "median": 10.325035572247366,
+      "p05": 7.840200054030602,
+      "p95": 13.225240600044337
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.0658195484762473,
+      "band_row": 229,
+      "band_row_fraction_of_depth": 0.89453125,
+      "band_rows": [
+        227,
+        232
+      ],
+      "energy_fraction_in_band": 3.505881087507511e-05,
+      "image_mean_display_value": 0.12735733675666694,
+      "msssim_drop": 0.015691332970044103,
+      "msssim_full": 0.9905964372016703,
+      "msssim_without_band": 0.9749051042316262,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "4levyy_ugol_glaza_frame250.png",
+    "series": "Female/1990-2000/Eye_corner/4levyy_ugol_glaza",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.896816918619768,
+      "mean": 10.456677940616672,
+      "median": 10.371989544800655,
+      "p05": 7.906182778576704,
+      "p95": 13.29237318716854
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.08836550486679091,
+      "band_row": 255,
+      "band_row_fraction_of_depth": 0.99609375,
+      "band_rows": [
+        253,
+        256
+      ],
+      "energy_fraction_in_band": 3.8783802363791074e-05,
+      "image_mean_display_value": 0.15380165658010014,
+      "msssim_drop": 3.6500087111646096e-05,
+      "msssim_full": 0.9950982980168719,
+      "msssim_without_band": 0.9950617979297602,
+      "rows_fraction_of_image": 0.01171875
+    },
+    "scan": "5lev_ugol_glaza_frame250.png",
+    "series": "Female/1990-2000/Eye_corner/5lev_ugol_glaza",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.898114138791021,
+      "mean": 10.4267269241132,
+      "median": 10.345421696040333,
+      "p05": 7.877027350571355,
+      "p95": 13.245156154299439
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.11799785851944762,
+      "band_row": 241,
+      "band_row_fraction_of_depth": 0.94140625,
+      "band_rows": [
+        239,
+        244
+      ],
+      "energy_fraction_in_band": 0.0014981463109713462,
+      "image_mean_display_value": 0.1331319209373838,
+      "msssim_drop": 0.010267212752688826,
+      "msssim_full": 0.9970084296052054,
+      "msssim_without_band": 0.9867412168525166,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "lev_shcheka1960_frame250.png",
+    "series": "Male/1950-1960/Cheek/lev_shcheka1960",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.89843414608829,
+      "mean": 10.356855770922817,
+      "median": 10.275792851410259,
+      "p05": 7.816500053107425,
+      "p95": 13.161547561974697
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.06751429936108859,
+      "band_row": 255,
+      "band_row_fraction_of_depth": 0.99609375,
+      "band_rows": [
+        253,
+        256
+      ],
+      "energy_fraction_in_band": 4.708964204033046e-05,
+      "image_mean_display_value": 0.09914236908052132,
+      "msssim_drop": 2.934729935910596e-05,
+      "msssim_full": 0.995660279777588,
+      "msssim_without_band": 0.9956309324782289,
+      "rows_fraction_of_image": 0.01171875
+    },
+    "scan": "levaya_shcheka_frame250.png",
+    "series": "Male/1950-1960/Cheek/levaya_shcheka",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.997247743498418,
+      "mean": 10.430225938768745,
+      "median": 10.356368375675892,
+      "p05": 7.908224182973886,
+      "p95": 13.219875081697596
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.168265935843192,
+      "band_row": 235,
+      "band_row_fraction_of_depth": 0.91796875,
+      "band_rows": [
+        233,
+        238
+      ],
+      "energy_fraction_in_band": 0.0010179905412949627,
+      "image_mean_display_value": 0.13765959259562166,
+      "msssim_drop": 0.02434222838106881,
+      "msssim_full": 0.9925996119983913,
+      "msssim_without_band": 0.9682573836173225,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "levaya_shcheka1960_frame250.png",
+    "series": "Male/1950-1960/Cheek/levaya_shcheka1960",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.962560003363034,
+      "mean": 10.411257595726157,
+      "median": 10.3272104036453,
+      "p05": 7.860887057041538,
+      "p95": 13.259789960112116
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.077866117404119,
+      "band_row": 231,
+      "band_row_fraction_of_depth": 0.90234375,
+      "band_rows": [
+        229,
+        234
+      ],
+      "energy_fraction_in_band": 0.0002059585423510104,
+      "image_mean_display_value": 0.12499862722755495,
+      "msssim_drop": 0.022157318850819063,
+      "msssim_full": 0.9961521439647868,
+      "msssim_without_band": 0.9739948251139677,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "prav_shcheka1960_frame250.png",
+    "series": "Male/1950-1960/Cheek/prav_shcheka1960",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 10.070182863502042,
+      "mean": 10.358621922560069,
+      "median": 10.280282353692094,
+      "p05": 7.848797595074366,
+      "p95": 13.14845151156209
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.05602022221137304,
+      "band_row": 255,
+      "band_row_fraction_of_depth": 0.99609375,
+      "band_rows": [
+        253,
+        256
+      ],
+      "energy_fraction_in_band": 5.960444615395465e-05,
+      "image_mean_display_value": 0.10297145762518767,
+      "msssim_drop": 2.7637645399813948e-05,
+      "msssim_full": 0.9962140623606185,
+      "msssim_without_band": 0.9961864247152187,
+      "rows_fraction_of_image": 0.01171875
+    },
+    "scan": "pravaya_shcheka_frame250.png",
+    "series": "Male/1950-1960/Cheek/pravaya_shcheka",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 10.003613910351822,
+      "mean": 10.427863531024034,
+      "median": 10.346852178903909,
+      "p05": 7.914402429493188,
+      "p95": 13.214837734491885
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.09661611793235352,
+      "band_row": 241,
+      "band_row_fraction_of_depth": 0.94140625,
+      "band_rows": [
+        239,
+        244
+      ],
+      "energy_fraction_in_band": 0.0001301649210080802,
+      "image_mean_display_value": 0.12643112826911818,
+      "msssim_drop": 0.01145140862809546,
+      "msssim_full": 0.9965202309285195,
+      "msssim_without_band": 0.985068822300424,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "lev_ugol_gl_frame250.png",
+    "series": "Male/1950-1960/Eye_corner/lev_ugol_gl",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.83769748879873,
+      "mean": 10.369460084883285,
+      "median": 10.284185611794351,
+      "p05": 7.815076052200161,
+      "p95": 13.196343791381146
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.07393842125511582,
+      "band_row": 236,
+      "band_row_fraction_of_depth": 0.921875,
+      "band_rows": [
+        234,
+        239
+      ],
+      "energy_fraction_in_band": 6.64341542644752e-05,
+      "image_mean_display_value": 0.12433448086849097,
+      "msssim_drop": 0.013513801104822698,
+      "msssim_full": 0.994562937306924,
+      "msssim_without_band": 0.9810491362021013,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "levyy_ugol_frame250.png",
+    "series": "Male/1950-1960/Eye_corner/levyy_ugol",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.92433368894301,
+      "mean": 10.402080546367905,
+      "median": 10.325689749518471,
+      "p05": 7.863839225252625,
+      "p95": 13.209497142303295
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.06393229352888738,
+      "band_row": 230,
+      "band_row_fraction_of_depth": 0.8984375,
+      "band_rows": [
+        228,
+        233
+      ],
+      "energy_fraction_in_band": 0.00011133149064562952,
+      "image_mean_display_value": 0.1048233360538049,
+      "msssim_drop": 0.016940117222215223,
+      "msssim_full": 0.9929453932324813,
+      "msssim_without_band": 0.9760052760102661,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "levyy_ugol_glaza1950_frame250.png",
+    "series": "Male/1950-1960/Eye_corner/levyy_ugol_glaza1950",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.822377406175239,
+      "mean": 10.450479855220532,
+      "median": 10.365972055892678,
+      "p05": 7.915523149331547,
+      "p95": 13.266717267511645
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.067686889192737,
+      "band_row": 231,
+      "band_row_fraction_of_depth": 0.90234375,
+      "band_rows": [
+        229,
+        234
+      ],
+      "energy_fraction_in_band": 6.389307339203744e-05,
+      "image_mean_display_value": 0.13840550827764275,
+      "msssim_drop": 0.0147581852914479,
+      "msssim_full": 0.9953924507700403,
+      "msssim_without_band": 0.9806342654785924,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "pravyy_ugol_frame250.png",
+    "series": "Male/1950-1960/Eye_corner/pravyy_ugol",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.986188012869475,
+      "mean": 10.418136096439543,
+      "median": 10.340192833461789,
+      "p05": 7.885727737714778,
+      "p95": 13.22413349965409
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.06058006708735775,
+      "band_row": 255,
+      "band_row_fraction_of_depth": 0.99609375,
+      "band_rows": [
+        253,
+        256
+      ],
+      "energy_fraction_in_band": 3.831242835294623e-05,
+      "image_mean_display_value": 0.10593935198334137,
+      "msssim_drop": 2.5711476052792115e-05,
+      "msssim_full": 0.9962433129878647,
+      "msssim_without_band": 0.9962176015118119,
+      "rows_fraction_of_image": 0.01171875
+    },
+    "scan": "pravyy_ugolglaza1950_frame250.png",
+    "series": "Male/1950-1960/Eye_corner/pravyy_ugolglaza1950",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.97632805871846,
+      "mean": 10.439771561574062,
+      "median": 10.35612269161013,
+      "p05": 7.92669413495046,
+      "p95": 13.242900269514175
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.18056373021172475,
+      "band_row": 238,
+      "band_row_fraction_of_depth": 0.9296875,
+      "band_rows": [
+        236,
+        241
+      ],
+      "energy_fraction_in_band": 0.0005691295817318459,
+      "image_mean_display_value": 0.1305427435279185,
+      "msssim_drop": 0.031843281672171764,
+      "msssim_full": 0.9962346202398572,
+      "msssim_without_band": 0.9643913385676854,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "1lev_shcheka_frame250.png",
+    "series": "Male/1990-2000/Cheek/1lev_shcheka",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.735450469782908,
+      "mean": 10.43146658696802,
+      "median": 10.35114092957673,
+      "p05": 7.857231017488172,
+      "p95": 13.286294274088604
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.06601103126795352,
+      "band_row": 236,
+      "band_row_fraction_of_depth": 0.921875,
+      "band_rows": [
+        234,
+        239
+      ],
+      "energy_fraction_in_band": 5.3983850558189345e-05,
+      "image_mean_display_value": 0.11083152926049422,
+      "msssim_drop": 0.012073473940066415,
+      "msssim_full": 0.9939446096592123,
+      "msssim_without_band": 0.9818711357191459,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "2levaya_shcheka_frame250.png",
+    "series": "Male/1990-2000/Cheek/2levaya_shcheka",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.879201888836748,
+      "mean": 10.44028823443457,
+      "median": 10.354943798013739,
+      "p05": 7.903078401967074,
+      "p95": 13.266460437693944
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.06316942587127414,
+      "band_row": 237,
+      "band_row_fraction_of_depth": 0.92578125,
+      "band_rows": [
+        235,
+        240
+      ],
+      "energy_fraction_in_band": 4.6037217258421736e-05,
+      "image_mean_display_value": 0.11226328244019612,
+      "msssim_drop": 0.010333184444585197,
+      "msssim_full": 0.9920499933246567,
+      "msssim_without_band": 0.9817168088800715,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "2pravaya_shcheka_frame250.png",
+    "series": "Male/1990-2000/Cheek/2pravaya_shcheka",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.857504517829398,
+      "mean": 10.428748058771093,
+      "median": 10.35036035006517,
+      "p05": 7.8792315851754235,
+      "p95": 13.265214191647843
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.1343030061758327,
+      "band_row": 236,
+      "band_row_fraction_of_depth": 0.921875,
+      "band_rows": [
+        234,
+        239
+      ],
+      "energy_fraction_in_band": 0.0006529115466005085,
+      "image_mean_display_value": 0.13343239935832685,
+      "msssim_drop": 0.021126683435678917,
+      "msssim_full": 0.9951614146821408,
+      "msssim_without_band": 0.9740347312464619,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "levaya_shcheka_frame250.png",
+    "series": "Male/1990-2000/Cheek/levaya_shcheka",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.867536131285451,
+      "mean": 10.43312815002286,
+      "median": 10.352046878488206,
+      "p05": 7.8641852725029056,
+      "p95": 13.287902491303926
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.12359681708549033,
+      "band_row": 234,
+      "band_row_fraction_of_depth": 0.9140625,
+      "band_rows": [
+        232,
+        237
+      ],
+      "energy_fraction_in_band": 0.0002535033786215472,
+      "image_mean_display_value": 0.12510768252715465,
+      "msssim_drop": 0.027633618174382146,
+      "msssim_full": 0.9943809967239642,
+      "msssim_without_band": 0.966747378549582,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "shcheka_lev_frame250.png",
+    "series": "Male/1990-2000/Cheek/shcheka_lev",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.87122690589553,
+      "mean": 10.45463184430646,
+      "median": 10.363851691469005,
+      "p05": 7.919317729969094,
+      "p95": 13.2942912929668
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.07136489172062284,
+      "band_row": 234,
+      "band_row_fraction_of_depth": 0.9140625,
+      "band_rows": [
+        232,
+        237
+      ],
+      "energy_fraction_in_band": 0.00019355140310553252,
+      "image_mean_display_value": 0.12863324087478745,
+      "msssim_drop": 0.015216265012472974,
+      "msssim_full": 0.9931115876928032,
+      "msssim_without_band": 0.9778953226803302,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "2levyy_ugol_glaza_frame250.png",
+    "series": "Male/1990-2000/Eye_corner/2levyy_ugol_glaza",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.793786258939345,
+      "mean": 10.433308359532754,
+      "median": 10.353687515508824,
+      "p05": 7.865375239622952,
+      "p95": 13.281884092080432
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.07762867864785221,
+      "band_row": 234,
+      "band_row_fraction_of_depth": 0.9140625,
+      "band_rows": [
+        232,
+        237
+      ],
+      "energy_fraction_in_band": 8.907825912327125e-05,
+      "image_mean_display_value": 0.1317652719437561,
+      "msssim_drop": 0.01739322874496929,
+      "msssim_full": 0.9910589278882114,
+      "msssim_without_band": 0.9736656991432421,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "2pravyy_ugol_glaza_frame250.png",
+    "series": "Male/1990-2000/Eye_corner/2pravyy_ugol_glaza",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.714825554885042,
+      "mean": 10.419976150093195,
+      "median": 10.332424204117082,
+      "p05": 7.833574628288784,
+      "p95": 13.291740790904747
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.15542586207629938,
+      "band_row": 238,
+      "band_row_fraction_of_depth": 0.9296875,
+      "band_rows": [
+        236,
+        241
+      ],
+      "energy_fraction_in_band": 0.00033983808588435157,
+      "image_mean_display_value": 0.12979269928484527,
+      "msssim_drop": 0.028230820967587777,
+      "msssim_full": 0.9950123552847998,
+      "msssim_without_band": 0.966781534317212,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "lev_ugol_glaza_frame250.png",
+    "series": "Male/1990-2000/Eye_corner/lev_ugol_glaza",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.7173839684828,
+      "mean": 10.434233379186322,
+      "median": 10.348716964208862,
+      "p05": 7.866467519840954,
+      "p95": 13.311698067179023
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.11284926791213365,
+      "band_row": 238,
+      "band_row_fraction_of_depth": 0.9296875,
+      "band_rows": [
+        236,
+        241
+      ],
+      "energy_fraction_in_band": 0.0002248837532528754,
+      "image_mean_display_value": 0.13792563415048775,
+      "msssim_drop": 0.020533249764427053,
+      "msssim_full": 0.99499601313141,
+      "msssim_without_band": 0.9744627633669829,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "levyy_ugol_glaza_frame250.png",
+    "series": "Male/1990-2000/Eye_corner/levyy_ugol_glaza",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.885450789299734,
+      "mean": 10.418731705686492,
+      "median": 10.33686240569656,
+      "p05": 7.845956064708131,
+      "p95": 13.25551751672487
+    }
+  },
+  {
+    "artifact": {
+      "band_mean_display_value": 0.08865502695207397,
+      "band_row": 234,
+      "band_row_fraction_of_depth": 0.9140625,
+      "band_rows": [
+        232,
+        237
+      ],
+      "energy_fraction_in_band": 0.0001753807948891264,
+      "image_mean_display_value": 0.1354139178181235,
+      "msssim_drop": 0.021134981166615496,
+      "msssim_full": 0.993885064940873,
+      "msssim_without_band": 0.9727500837742575,
+      "rows_fraction_of_image": 0.01953125
+    },
+    "scan": "ugol_gl_lev_frame250.png",
+    "series": "Male/1990-2000/Eye_corner/ugol_gl_lev",
+    "voxels_per_pixel": {
+      "brightness_weighted_mean": 9.932486975394239,
+      "mean": 10.420236830352875,
+      "median": 10.340406432153042,
+      "p05": 7.861589807394396,
+      "p95": 13.268813786352803
+    }
+  }
+]

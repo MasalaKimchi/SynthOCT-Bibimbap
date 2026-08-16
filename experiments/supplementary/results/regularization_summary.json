@@ -1,0 +1,67 @@
+{
+  "best_alpha_L_current": 0.02,
+  "best_alpha_L_earlier": 0.4,
+  "lateral_singular_values": {
+    "max": 2.8691465470442736,
+    "min": 0.012552310185622913,
+    "n_below_0.05": 104,
+    "n_below_0.20": 207
+  },
+  "mode_energy": {
+    "selected_phase": {
+      "fraction_below_sigma_0.05": 0.16458800682200342,
+      "fraction_below_sigma_0.20": 0.67557902653981,
+      "fraction_in_top_64_modes": 0.021968552349947927,
+      "mode_participation_ratio": 213.98843444459513
+    },
+    "zero_phase": {
+      "fraction_below_sigma_0.05": 0.3674998388195588,
+      "fraction_below_sigma_0.20": 0.8438721633230571,
+      "fraction_in_top_64_modes": 0.01761307629090469,
+      "mode_participation_ratio": 158.75555996880567
+    }
+  },
+  "reference_lateral_roughness": 0.04520609067332669,
+  "sweep": {
+    "current_alphaL_0.02": {
+      "msssim_mean": 0.9953044718539932,
+      "roughness_mean": 0.04480170477003921
+    },
+    "current_alphaL_0.05": {
+      "msssim_mean": 0.9944329165734139,
+      "roughness_mean": 0.04320067883709623
+    },
+    "current_alphaL_0.1": {
+      "msssim_mean": 0.9924779469068916,
+      "roughness_mean": 0.04062568207216276
+    },
+    "current_alphaL_0.2": {
+      "msssim_mean": 0.9891320905857232,
+      "roughness_mean": 0.03600803109779249
+    },
+    "current_alphaL_0.4": {
+      "msssim_mean": 0.9842040108829861,
+      "roughness_mean": 0.029988633696273675
+    },
+    "earlier_alphaL_0.02": {
+      "msssim_mean": 0.7738984602886869,
+      "roughness_mean": 0.029039283338293514
+    },
+    "earlier_alphaL_0.05": {
+      "msssim_mean": 0.8643974224932471,
+      "roughness_mean": 0.03236339932925947
+    },
+    "earlier_alphaL_0.1": {
+      "msssim_mean": 0.9263087612013715,
+      "roughness_mean": 0.03224628175603868
+    },
+    "earlier_alphaL_0.2": {
+      "msssim_mean": 0.9556845652838234,
+      "roughness_mean": 0.030337258455184885
+    },
+    "earlier_alphaL_0.4": {
+      "msssim_mean": 0.963005541050882,
+      "roughness_mean": 0.027003614090387013
+    }
+  }
+}

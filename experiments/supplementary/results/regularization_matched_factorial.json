@@ -1,0 +1,4366 @@
+{
+  "rows": [
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0015777173525458278,
+        "weak_mode_energy_fraction": 0.7761314518824087
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9877511694851814
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7103159763579922
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0017791353498761299,
+        "weak_mode_energy_fraction": 0.3858461118882311
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9863683445091611
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8211138706148946
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0019420189310242384,
+        "weak_mode_energy_fraction": 0.11784748918942141
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.984135982064767
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.9046954236813257
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0021124550878421156,
+        "weak_mode_energy_fraction": 0.020671828072173
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9816860699771742
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9481401585644952
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0023239148085141196,
+        "weak_mode_energy_fraction": 0.002687105937974686
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9787932107449543
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9616452906592196
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.00022788868654146862,
+        "weak_mode_energy_fraction": 0.4217476072816372
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9972454308390939
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9296227959295663
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.00036903734118778013,
+        "weak_mode_energy_fraction": 0.18480318948031255
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9968364747990552
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9605292769520255
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0005636595758494063,
+        "weak_mode_energy_fraction": 0.07065263684163958
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9957253556414071
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9754295494491114
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0008592045949082547,
+        "weak_mode_energy_fraction": 0.015310914502733601
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9934485111148805
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9828494151146444
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0012785677135930408,
+        "weak_mode_energy_fraction": 0.0030934476044467097
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9883067034757465
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9821363220534092
+      },
+      "scan": "l__shcheka_frame250.png",
+      "series": "Female/1950-1960/Cheek/l__shcheka"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0017730496755253824,
+        "weak_mode_energy_fraction": 0.7316932574115355
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9812754623144172
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7090209071166791
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0019943554845875317,
+        "weak_mode_energy_fraction": 0.33039941275420376
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9797848104129875
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8289046926380088
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0021692168222193346,
+        "weak_mode_energy_fraction": 0.10117917941275203
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.980030643494484
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.9041283347985385
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0023488509355556833,
+        "weak_mode_energy_fraction": 0.019811459307853073
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9785840250434831
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9439107908703022
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0025669403146771717,
+        "weak_mode_energy_fraction": 0.0027051909883601664
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9763427517461168
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9591671857407191
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0003761770372728564,
+        "weak_mode_energy_fraction": 0.39166436334456156
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9944344176746045
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9058026157589204
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0005321727384139249,
+        "weak_mode_energy_fraction": 0.15836201384408014
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9935646591303663
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9480059233250434
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0007376709798461635,
+        "weak_mode_energy_fraction": 0.06800161854664855
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9914613317898305
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9637253826643148
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0010378330589046328,
+        "weak_mode_energy_fraction": 0.015654784603676176
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9851842614803898
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9709061223463598
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.001456931416130737,
+        "weak_mode_energy_fraction": 0.002614229282138965
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9812137498749449
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9756082160127786
+      },
+      "scan": "l_shchekka1960_frame250.png",
+      "series": "Female/1950-1960/Cheek/l_shchekka1960"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0024182359426775397,
+        "weak_mode_energy_fraction": 0.7647393599997792
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9858378353925743
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.730963605404457
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0026683039775888756,
+        "weak_mode_energy_fraction": 0.36933677407426396
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.983040528804546
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8205055756441767
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0028716419452989536,
+        "weak_mode_energy_fraction": 0.114873628060372
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9797305956296742
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8945082702180338
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.003065720201894875,
+        "weak_mode_energy_fraction": 0.02063383968555083
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9763371205609185
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9435543581829369
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0033095841880432476,
+        "weak_mode_energy_fraction": 0.002637092934994227
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9744755768314955
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9587040572887038
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0005644846937117653,
+        "weak_mode_energy_fraction": 0.43475924050536224
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9964146708581503
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9251128624036071
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0007504893110379404,
+        "weak_mode_energy_fraction": 0.15919626176578472
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9952365807793612
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9532611604741061
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0009948825743182916,
+        "weak_mode_energy_fraction": 0.06215691265334408
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9944095211158239
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9744598096185123
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0013736054490547495,
+        "weak_mode_energy_fraction": 0.014886420942032437
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9911558575395695
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9806540061905274
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.001904105014415847,
+        "weak_mode_energy_fraction": 0.0031388953405979084
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9850588026697785
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9803168000812278
+      },
+      "scan": "lev_shcheka1960_frame250.png",
+      "series": "Female/1950-1960/Cheek/lev_shcheka1960"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0020673444275281735,
+        "weak_mode_energy_fraction": 0.7785839311643745
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9800390688072385
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7776625983145016
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.002312628026859873,
+        "weak_mode_energy_fraction": 0.39817607418744094
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9755872451420305
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8485387407135091
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.00251467736346209,
+        "weak_mode_energy_fraction": 0.13546267858350752
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.966730252614924
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.9038305607836284
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0027173320603276724,
+        "weak_mode_energy_fraction": 0.02573289595278001
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9596633663953206
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9344134674542932
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.002969761372476617,
+        "weak_mode_energy_fraction": 0.0032742827104871
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9606037647391563
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9435522199048777
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.00040051723193616887,
+        "weak_mode_energy_fraction": 0.4255055688910752
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9948470080970796
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9035048003838377
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0005788422660897587,
+        "weak_mode_energy_fraction": 0.182813745010454
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9931750875277116
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.945884016549099
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0008334012456216782,
+        "weak_mode_energy_fraction": 0.06360222463773056
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9881091846805904
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9580276627816198
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0011839862477954672,
+        "weak_mode_energy_fraction": 0.017732745420006774
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9835351302307688
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9676828972533149
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0016939275035214125,
+        "weak_mode_energy_fraction": 0.0031171830463928444
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9830470392759122
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9724031139433686
+      },
+      "scan": "levaya_shcheka_frame250.png",
+      "series": "Female/1950-1960/Cheek/levaya_shcheka"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.002227575189552708,
+        "weak_mode_energy_fraction": 0.7490010237048157
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9875129830042801
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7027914683061086
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0024575704141367566,
+        "weak_mode_energy_fraction": 0.35328899820824927
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9851572988180216
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.808870927689685
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0026496670963452856,
+        "weak_mode_energy_fraction": 0.1063623434713923
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9822247659732516
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8951066385740787
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.002849561060168205,
+        "weak_mode_energy_fraction": 0.018633983005282614
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9797932193246714
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9445350909681778
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.003097860288503884,
+        "weak_mode_energy_fraction": 0.0023313737617657983
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9761650239369802
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9604066933109646
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0004854173510477536,
+        "weak_mode_energy_fraction": 0.3773269281997426
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9963336393502885
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9268341754088706
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0006459660587920603,
+        "weak_mode_energy_fraction": 0.16513589253823302
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9959974654815626
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9601829373939359
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0008838116803513664,
+        "weak_mode_energy_fraction": 0.05528422427426552
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9951548753082746
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9748480121261128
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0012483744730147944,
+        "weak_mode_energy_fraction": 0.014324551305879818
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9929542089324763
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9833540562594862
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0017556570528636784,
+        "weak_mode_energy_fraction": 0.0030925090639560763
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9871583206798799
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9819710692316769
+      },
+      "scan": "levaya_shcheka1_frame250.png",
+      "series": "Female/1950-1960/Cheek/levaya_shcheka1"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0022991471203821215,
+        "weak_mode_energy_fraction": 0.7493658841651349
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9833701293580677
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7412424713670298
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0025371851025751827,
+        "weak_mode_energy_fraction": 0.35599400372303636
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9803579853618167
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.840186951386509
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0027418216051613093,
+        "weak_mode_energy_fraction": 0.1070811082341118
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9772247651876143
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.9057285335872809
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0029651893744543235,
+        "weak_mode_energy_fraction": 0.018521080694042853
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9742967120704297
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9446973184265136
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.003261992578979784,
+        "weak_mode_energy_fraction": 0.002294094846492038
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.972711350718333
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9569133153422331
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0005072844136334574,
+        "weak_mode_energy_fraction": 0.42237696335297253
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9924598046051369
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9043495588310839
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0006931669104873292,
+        "weak_mode_energy_fraction": 0.18201844851391366
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9920042321215249
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.954415084667611
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0009432154398796859,
+        "weak_mode_energy_fraction": 0.060483383956530676
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9898031417027442
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9660364527218785
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.001308760412503945,
+        "weak_mode_energy_fraction": 0.01323703277095656
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9844427402996836
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.973162133544026
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0018298470478202455,
+        "weak_mode_energy_fraction": 0.0026950336814985133
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.980695340930501
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9747837389584819
+      },
+      "scan": "Lev_ugol_glaza_frame250.png",
+      "series": "Female/1950-1960/Eye_corner/Lev_ugol_glaza"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0017255305974560938,
+        "weak_mode_energy_fraction": 0.7736785145512134
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9808409705650825
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7644187827570234
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.001920433240753895,
+        "weak_mode_energy_fraction": 0.40317483538138277
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9750562182631474
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8490660781327565
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0020820486508379586,
+        "weak_mode_energy_fraction": 0.13416495641016538
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9737084760295274
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.9054796864975699
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0022433674594641182,
+        "weak_mode_energy_fraction": 0.023761240235743972
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9735962661463646
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9390810897042117
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0024530693980750217,
+        "weak_mode_energy_fraction": 0.002900315781320205
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9728878397726399
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9524043144616405
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.00043795929766148495,
+        "weak_mode_energy_fraction": 0.44043834867895426
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9926373643556886
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9220872116033926
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0005811200139645771,
+        "weak_mode_energy_fraction": 0.16955219334697028
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9909600431501742
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9493731846755723
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0007705027247923147,
+        "weak_mode_energy_fraction": 0.058682680880258714
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9880915306910905
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9664236945173401
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0010535794801387534,
+        "weak_mode_energy_fraction": 0.014187298302736052
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9829822228564796
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9702518773088755
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.00144491351064921,
+        "weak_mode_energy_fraction": 0.0025891153510741757
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9806956497198095
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9713449216470277
+      },
+      "scan": "l__ugol_glaza_frame250.png",
+      "series": "Female/1950-1960/Eye_corner/l__ugol_glaza"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0019314529204750932,
+        "weak_mode_energy_fraction": 0.6844714969420853
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9860391068521361
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.743445592855688
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0021490026833566435,
+        "weak_mode_energy_fraction": 0.2715989712101001
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9823652601060331
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8447280447260985
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0023317856897038603,
+        "weak_mode_energy_fraction": 0.0721111115077379
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9793409872854217
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.9141835558572008
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.002527076234657134,
+        "weak_mode_energy_fraction": 0.012428108882877577
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9762736332627986
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9475274829597076
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.002777799809107724,
+        "weak_mode_energy_fraction": 0.0016438078190692013
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.975066250440054
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9598109688435671
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.00045797346039865624,
+        "weak_mode_energy_fraction": 0.4020462157818169
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9947093141257723
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9315317775521976
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0006157377986878066,
+        "weak_mode_energy_fraction": 0.15204324108888687
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9942134890210884
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9592589448258665
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0008360687311309336,
+        "weak_mode_energy_fraction": 0.06453498781322677
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9933885178571635
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9735875724489098
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.001161217803226273,
+        "weak_mode_energy_fraction": 0.012705571520018902
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9909828659310389
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9813176675109253
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0016235668622163267,
+        "weak_mode_energy_fraction": 0.0024599634836603057
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9852197458900694
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9795879002515681
+      },
+      "scan": "lev_ugol1960_frame250.png",
+      "series": "Female/1950-1960/Eye_corner/lev_ugol1960"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.002421280776312487,
+        "weak_mode_energy_fraction": 0.7650466800335141
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9733414899263171
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7424875077300144
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.002708397326845986,
+        "weak_mode_energy_fraction": 0.3737673341122842
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.971121246322795
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8328762325508177
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0029473842354922957,
+        "weak_mode_energy_fraction": 0.11288387096913423
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9678750621428194
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.9061110061324568
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0031991415369120603,
+        "weak_mode_energy_fraction": 0.020457236588659316
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.967082257948387
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9412675963168432
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.003521409726802501,
+        "weak_mode_energy_fraction": 0.0027292020931936316
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9664512134263411
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9541799752228702
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.00047100522391448015,
+        "weak_mode_energy_fraction": 0.4102818150789591
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9939663728602948
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9174513004278848
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0006784277922996915,
+        "weak_mode_energy_fraction": 0.16796046160845013
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9925197303933894
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.950901204266153
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0009657143602450984,
+        "weak_mode_energy_fraction": 0.059999286855112445
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9898315029664594
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9629911910708016
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.001369292860701591,
+        "weak_mode_energy_fraction": 0.012407760621749121
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9867297567967208
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9753548462025384
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0019697517499347264,
+        "weak_mode_energy_fraction": 0.0026527430952160112
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9822317800023954
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9717482757741563
+      },
+      "scan": "levyy_ugol_glaza_frame250.png",
+      "series": "Female/1950-1960/Eye_corner/levyy_ugol_glaza"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.001873593195973887,
+        "weak_mode_energy_fraction": 0.7694956059988434
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9860921176149093
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7036559951610013
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0020743188351663743,
+        "weak_mode_energy_fraction": 0.39687888572195523
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9848308926851969
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8101359050086651
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0022444679163370704,
+        "weak_mode_energy_fraction": 0.13069276425913987
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9822637872196843
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8948123078532532
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.002415280646240936,
+        "weak_mode_energy_fraction": 0.02466931579865276
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9790269475679039
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9446051500464956
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.002619441723807416,
+        "weak_mode_energy_fraction": 0.0032627781225185457
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9757312540818994
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9599613885776157
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0004021912761979663,
+        "weak_mode_energy_fraction": 0.4478056718443794
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9969677670359774
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9262901611007293
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0005498102329553074,
+        "weak_mode_energy_fraction": 0.16886259408701712
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.996701183443652
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9598121579923903
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0007525792530285044,
+        "weak_mode_energy_fraction": 0.06371366705284585
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9957770929980513
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9755245280266183
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0010783557889939787,
+        "weak_mode_energy_fraction": 0.014179793984052537
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9929786523058034
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9824617694446001
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0015164787477604472,
+        "weak_mode_energy_fraction": 0.0030651002431394754
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9869783106317227
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9816356067105592
+      },
+      "scan": "levyy_ugol_glaza1_frame250.png",
+      "series": "Female/1950-1960/Eye_corner/levyy_ugol_glaza1"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0018103908291421625,
+        "weak_mode_energy_fraction": 0.7145068719991136
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.98136807439223
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7428668569465118
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0020210106143763317,
+        "weak_mode_energy_fraction": 0.3093176028724216
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9792723996606063
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8289946434078427
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0021978422448781566,
+        "weak_mode_energy_fraction": 0.08833271778511693
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9781792623001971
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8969786039981038
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.002376689274002216,
+        "weak_mode_energy_fraction": 0.0160827912712353
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9763792831346556
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9400900695857689
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.002593670056753323,
+        "weak_mode_energy_fraction": 0.002090609549916328
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9736875398596958
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9546712123855746
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.00029012204965983963,
+        "weak_mode_energy_fraction": 0.39737815578879987
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9970146076908935
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9319395079083872
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.00044639606789257855,
+        "weak_mode_energy_fraction": 0.1632408593350364
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9966285544741443
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9610247042058494
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.000665353275285044,
+        "weak_mode_energy_fraction": 0.06296358790514298
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9954468736410607
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9755724390111313
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0010023574423927855,
+        "weak_mode_energy_fraction": 0.0173598475352483
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9918566209758307
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9819585643576494
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0014544378976367376,
+        "weak_mode_energy_fraction": 0.003557617619811265
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9862603774784904
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9805413130507515
+      },
+      "scan": "1levaya_shcheka_frame250.png",
+      "series": "Female/1990-2000/Cheek/1levaya_shcheka"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0024047721447174606,
+        "weak_mode_energy_fraction": 0.6964654978412735
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9831220594013212
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7089232179727488
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0026713581098114286,
+        "weak_mode_energy_fraction": 0.30271088633851806
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9792699615052597
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8103575904140676
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.002895453242897956,
+        "weak_mode_energy_fraction": 0.09517723936990775
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9755585220799723
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8930094917449705
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0031140212978131095,
+        "weak_mode_energy_fraction": 0.018003640004137025
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9732786207723584
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9411077428907443
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.003376825475166976,
+        "weak_mode_energy_fraction": 0.0022857652350885163
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9709196381159597
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9555011233133327
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0006050953125894362,
+        "weak_mode_energy_fraction": 0.35459313104068657
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9963447140495197
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9165508281999198
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0007870106429029457,
+        "weak_mode_energy_fraction": 0.15528435869371107
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9957980423148355
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9562963378490275
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0010395274323432783,
+        "weak_mode_energy_fraction": 0.05593691061391833
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9940379177817088
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9729746503548803
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0014361477589242618,
+        "weak_mode_energy_fraction": 0.012578590109853148
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9909552450442228
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9796022953501736
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.001977310087297672,
+        "weak_mode_energy_fraction": 0.002194798864226266
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9849983282097887
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9799384290840581
+      },
+      "scan": "2lev_shcheka_frame250.png",
+      "series": "Female/1990-2000/Cheek/2lev_shcheka"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0034365339677160994,
+        "weak_mode_energy_fraction": 0.7741947262587625
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9814679661710344
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.716093626645085
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0037576451382113096,
+        "weak_mode_energy_fraction": 0.39084077697303093
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9794850728785677
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8108449813048858
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.004032721284548903,
+        "weak_mode_energy_fraction": 0.12278449185645
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9765202497483099
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8895525878869841
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0043137071799373315,
+        "weak_mode_energy_fraction": 0.021364812226237765
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9740354187802575
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9382280910124388
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.004668183862129869,
+        "weak_mode_energy_fraction": 0.0026031156911619645
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.971917551116829
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9538711715294612
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0005236863407290564,
+        "weak_mode_energy_fraction": 0.38185777282441025
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.996083182423753
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9232002128799293
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0007847242300317364,
+        "weak_mode_energy_fraction": 0.1493691743912732
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9951424462199615
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9566110302217508
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0011418867754269468,
+        "weak_mode_energy_fraction": 0.06041827456938456
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9939159466134425
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9716231032514309
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0016786422236872269,
+        "weak_mode_energy_fraction": 0.017827385368182402
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9901115867352581
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9784626808769774
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0024227209635944735,
+        "weak_mode_energy_fraction": 0.003255839601671063
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9856149385949221
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9791707728830197
+      },
+      "scan": "3shcheka_levaya_frame250.png",
+      "series": "Female/1990-2000/Cheek/3shcheka_levaya"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.002466786008182001,
+        "weak_mode_energy_fraction": 0.7558303956318012
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9783975669627342
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7445424020364403
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0027157446771935516,
+        "weak_mode_energy_fraction": 0.35948631275472037
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9745268245221977
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8321881890864613
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0029207578026844557,
+        "weak_mode_energy_fraction": 0.1067898116451842
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9713110200166142
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8938351286926077
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0031349807710201226,
+        "weak_mode_energy_fraction": 0.018700284367119034
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9695222793974164
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9322907478729415
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.003424783409353265,
+        "weak_mode_energy_fraction": 0.0023267321017614463
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9683530025802141
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9467758491074932
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0005019728314018543,
+        "weak_mode_energy_fraction": 0.43900475741349765
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9932822293324703
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.909615897485026
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0007029943424883906,
+        "weak_mode_energy_fraction": 0.16212457566801497
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9924671751863183
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.946588957684829
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0009661481864453793,
+        "weak_mode_energy_fraction": 0.06358346867849689
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9910436181603234
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.962333261501249
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0013688877013649967,
+        "weak_mode_energy_fraction": 0.01666037284875355
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9883182372301081
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9745836966824102
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0019299671543352391,
+        "weak_mode_energy_fraction": 0.002685255235419776
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.982442221540848
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9749003032715607
+      },
+      "scan": "4levaya_shcheka_frame250.png",
+      "series": "Female/1990-2000/Cheek/4levaya_shcheka"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0026037350259896313,
+        "weak_mode_energy_fraction": 0.7116737695355988
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9800342722488403
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.734364517466627
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.002867492666778104,
+        "weak_mode_energy_fraction": 0.3179618051352103
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9773904620700414
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8228850593325399
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0030816021056530845,
+        "weak_mode_energy_fraction": 0.09492365592413833
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9756837016500104
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8989187218005047
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.003306468322362614,
+        "weak_mode_energy_fraction": 0.01739075621127774
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9722732859303991
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9439366187885886
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0035988032570404027,
+        "weak_mode_energy_fraction": 0.0022689549524567685
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9705898916416044
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9577685126971281
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0005245113496269811,
+        "weak_mode_energy_fraction": 0.4018801963912845
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9936610205087857
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9181154293578684
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.000727990711993809,
+        "weak_mode_energy_fraction": 0.15867108045876255
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.991935651855133
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9531565637109799
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.001010733524215604,
+        "weak_mode_energy_fraction": 0.06257095076439295
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9896772911835026
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9587318765145215
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0014293046975763402,
+        "weak_mode_energy_fraction": 0.015687739361390566
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9860860635979098
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9772721961222229
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0020193013373814863,
+        "weak_mode_energy_fraction": 0.0027410687125998703
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9821689090220272
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9756847526724495
+      },
+      "scan": "5lev_shcheka_frame250.png",
+      "series": "Female/1990-2000/Cheek/5lev_shcheka"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.00275840330640895,
+        "weak_mode_energy_fraction": 0.7468436033713644
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9836295869605828
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7276167514948518
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.003017392076751922,
+        "weak_mode_energy_fraction": 0.3633202088875687
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9821388144642524
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.820922961567054
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0032340030610393863,
+        "weak_mode_energy_fraction": 0.11468240564628256
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9784295623044722
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8957702459285087
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0034542027036684785,
+        "weak_mode_energy_fraction": 0.020412143722916408
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9763365711020466
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9422283060693045
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0037215573165910788,
+        "weak_mode_energy_fraction": 0.0024834643469586262
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9738780538842492
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9571417922947734
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0007470363971143933,
+        "weak_mode_energy_fraction": 0.4537841871561171
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9959627225716243
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9234089606021336
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0009369976345444568,
+        "weak_mode_energy_fraction": 0.14878599021509833
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9954389294420238
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9543196676871611
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0012093217358651826,
+        "weak_mode_energy_fraction": 0.06035277082455218
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9913738891087133
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9714655457561486
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0016139697394281644,
+        "weak_mode_energy_fraction": 0.013976755962817023
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9886926904373057
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9777273641611396
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.002162731923975702,
+        "weak_mode_energy_fraction": 0.002729861600361515
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9853122734630884
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9810779210744164
+      },
+      "scan": "2lev_ugol_glaza_frame250.png",
+      "series": "Female/1990-2000/Eye_corner/2lev_ugol_glaza"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.003714830506225612,
+        "weak_mode_energy_fraction": 0.7654042570668199
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9853068306900669
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.698779958374064
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.004071000790597571,
+        "weak_mode_energy_fraction": 0.3635739609417295
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.983617375820211
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8046417182569798
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0043601659407279955,
+        "weak_mode_energy_fraction": 0.10699571176441576
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9810124480508594
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8848543577109579
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.004669194565277139,
+        "weak_mode_energy_fraction": 0.018133371255273797
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9781922430881689
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9382043474266232
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.005072861760618933,
+        "weak_mode_energy_fraction": 0.002275176173811943
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9750361607507847
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9554502795478961
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0005503609126341452,
+        "weak_mode_energy_fraction": 0.39288033068051786
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9960047383357314
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9218376578304708
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0008416437653371347,
+        "weak_mode_energy_fraction": 0.16679587116775077
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9952979022304134
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9516417112675711
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0012252058122840203,
+        "weak_mode_energy_fraction": 0.06065269759032369
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9942300473337548
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9715199766233605
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0018160827030357777,
+        "weak_mode_energy_fraction": 0.017246964683082122
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9917562329827941
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9802633728848776
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.002642983468263909,
+        "weak_mode_energy_fraction": 0.003218840298517228
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9868972582815657
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9806386126679377
+      },
+      "scan": "3ugol_glaza_levyy_frame250.png",
+      "series": "Female/1990-2000/Eye_corner/3ugol_glaza_levyy"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0037080999462591664,
+        "weak_mode_energy_fraction": 0.7836092671566605
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9844562628355085
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7078383783801373
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.004080456532862486,
+        "weak_mode_energy_fraction": 0.4112471034079634
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9817243407817351
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8128500263389663
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.004407383188228057,
+        "weak_mode_energy_fraction": 0.1306233337804867
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9788318779369816
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8886202337216775
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.004756792734880995,
+        "weak_mode_energy_fraction": 0.02334677463388702
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9767383181985095
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9404634792755215
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.005202448886046709,
+        "weak_mode_energy_fraction": 0.0030696452709926578
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.974483593911079
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9573355559219265
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0006350047771791405,
+        "weak_mode_energy_fraction": 0.37415700590608014
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9951812500521431
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9245012638402321
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0009374011645216061,
+        "weak_mode_energy_fraction": 0.16003789208957434
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9945698436469443
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9556747043604863
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.001348014254123102,
+        "weak_mode_energy_fraction": 0.0600644673529598
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9936771888902493
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9721221401324573
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0019474492722752318,
+        "weak_mode_energy_fraction": 0.01784733300993768
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9908550084639941
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9808686662041772
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.00283927572759816,
+        "weak_mode_energy_fraction": 0.0032944478636612894
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9851887530944763
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9796646940362558
+      },
+      "scan": "3ugol_glaza_levyy_1_norm_frame250.png",
+      "series": "Female/1990-2000/Eye_corner/3ugol_glaza_levyy_1_norm"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.002867522712699704,
+        "weak_mode_energy_fraction": 0.7538355195467484
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.975231322143204
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7404267350421972
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0031716051501858014,
+        "weak_mode_energy_fraction": 0.3616015311516425
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9724850789280067
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8315574773694419
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.00343038385699625,
+        "weak_mode_energy_fraction": 0.1092172903184095
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9715838153235354
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8970328451970734
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.003700553403528321,
+        "weak_mode_energy_fraction": 0.019499915715784716
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9676538637930129
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9314979601664548
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.004045897522454547,
+        "weak_mode_energy_fraction": 0.0025374076509221684
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9673118818793639
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.947457742581379
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0006070562956490944,
+        "weak_mode_energy_fraction": 0.4026192187609488
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9915655525081025
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9095999109241746
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0008384980310084595,
+        "weak_mode_energy_fraction": 0.16119823220377366
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9905964372016703
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9486492909464502
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0011386759460253286,
+        "weak_mode_energy_fraction": 0.06576478094956635
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9886345901373285
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.966841116720547
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0015927065377416183,
+        "weak_mode_energy_fraction": 0.016817893124148425
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9860561585793963
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.974396655450538
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.002243969689096908,
+        "weak_mode_energy_fraction": 0.002767948482879039
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9806360246542426
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9734189429873026
+      },
+      "scan": "4levyy_ugol_glaza_frame250.png",
+      "series": "Female/1990-2000/Eye_corner/4levyy_ugol_glaza"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0036567900081158674,
+        "weak_mode_energy_fraction": 0.747832552648741
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9853362140317448
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7473679446490271
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.004068525211260019,
+        "weak_mode_energy_fraction": 0.35831242380324085
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9822297142154027
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8302557622673862
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.004411714213565551,
+        "weak_mode_energy_fraction": 0.11306897127033924
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9795470840577784
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8995499787597062
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.00478449209321112,
+        "weak_mode_energy_fraction": 0.021286442047125865
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9765818552289915
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9428840754255918
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.005284427191247151,
+        "weak_mode_energy_fraction": 0.0027989271613781063
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9736351247846753
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.955038373206682
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0005850131859605052,
+        "weak_mode_energy_fraction": 0.36813647879969064
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9956797267284313
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9277612194287914
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0009090757248738998,
+        "weak_mode_energy_fraction": 0.15236962098703435
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9950982980168719
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9586574432926681
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0013438826105320678,
+        "weak_mode_energy_fraction": 0.06178968150050998
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9936960799667178
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9731285297903187
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0019652085112535373,
+        "weak_mode_energy_fraction": 0.016783299086874343
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9904179282624059
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9820044390828939
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0028562439991473305,
+        "weak_mode_energy_fraction": 0.0032341089734944403
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9848783128249801
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9797722004135252
+      },
+      "scan": "5lev_ugol_glaza_frame250.png",
+      "series": "Female/1990-2000/Eye_corner/5lev_ugol_glaza"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0018737929985440042,
+        "weak_mode_energy_fraction": 0.79524029974937
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9853436626818451
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7243872118149932
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0020981867586966673,
+        "weak_mode_energy_fraction": 0.40999559304470107
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9816248093385326
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8203997023234744
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0022782130999126037,
+        "weak_mode_energy_fraction": 0.13385920408819674
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9788332859627606
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8970465517310681
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0024479834361386724,
+        "weak_mode_energy_fraction": 0.023910455346059224
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9760672685531037
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9410518823287587
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.002663219095638838,
+        "weak_mode_energy_fraction": 0.0028294601956854446
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9727701354291868
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9565055120231231
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.00044327655118352383,
+        "weak_mode_energy_fraction": 0.4228891220017166
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9978365292429356
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9283856408084491
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0005940892225106544,
+        "weak_mode_energy_fraction": 0.14634056097917053
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9970084296052054
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9622272331275338
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0008064281179940459,
+        "weak_mode_energy_fraction": 0.05189664086062073
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9953225085718492
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9756867952298386
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0011495120509748095,
+        "weak_mode_energy_fraction": 0.011447917797323926
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9925666568397062
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9823017861598473
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0016103061736857823,
+        "weak_mode_energy_fraction": 0.002060099332983006
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9856883135484663
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9806841388261209
+      },
+      "scan": "lev_shcheka1960_frame250.png",
+      "series": "Male/1950-1960/Cheek/lev_shcheka1960"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0014092041788145019,
+        "weak_mode_energy_fraction": 0.7591260964060479
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9878708500810205
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7101407855754862
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0015704593484724449,
+        "weak_mode_energy_fraction": 0.3592084762885641
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9858599781464725
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8223520247197182
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.001703306795100025,
+        "weak_mode_energy_fraction": 0.10295141767021107
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9831660457494631
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.9085908688381827
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0018377084297398225,
+        "weak_mode_energy_fraction": 0.017559961577054525
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9808322832228201
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9507969794898987
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.002000589074190133,
+        "weak_mode_energy_fraction": 0.0021422318420676184
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9786540569352227
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9636847495084248
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0003061898457766771,
+        "weak_mode_energy_fraction": 0.42549197261599886
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9961263561787095
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9259088864023604
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.00041873741017527474,
+        "weak_mode_energy_fraction": 0.1439658308231535
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.995660279777588
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9583685104219924
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0005755892821638581,
+        "weak_mode_energy_fraction": 0.054243294601109764
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9941451421002435
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9740693597325272
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0008138878233365702,
+        "weak_mode_energy_fraction": 0.011663394705322135
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9914124018340441
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9797417955914435
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0011366010163803637,
+        "weak_mode_energy_fraction": 0.002288385896460011
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9862145361487261
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9792321207445782
+      },
+      "scan": "levaya_shcheka_frame250.png",
+      "series": "Male/1950-1960/Cheek/levaya_shcheka"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.00272860741356935,
+        "weak_mode_energy_fraction": 0.7738250737838023
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9801723797520284
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7425823820254712
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.002994327319943693,
+        "weak_mode_energy_fraction": 0.3718132296038747
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9782709213403066
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8295856045836849
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0032126467317229704,
+        "weak_mode_energy_fraction": 0.11664873300310437
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9729541355505721
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8990744114568334
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0034329611290305683,
+        "weak_mode_energy_fraction": 0.021105220286399422
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9686619187880621
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9391287347711523
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0037178995441718883,
+        "weak_mode_energy_fraction": 0.0025884191209961716
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9682236597438805
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9527588553839498
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0006279370534438861,
+        "weak_mode_energy_fraction": 0.4490786364316427
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9944988179848101
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9015552396527632
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0008558818511542426,
+        "weak_mode_energy_fraction": 0.17267705882643364
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9925996119983913
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9523834000175394
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0011477913567815843,
+        "weak_mode_energy_fraction": 0.061851322795767626
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9896668955026615
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9676382887992409
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0015673817697529817,
+        "weak_mode_energy_fraction": 0.016036192587506087
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9859871873961423
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9743921097054318
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0021473413071223498,
+        "weak_mode_energy_fraction": 0.0024943176714689592
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9828238193631452
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9765079033803454
+      },
+      "scan": "levaya_shcheka1960_frame250.png",
+      "series": "Male/1950-1960/Cheek/levaya_shcheka1960"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0014212820428275825,
+        "weak_mode_energy_fraction": 0.7934551627821688
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9881234772266976
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.6401747064416424
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0016077600734044695,
+        "weak_mode_energy_fraction": 0.392448733260236
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9859188701206941
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.7776858230561199
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0017569394579370777,
+        "weak_mode_energy_fraction": 0.11446579763051244
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9827272811480939
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8842384191571783
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0019047645429616214,
+        "weak_mode_energy_fraction": 0.0193332953304987
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9780900470309981
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9426935235695449
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0020821406979700616,
+        "weak_mode_energy_fraction": 0.0025079913460787136
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9708993512301111
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9542615864709579
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0002058049709528371,
+        "weak_mode_energy_fraction": 0.411700839133082
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9968125382638056
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.929664941540794
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.00033270638867677755,
+        "weak_mode_energy_fraction": 0.14632730445589973
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9961521439647868
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9629053244873909
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0005173022394920682,
+        "weak_mode_energy_fraction": 0.05875726474699636
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9948966049431398
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9783953324888234
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0008063485053164603,
+        "weak_mode_energy_fraction": 0.016079528823187608
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9915846190478829
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9828869758224461
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0012001137272204792,
+        "weak_mode_energy_fraction": 0.00328385983861661
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9829495767872978
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9804002768214252
+      },
+      "scan": "prav_shcheka1960_frame250.png",
+      "series": "Male/1950-1960/Cheek/prav_shcheka1960"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0013423201069973799,
+        "weak_mode_energy_fraction": 0.7255077896470559
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9879102004448176
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.6981870876254168
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0015097335861416503,
+        "weak_mode_energy_fraction": 0.314143666109091
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9858959418238119
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8258674263411877
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0016457918508873237,
+        "weak_mode_energy_fraction": 0.0859095360264652
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9837376091419138
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.9069158121029115
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0017851804929628105,
+        "weak_mode_energy_fraction": 0.014354998314826499
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9821170236116876
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9498427529978075
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.001956916259283524,
+        "weak_mode_energy_fraction": 0.0017931732327776495
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9796758683721033
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9599364185837138
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0002731777482868297,
+        "weak_mode_energy_fraction": 0.4221503671715276
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9963597136788342
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9239062586218013
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0003912086692270569,
+        "weak_mode_energy_fraction": 0.16818603872309754
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9962140623606185
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9598871738665371
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0005575173711879744,
+        "weak_mode_energy_fraction": 0.05961943676989362
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9954396764045119
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9762640862005381
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0008099336852310748,
+        "weak_mode_energy_fraction": 0.015327919764566336
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.992634070634364
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9841967560111883
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0011491884380579979,
+        "weak_mode_energy_fraction": 0.0027825707551826723
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9879350560391047
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9807279621378514
+      },
+      "scan": "pravaya_shcheka_frame250.png",
+      "series": "Male/1950-1960/Cheek/pravaya_shcheka"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0019123917170161032,
+        "weak_mode_energy_fraction": 0.7948457091563612
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9838927678650965
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7176386707567155
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0021232174438644874,
+        "weak_mode_energy_fraction": 0.3878099414678086
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.978732469032528
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8226668671980039
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.002296919794738166,
+        "weak_mode_energy_fraction": 0.11572848247114345
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9783278399340957
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8974899610042216
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.002465186423714177,
+        "weak_mode_energy_fraction": 0.01899525452012194
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9784429243511098
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9470829163951864
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0026629405355206104,
+        "weak_mode_energy_fraction": 0.002133644022405755
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9745774635136913
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9605618629110577
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0004705670983888231,
+        "weak_mode_energy_fraction": 0.5221404941074443
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.997058366827158
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9290479571316203
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0006152532875671663,
+        "weak_mode_energy_fraction": 0.18605314043051155
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9965202309285195
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.958452878156505
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0008172885957117237,
+        "weak_mode_energy_fraction": 0.057963027667234775
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.995198992706327
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9763223539509193
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0011402781645794048,
+        "weak_mode_energy_fraction": 0.013913911971821562
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9924474075535133
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.983830490004457
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0015784937327361164,
+        "weak_mode_energy_fraction": 0.003130245338067675
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9867368900831467
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9816838019824504
+      },
+      "scan": "lev_ugol_gl_frame250.png",
+      "series": "Male/1950-1960/Eye_corner/lev_ugol_gl"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0019658170507289756,
+        "weak_mode_energy_fraction": 0.7683483461114159
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.986811945610815
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.711859100707267
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0021828753694021247,
+        "weak_mode_energy_fraction": 0.3822703974284604
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9841859187893335
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8182921122365155
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.002364286994022275,
+        "weak_mode_energy_fraction": 0.11984220351144373
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9810681392017448
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8960695891028707
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0025527080416069747,
+        "weak_mode_energy_fraction": 0.021013512256951614
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9782470645974655
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9450758637280464
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0027871611630275604,
+        "weak_mode_energy_fraction": 0.002521790944795974
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9750948163287667
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9602023278930886
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.00046420943049485465,
+        "weak_mode_energy_fraction": 0.43179985675089066
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9952147894619423
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9222821445435055
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0006131163713015144,
+        "weak_mode_energy_fraction": 0.15855809262681447
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.994562937306924
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9547182747276381
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0008308552869064062,
+        "weak_mode_energy_fraction": 0.05937209630504821
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9934639619125545
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9700696291293657
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0011609431659381623,
+        "weak_mode_energy_fraction": 0.012943458535130842
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9905507536089204
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9804313322135583
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.001617804313815213,
+        "weak_mode_energy_fraction": 0.0022723019576295694
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9848373077169258
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9794522470108176
+      },
+      "scan": "levyy_ugol_frame250.png",
+      "series": "Male/1950-1960/Eye_corner/levyy_ugol"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.001747999941489613,
+        "weak_mode_energy_fraction": 0.7783866314968978
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9812527220947322
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7534501576226755
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0019614938064388913,
+        "weak_mode_energy_fraction": 0.3737762481058863
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9761228091672426
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8376879712151409
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.002133471413909193,
+        "weak_mode_energy_fraction": 0.11116430702533982
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9732846742024778
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.9084986575931338
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0023156711717725854,
+        "weak_mode_energy_fraction": 0.019287641763424512
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9712250201362413
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9457048457263197
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0025380815928084505,
+        "weak_mode_energy_fraction": 0.0023822665354246444
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.969216537890899
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9568004417062852
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0003794757557166766,
+        "weak_mode_energy_fraction": 0.40048976546224396
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9940607486377645
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9111014451532375
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0005282319427956225,
+        "weak_mode_energy_fraction": 0.16925965158276102
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9929453932324813
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9525834290114834
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0007297523833073151,
+        "weak_mode_energy_fraction": 0.0575585204279724
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9914956146922432
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.968533794878235
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.001036885979125427,
+        "weak_mode_energy_fraction": 0.015992260808901176
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9881096019689701
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9770816650233285
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0014651787576994762,
+        "weak_mode_energy_fraction": 0.002812189588378609
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9816373242131676
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9771408649664054
+      },
+      "scan": "levyy_ugol_glaza1950_frame250.png",
+      "series": "Male/1950-1960/Eye_corner/levyy_ugol_glaza1950"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.002412711877609733,
+        "weak_mode_energy_fraction": 0.7871643577220662
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9866023518655849
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7073000315145532
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.002680573148903487,
+        "weak_mode_energy_fraction": 0.4030935469260642
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.984244136968316
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8123033599504289
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.002895961889668816,
+        "weak_mode_energy_fraction": 0.12273327403463585
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9812896117931911
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8958776801480787
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0031274969979547644,
+        "weak_mode_energy_fraction": 0.02084415447271873
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9783891337330994
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9437407291969395
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0034214713760282113,
+        "weak_mode_energy_fraction": 0.0025972810886040185
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9757235139325839
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9586492261258762
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0004037713646409193,
+        "weak_mode_energy_fraction": 0.40186416598500957
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9959686583418275
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9274437390787498
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0006000063380968238,
+        "weak_mode_energy_fraction": 0.15986491635301203
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9953924507700403
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9578861341881336
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0008825989857715702,
+        "weak_mode_energy_fraction": 0.06530593579602773
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9942280578831982
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9730737211576226
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0012831465242489576,
+        "weak_mode_energy_fraction": 0.0157592615024186
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9920564366020831
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9814661140707093
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0018580620301645724,
+        "weak_mode_energy_fraction": 0.002875339493029814
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9867152520957095
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.981247575018517
+      },
+      "scan": "pravyy_ugol_frame250.png",
+      "series": "Male/1950-1960/Eye_corner/pravyy_ugol"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0016237161621244973,
+        "weak_mode_energy_fraction": 0.7477003663401114
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9885537533026925
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7274209514384343
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0018293827181502865,
+        "weak_mode_energy_fraction": 0.35718134628837744
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.986655954078313
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8436273660667616
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.001999542613450856,
+        "weak_mode_energy_fraction": 0.10862484202041967
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9842009643018297
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.9110167764825255
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.002172605208084848,
+        "weak_mode_energy_fraction": 0.01901102281765119
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9814294182487289
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9493528734892487
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0023829937807317452,
+        "weak_mode_energy_fraction": 0.002397463917476095
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9781269466347061
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9612643768440807
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.00027385591717981055,
+        "weak_mode_energy_fraction": 0.4234240674935891
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.996688854729049
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9306817436955379
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.00042218870238572287,
+        "weak_mode_energy_fraction": 0.17063689851731798
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9962433129878647
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9597427843598376
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0006212579188412164,
+        "weak_mode_energy_fraction": 0.06278641167469527
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9953293270629864
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9747982443198131
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0009192094967597588,
+        "weak_mode_energy_fraction": 0.016985507441430875
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9920577344551301
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9810672095704116
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0013412108212973695,
+        "weak_mode_energy_fraction": 0.003164551197352503
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9857462815024045
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9788709970919683
+      },
+      "scan": "pravyy_ugolglaza1950_frame250.png",
+      "series": "Male/1950-1960/Eye_corner/pravyy_ugolglaza1950"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0026202360535131693,
+        "weak_mode_energy_fraction": 0.7577442293029079
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9838225159232706
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.771560354458213
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0029080308562139242,
+        "weak_mode_energy_fraction": 0.3728768155878956
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9801314584804199
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8498390574898032
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0031421206859433078,
+        "weak_mode_energy_fraction": 0.12217998636286868
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9779452135100795
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.9109233646817785
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.003381454250781386,
+        "weak_mode_energy_fraction": 0.02233131919681767
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.973198140831849
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.945296031067567
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0036830970835556496,
+        "weak_mode_energy_fraction": 0.0027619145536435306
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9662939055521583
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9582171824372895
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0004710460602334776,
+        "weak_mode_energy_fraction": 0.42182607044415876
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.997454894183713
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9247566980613154
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0007076178793488446,
+        "weak_mode_energy_fraction": 0.17599510736450613
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9962346202398572
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9595866755224207
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.001009509074155322,
+        "weak_mode_energy_fraction": 0.05941221244279484
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9932463138870772
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9746397786745874
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0014408105481014885,
+        "weak_mode_energy_fraction": 0.01668132075834387
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9895329035880338
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9773645919606596
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0020695257805315157,
+        "weak_mode_energy_fraction": 0.003430194916673747
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9855405480346218
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9792232982424599
+      },
+      "scan": "1lev_shcheka_frame250.png",
+      "series": "Male/1990-2000/Cheek/1lev_shcheka"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0020815239195396337,
+        "weak_mode_energy_fraction": 0.7802401215741166
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9824066820969065
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7585571091169396
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.002317661004667318,
+        "weak_mode_energy_fraction": 0.39273312271462224
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9791521891884738
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8441741882821114
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0025161196859215893,
+        "weak_mode_energy_fraction": 0.12109540084942959
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9761317521584701
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.9025502980513251
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0027184169406433223,
+        "weak_mode_energy_fraction": 0.022305445764893142
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9724424218675058
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9442213453844129
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0029662131973902757,
+        "weak_mode_energy_fraction": 0.0029686441500548296
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9684113933080558
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9533900682042559
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.00046965828264195365,
+        "weak_mode_energy_fraction": 0.42413979536391916
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9943669814804647
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9137231879637016
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0006374789966292723,
+        "weak_mode_energy_fraction": 0.15853719453798587
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9939446096592123
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9559518138898577
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0008727728678969854,
+        "weak_mode_energy_fraction": 0.06232041983253842
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9915983187257925
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9712047918949896
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.001221894895481274,
+        "weak_mode_energy_fraction": 0.015038108550305329
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9882502863985426
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9778989080929072
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0017022908932730555,
+        "weak_mode_energy_fraction": 0.0031729123994680623
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.981784289105047
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9764036190601877
+      },
+      "scan": "2levaya_shcheka_frame250.png",
+      "series": "Male/1990-2000/Cheek/2levaya_shcheka"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0021351035669087037,
+        "weak_mode_energy_fraction": 0.7785389810234251
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9833476693863465
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7546076314474972
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.00235181913282833,
+        "weak_mode_energy_fraction": 0.3926836848253459
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9797155794523768
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8462908363014704
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0025304038745033288,
+        "weak_mode_energy_fraction": 0.11929221349319696
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.976679753935791
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.9071480227817228
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.00272049544551537,
+        "weak_mode_energy_fraction": 0.02063763126221385
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.973212283751928
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9405682933271272
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.002954769634086069,
+        "weak_mode_energy_fraction": 0.002518834082832916
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9726440286889576
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9563903455285543
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0005551941500408388,
+        "weak_mode_energy_fraction": 0.4258469923011849
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9934355309530133
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9007266247706713
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0007142809525201346,
+        "weak_mode_energy_fraction": 0.1643767781360429
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9920499933246567
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9456568746672086
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0009337298096852659,
+        "weak_mode_energy_fraction": 0.06073716294457254
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9895192193716507
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9725244549657667
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.001263595505600939,
+        "weak_mode_energy_fraction": 0.014280214721486969
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9877678249512563
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9772893076402438
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0017193874612944887,
+        "weak_mode_energy_fraction": 0.00248182233369018
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9820762367491505
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9765858713517921
+      },
+      "scan": "2pravaya_shcheka_frame250.png",
+      "series": "Male/1990-2000/Cheek/2pravaya_shcheka"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0023720039746839977,
+        "weak_mode_energy_fraction": 0.7309260902398468
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9819938939126128
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7392201723348929
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.002656105799165814,
+        "weak_mode_energy_fraction": 0.36574028683752874
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9769689594048337
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8306714793745352
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.002886190176962852,
+        "weak_mode_energy_fraction": 0.12675779895697972
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9751625831032171
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.9014587297146706
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0031198839010867447,
+        "weak_mode_energy_fraction": 0.02489501840597061
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9744128245373674
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9432386180763378
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0034063351432411975,
+        "weak_mode_energy_fraction": 0.0032318382688477
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9729717291216133
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9570117692803501
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0004245848607453248,
+        "weak_mode_energy_fraction": 0.4110538032761346
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9962065964649011
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.8991268258396009
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0006486298466264997,
+        "weak_mode_energy_fraction": 0.18455955066838964
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9951614146821408
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9524306124702583
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.000951266938101637,
+        "weak_mode_energy_fraction": 0.06502076849531986
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9929206005051583
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9698612908238715
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0013906234258738881,
+        "weak_mode_energy_fraction": 0.016927152214561716
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.989449515539349
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.979454660041663
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.001989042485750241,
+        "weak_mode_energy_fraction": 0.0037374048084899522
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.983088638961001
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9771838582132141
+      },
+      "scan": "levaya_shcheka_frame250.png",
+      "series": "Male/1990-2000/Cheek/levaya_shcheka"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0024299962308660674,
+        "weak_mode_energy_fraction": 0.7980029484142085
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.982427854452869
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7426299338110876
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0026910500587109935,
+        "weak_mode_energy_fraction": 0.4283181036587559
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9806618015962979
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8293138036941106
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.002904904831187327,
+        "weak_mode_energy_fraction": 0.13886142253321831
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9773642837992454
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.9000187321958208
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0031221570983557554,
+        "weak_mode_energy_fraction": 0.025067509714059903
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9747092423917
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9411534360698727
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0034003487700066536,
+        "weak_mode_energy_fraction": 0.0032251846889603227
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9719041857411904
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9550223604400138
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0004553739443662633,
+        "weak_mode_energy_fraction": 0.3864218140934473
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.995321059423525
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.906092134886864
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0006507082561389291,
+        "weak_mode_energy_fraction": 0.1692998097160168
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9943809967239642
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9517508925082965
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0009324034177837571,
+        "weak_mode_energy_fraction": 0.06951811852585418
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9923466584093908
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9712222560049991
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0013395652122813074,
+        "weak_mode_energy_fraction": 0.015898969645576595
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9853114586146764
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9728002226880627
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0019028911031633018,
+        "weak_mode_energy_fraction": 0.00372430183593062
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9834644548094855
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9750633113497732
+      },
+      "scan": "shcheka_lev_frame250.png",
+      "series": "Male/1990-2000/Cheek/shcheka_lev"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0024849001872787892,
+        "weak_mode_energy_fraction": 0.7600640496317499
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9828242820397614
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7376293911538089
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0027811770275836703,
+        "weak_mode_energy_fraction": 0.36286342255820014
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9790294548571119
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.840936175134994
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.003021343637311507,
+        "weak_mode_energy_fraction": 0.10799616808763214
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9765722887809627
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.9085484561199059
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.003270438100141542,
+        "weak_mode_energy_fraction": 0.018339471736326725
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.974687910431456
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9455546364714614
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0035867306555976575,
+        "weak_mode_energy_fraction": 0.0022337371774090375
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9722241164327617
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9581949264811481
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.00048569602893330034,
+        "weak_mode_energy_fraction": 0.4122541079972871
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9940007491399125
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9215776906461943
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0007008467365824889,
+        "weak_mode_energy_fraction": 0.16703578250638507
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9931115876928032
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9558878296652171
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0009894313213778142,
+        "weak_mode_energy_fraction": 0.06195794883016181
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.991099330214858
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9684683787579282
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0014048677246864371,
+        "weak_mode_energy_fraction": 0.015351519818540259
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9870654614883374
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9779779962204681
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.002014462167546472,
+        "weak_mode_energy_fraction": 0.0023845876849693933
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9822725230865107
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9761653495485699
+      },
+      "scan": "2levyy_ugol_glaza_frame250.png",
+      "series": "Male/1990-2000/Eye_corner/2levyy_ugol_glaza"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.00247239741278904,
+        "weak_mode_energy_fraction": 0.7602661826629057
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9790469492686505
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.732070085661361
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.002749276150173917,
+        "weak_mode_energy_fraction": 0.3785467642225989
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9708501303842318
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8378176469738894
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.002977624537329039,
+        "weak_mode_energy_fraction": 0.1186265623229548
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9610231509583428
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.9059928217277201
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0032152756289010247,
+        "weak_mode_energy_fraction": 0.020712578353295517
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9557955455265283
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9407947288545593
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.003526214909881732,
+        "weak_mode_energy_fraction": 0.0024766993291795215
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9604930900822896
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9551172560159494
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0005863707805383662,
+        "weak_mode_energy_fraction": 0.43002406055017545
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9928729504637378
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9233313930499116
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.000795056315916139,
+        "weak_mode_energy_fraction": 0.1642583230531329
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9910589278882114
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.952581280140028
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.001079525353970468,
+        "weak_mode_energy_fraction": 0.06360635893066394
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9879054528671025
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9687945658516466
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0014890207467746104,
+        "weak_mode_energy_fraction": 0.013732739206520003
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9843971495805911
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9701814831495097
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0020575847001348055,
+        "weak_mode_energy_fraction": 0.00248352537956685
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.979886670278019
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9744433456820826
+      },
+      "scan": "2pravyy_ugol_glaza_frame250.png",
+      "series": "Male/1990-2000/Eye_corner/2pravyy_ugol_glaza"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.002446653630470374,
+        "weak_mode_energy_fraction": 0.7527518735154154
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9814027547735337
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7695946403324728
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0027118132886102294,
+        "weak_mode_energy_fraction": 0.36729495672720675
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9779974069824741
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8448624152870072
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0029089528696870336,
+        "weak_mode_energy_fraction": 0.11622057775553238
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9750991131955046
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.9084886397507449
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0030970792797184498,
+        "weak_mode_energy_fraction": 0.0215553093491652
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9734986278163422
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9403845211631905
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.003342494941337376,
+        "weak_mode_energy_fraction": 0.002739844417537142
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9712458005366912
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9515777076262916
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0005365613220889256,
+        "weak_mode_energy_fraction": 0.4650366451489988
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9962967806619459
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9214064047171492
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.000738488877920198,
+        "weak_mode_energy_fraction": 0.18341398003888612
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.9950123552847998
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9590698287575002
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0009899043325874953,
+        "weak_mode_energy_fraction": 0.05824983941187588
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9890487286821088
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9716643904487053
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0013675630467557243,
+        "weak_mode_energy_fraction": 0.01743838308394498
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9871366670077832
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9741959292155017
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0018999520388619416,
+        "weak_mode_energy_fraction": 0.0026881254740024527
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9844470128386416
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9769657027728877
+      },
+      "scan": "lev_ugol_glaza_frame250.png",
+      "series": "Male/1990-2000/Eye_corner/lev_ugol_glaza"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0022158536805592308,
+        "weak_mode_energy_fraction": 0.7669721085827748
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9864203590875675
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.7254075384655854
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.002469768630284171,
+        "weak_mode_energy_fraction": 0.3769627585606975
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9840679531319494
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8273362635942769
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0026713432366578314,
+        "weak_mode_energy_fraction": 0.11830845275142028
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9798978185722104
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8991452409065022
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.002866944724459341,
+        "weak_mode_energy_fraction": 0.02161510878660927
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9758882019362813
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9401741779561443
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.003114835969405534,
+        "weak_mode_energy_fraction": 0.002776240427641516
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9734160056915035
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9556960381719969
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0005217563870470971,
+        "weak_mode_energy_fraction": 0.4282852930046706
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.995955670772949
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9220307721933536
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0007048406842183389,
+        "weak_mode_energy_fraction": 0.16601982635537513
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.99499601313141
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.955744479531915
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0009436696021849964,
+        "weak_mode_energy_fraction": 0.061098091187077604
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9928842157256359
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9724007618693432
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0013203991621746555,
+        "weak_mode_energy_fraction": 0.014434988345537619
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9904261987834628
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.980995690114887
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0018623393440136984,
+        "weak_mode_energy_fraction": 0.0027822900150491327
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9851970975128279
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.9790385884182684
+      },
+      "scan": "levyy_ugol_glaza_frame250.png",
+      "series": "Male/1990-2000/Eye_corner/levyy_ugol_glaza"
+    },
+    {
+      "phase0_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0023986213239629217,
+        "weak_mode_energy_fraction": 0.7240249359021107
+      },
+      "phase0_alphaL_0.02_pair": {
+        "msssim": 0.9839230694533931
+      },
+      "phase0_alphaL_0.02_single": {
+        "msssim": 0.714409218942464
+      },
+      "phase0_alphaL_0.05": {
+        "projected_magnitude_mae": 0.002640593126764632,
+        "weak_mode_energy_fraction": 0.33339844503924065
+      },
+      "phase0_alphaL_0.05_pair": {
+        "msssim": 0.9813968193049759
+      },
+      "phase0_alphaL_0.05_single": {
+        "msssim": 0.8127002572483041
+      },
+      "phase0_alphaL_0.1": {
+        "projected_magnitude_mae": 0.002841023683936558,
+        "weak_mode_energy_fraction": 0.10519203705426877
+      },
+      "phase0_alphaL_0.1_pair": {
+        "msssim": 0.9779485068950114
+      },
+      "phase0_alphaL_0.1_single": {
+        "msssim": 0.8976015512489398
+      },
+      "phase0_alphaL_0.2": {
+        "projected_magnitude_mae": 0.003044080048886398,
+        "weak_mode_energy_fraction": 0.02005509163184093
+      },
+      "phase0_alphaL_0.2_pair": {
+        "msssim": 0.9752084222217118
+      },
+      "phase0_alphaL_0.2_single": {
+        "msssim": 0.9445764969035244
+      },
+      "phase0_alphaL_0.4": {
+        "projected_magnitude_mae": 0.003298748948123233,
+        "weak_mode_energy_fraction": 0.0026124208558508063
+      },
+      "phase0_alphaL_0.4_pair": {
+        "msssim": 0.9736980465128925
+      },
+      "phase0_alphaL_0.4_single": {
+        "msssim": 0.9592539997122788
+      },
+      "phase200_alphaL_0.02": {
+        "projected_magnitude_mae": 0.0004682643457961124,
+        "weak_mode_energy_fraction": 0.38412384949271405
+      },
+      "phase200_alphaL_0.02_pair": {
+        "msssim": 0.9948467532651857
+      },
+      "phase200_alphaL_0.02_single": {
+        "msssim": 0.9186841690141583
+      },
+      "phase200_alphaL_0.05": {
+        "projected_magnitude_mae": 0.0006620522126107727,
+        "weak_mode_energy_fraction": 0.15952873069111176
+      },
+      "phase200_alphaL_0.05_pair": {
+        "msssim": 0.993885064940873
+      },
+      "phase200_alphaL_0.05_single": {
+        "msssim": 0.9515857261532046
+      },
+      "phase200_alphaL_0.1": {
+        "projected_magnitude_mae": 0.0009293399204728071,
+        "weak_mode_energy_fraction": 0.06514637746536792
+      },
+      "phase200_alphaL_0.1_pair": {
+        "msssim": 0.9918767585389389
+      },
+      "phase200_alphaL_0.1_single": {
+        "msssim": 0.9630497668445207
+      },
+      "phase200_alphaL_0.2": {
+        "projected_magnitude_mae": 0.0013319395340296823,
+        "weak_mode_energy_fraction": 0.01847163949926504
+      },
+      "phase200_alphaL_0.2_pair": {
+        "msssim": 0.9870393077390948
+      },
+      "phase200_alphaL_0.2_single": {
+        "msssim": 0.9699490245109332
+      },
+      "phase200_alphaL_0.4": {
+        "projected_magnitude_mae": 0.0018710025921509293,
+        "weak_mode_energy_fraction": 0.003228659670816539
+      },
+      "phase200_alphaL_0.4_pair": {
+        "msssim": 0.9841157661308555
+      },
+      "phase200_alphaL_0.4_single": {
+        "msssim": 0.975782726765698
+      },
+      "scan": "ugol_gl_lev_frame250.png",
+      "series": "Male/1990-2000/Eye_corner/ugol_gl_lev"
+    }
+  ],
+  "summary": {
+    "design": {
+      "axial_regularization_fixed": 0.02,
+      "dynamic_range_db": 51.0,
+      "encodings": [
+        "single",
+        "pair"
+      ],
+      "lateral_mode_count": 512,
+      "lateral_regularization": [
+        0.02,
+        0.05,
+        0.1,
+        0.2,
+        0.4
+      ],
+      "n_scans": 40,
+      "phase_iterations": [
+        0,
+        200
+      ],
+      "phase_momentum": 1.0,
+      "selection": "frame-250 scan from each filename-defined acquisition series",
+      "weak_mode_count": 104,
+      "weak_mode_definition": "lateral singular value < 0.05"
+    },
+    "elapsed_seconds": 1539.7228093340009,
+    "msssim": {
+      "phase0_alphaL_0.02_pair": {
+        "max": 0.9885537533026925,
+        "mean": 0.9833650157619427,
+        "median": 0.9834998581593253,
+        "min": 0.9733414899263171
+      },
+      "phase0_alphaL_0.02_single": {
+        "max": 0.7776625983145016,
+        "mean": 0.7293413113906292,
+        "median": 0.7315168455329091,
+        "min": 0.6401747064416424
+      },
+      "phase0_alphaL_0.05_pair": {
+        "max": 0.986655954078313,
+        "mean": 0.9803323359215177,
+        "median": 0.9802447219211183,
+        "min": 0.9708501303842318
+      },
+      "phase0_alphaL_0.05_single": {
+        "max": 0.8498390574898032,
+        "mean": 0.8271208952380572,
+        "median": 0.8289496680229258,
+        "min": 0.7776858230561199
+      },
+      "phase0_alphaL_0.1_pair": {
+        "max": 0.9842009643018297,
+        "mean": 0.9773334228251469,
+        "median": 0.9780638845976043,
+        "min": 0.9610231509583428
+      },
+      "phase0_alphaL_0.1_single": {
+        "max": 0.9141835558572008,
+        "mean": 0.900335027455515,
+        "median": 0.8993476098331041,
+        "min": 0.8842384191571783
+      },
+      "phase0_alphaL_0.2_pair": {
+        "max": 0.9821170236116876,
+        "mean": 0.9745971770327314,
+        "median": 0.9755483120789965,
+        "min": 0.9557955455265283
+      },
+      "phase0_alphaL_0.2_single": {
+        "max": 0.9507969794898987,
+        "mean": 0.9425774332243764,
+        "median": 0.9430613467509648,
+        "min": 0.9314979601664548
+      },
+      "phase0_alphaL_0.4_pair": {
+        "max": 0.9796758683721033,
+        "mean": 0.9723826331660422,
+        "median": 0.9729297844471266,
+        "min": 0.9604930900822896
+      },
+      "phase0_alphaL_0.4_single": {
+        "max": 0.9636847495084248,
+        "mean": 0.9563063508321686,
+        "median": 0.9568568785242592,
+        "min": 0.9435522199048777
+      },
+      "phase200_alphaL_0.02_pair": {
+        "max": 0.9978365292429356,
+        "mean": 0.9953044718539932,
+        "median": 0.9958176987506902,
+        "min": 0.9915655525081025
+      },
+      "phase200_alphaL_0.02_single": {
+        "max": 0.9319395079083872,
+        "mean": 0.9195138011407191,
+        "median": 0.9221846780734491,
+        "min": 0.8991268258396009
+      },
+      "phase200_alphaL_0.05_pair": {
+        "max": 0.9970084296052054,
+        "mean": 0.9944329165734139,
+        "median": 0.9950041842081049,
+        "min": 0.9905964372016703
+      },
+      "phase200_alphaL_0.05_single": {
+        "max": 0.9629053244873909,
+        "mean": 0.9550911364504768,
+        "median": 0.9557095919462006,
+        "min": 0.9456568746672086
+      },
+      "phase200_alphaL_0.1_pair": {
+        "max": 0.9957770929980513,
+        "mean": 0.9924779469068916,
+        "median": 0.9930834571961178,
+        "min": 0.9879054528671025
+      },
+      "phase200_alphaL_0.1_single": {
+        "max": 0.9783953324888234,
+        "mean": 0.9706512134276137,
+        "median": 0.971643746850068,
+        "min": 0.9580276627816198
+      },
+      "phase200_alphaL_0.2_pair": {
+        "max": 0.9934485111148805,
+        "mean": 0.9891320905857232,
+        "median": 0.989822245161646,
+        "min": 0.9829822228564796
+      },
+      "phase200_alphaL_0.2_single": {
+        "max": 0.9841967560111883,
+        "mean": 0.9780159692539006,
+        "median": 0.9789586704593203,
+        "min": 0.9676828972533149
+      },
+      "phase200_alphaL_0.4_pair": {
+        "max": 0.9883067034757465,
+        "mean": 0.9842040108829861,
+        "median": 0.9848578102709529,
+        "min": 0.979886670278019
+      },
+      "phase200_alphaL_0.4_single": {
+        "max": 0.9821363220534092,
+        "mean": 0.9779786866547736,
+        "median": 0.979104680650644,
+        "min": 0.9713449216470277
+      }
+    },
+    "weak_mode_energy_fraction": {
+      "phase0_alphaL_0.02": {
+        "max": 0.7980029484142085,
+        "mean": 0.7581383755238836,
+        "min": 0.6844714969420853
+      },
+      "phase0_alphaL_0.05": {
+        "max": 0.4283181036587559,
+        "mean": 0.3674998388195588,
+        "min": 0.2715989712101001
+      },
+      "phase0_alphaL_0.1": {
+        "max": 0.13886142253321831,
+        "mean": 0.11354282942768598,
+        "min": 0.0721111115077379
+      },
+      "phase0_alphaL_0.2": {
+        "max": 0.02573289595278001,
+        "mean": 0.020311798014137745,
+        "min": 0.012428108882877577
+      },
+      "phase0_alphaL_0.4": {
+        "max": 0.0032742827104871,
+        "mean": 0.002566103083222338,
+        "min": 0.0016438078190692013
+      },
+      "phase200_alphaL_0.02": {
+        "max": 0.5221404941074443,
+        "mean": 0.4160071419136832,
+        "min": 0.35459313104068657
+      },
+      "phase200_alphaL_0.05": {
+        "max": 0.18605314043051155,
+        "mean": 0.16458800682200342,
+        "min": 0.1439658308231535
+      },
+      "phase200_alphaL_0.1": {
+        "max": 0.07065263684163958,
+        "mean": 0.06144076159931109,
+        "min": 0.05189664086062073
+      },
+      "phase200_alphaL_0.2": {
+        "max": 0.01847163949926504,
+        "mean": 0.015295436121145528,
+        "min": 0.011447917797323926
+      },
+      "phase200_alphaL_0.4": {
+        "max": 0.0037374048084899522,
+        "mean": 0.002886892325814727,
+        "min": 0.002060099332983006
+      }
+    }
+  }
+}

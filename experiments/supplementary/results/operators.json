@@ -1,0 +1,77 @@
+{
+  "axial_geometry": {
+    "amplitude_fwhm_um": 13.521727967376592,
+    "intensity_fwhm_um": 12.24253442637351,
+    "pixel_size_z_um": 6.0,
+    "samples_holding_95pct_energy": 2,
+    "samples_within_amplitude_fwhm": 2.2536213278960986
+  },
+  "carrier": {
+    "fractional_bandwidth": 0.10791180285343709,
+    "k0_is_a_scanner_sample": true,
+    "k0_rad_per_um": 4.83321946706122,
+    "k_max": 5.09502284966296,
+    "k_min": 4.573461423386055,
+    "two_way_phase_over_half_wavelength_in_2pi": 0.9999999999999999,
+    "two_way_phase_over_half_wavelength_rad": 6.283185307179585
+  },
+  "effective_dof": {
+    "axial_alpha_0.02": 229.24888514968254,
+    "axial_alpha_0.03": 223.31133536429655,
+    "axial_of": 256,
+    "lateral_alpha_0.05": 398.8191510980706,
+    "lateral_alpha_0.20": 304.7018351323319,
+    "lateral_of": 512
+  },
+  "lateral_geometry": {
+    "amplitude_fwhm_um": 17.14839563429433,
+    "beam_radius_um": 10.0,
+    "columns_within_amplitude_fwhm": 2.8580659390490553,
+    "intensity_fwhm_um": 11.690260833434877,
+    "nonzero_columns_per_ascan": 5,
+    "pixel_size_x_um": 6.0,
+    "row_weights": {
+      "-12": 0.23692775868212176,
+      "-6": 0.697676326071031,
+      "0": 1.0,
+      "12": 0.23692775868212176,
+      "6": 0.697676326071031
+    },
+    "truncation_radius_um": 17.32050807568877
+  },
+  "operator_shapes": {
+    "axial": [
+      256,
+      256
+    ],
+    "lateral": [
+      512,
+      512
+    ]
+  },
+  "resolution_element_occupancy": {
+    "definition": "voxels whose axial and lateral responses overlap within the amplitude FWHM of the scanner point-spread function, times two encoding rows per voxel",
+    "encoded_rows_per_resolution_element": 12.881996713548684,
+    "voxels_per_resolution_element": 6.440998356774342
+  },
+  "singular_values": {
+    "axial": {
+      "alpha": 0.02,
+      "finite_precision_max_to_min_ratio": 3.206520692005653e+16,
+      "max": 0.9999712907121795,
+      "median": 0.49692022030261196,
+      "min": 3.118555552144919e-17,
+      "n_below_alpha": 24,
+      "nullity": 2,
+      "numerical_rank": 254
+    },
+    "lateral": {
+      "condition_number": 228.57517896032553,
+      "max": 2.8691465470442736,
+      "median": 0.528182721123488,
+      "min": 0.01255231018562291,
+      "n_below_alpha_005": 104,
+      "n_below_alpha_020": 207
+    }
+  }
+}

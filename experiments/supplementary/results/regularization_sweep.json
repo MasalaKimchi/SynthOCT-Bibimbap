@@ -1,0 +1,1762 @@
+[
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04045102756415679,
+      "msssim": 0.9972454308390939
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.038983483357606534,
+      "msssim": 0.9968364747990552
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.03651862128152954,
+      "msssim": 0.9957253556414071
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.032246342881537486,
+      "msssim": 0.9934485111148805
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.026699163591509454,
+      "msssim": 0.9883067034757465
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.028882786218999677,
+      "msssim": 0.7624714783663679
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.030849276518444376,
+      "msssim": 0.8636843950675136
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.0297729740812468,
+      "msssim": 0.9327926181673597
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.027338328098310473,
+      "msssim": 0.962775523449293
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.023956186537857836,
+      "msssim": 0.9698196191215044
+    },
+    "scan": "l__shcheka_frame250.png",
+    "series": "Female/1950-1960/Cheek/l__shcheka"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04163488766195958,
+      "msssim": 0.9944344176746045
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.040056103301048064,
+      "msssim": 0.9935646591303663
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.037544546013420735,
+      "msssim": 0.9914613317898305
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.032899094615146555,
+      "msssim": 0.9851842614803898
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.027758878923571234,
+      "msssim": 0.9812137498749449
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.030297362024259162,
+      "msssim": 0.7671245059368302
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.03102052636792595,
+      "msssim": 0.8710553496961259
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.030185053368109,
+      "msssim": 0.9297938189429338
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.02869351907779507,
+      "msssim": 0.9587525816259681
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.025502486027615557,
+      "msssim": 0.967794336372013
+    },
+    "scan": "l_shchekka1960_frame250.png",
+    "series": "Female/1950-1960/Cheek/l_shchekka1960"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04591610744112732,
+      "msssim": 0.9964146708581503
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.044296332686606495,
+      "msssim": 0.9952365807793612
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.0417931213265035,
+      "msssim": 0.9944095211158239
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.03687835495200788,
+      "msssim": 0.9911558575395695
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.030271122109886438,
+      "msssim": 0.9850588026697785
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.025844316520767956,
+      "msssim": 0.771954282341503
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.03148071277848042,
+      "msssim": 0.8573541970982346
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.032009279549722255,
+      "msssim": 0.9215449160091795
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.030702853306240785,
+      "msssim": 0.9574295410274521
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.027129618766127905,
+      "msssim": 0.9652459761964488
+    },
+    "scan": "lev_shcheka1960_frame250.png",
+    "series": "Female/1950-1960/Cheek/lev_shcheka1960"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04033503573063893,
+      "msssim": 0.9948470080970796
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.038758023141055586,
+      "msssim": 0.9931750875277116
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.03597024527891377,
+      "msssim": 0.9881091846805904
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.031603558385430684,
+      "msssim": 0.9835351302307688
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.02668631871420533,
+      "msssim": 0.9830470392759122
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.020886291740106994,
+      "msssim": 0.8075795396320979
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.026017014556307987,
+      "msssim": 0.8791301039620201
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.027132433214106036,
+      "msssim": 0.925601705349914
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.025573447483698553,
+      "msssim": 0.9427618576355431
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.02316382839653888,
+      "msssim": 0.9485533041382064
+    },
+    "scan": "levaya_shcheka_frame250.png",
+    "series": "Female/1950-1960/Cheek/levaya_shcheka"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04783626819320699,
+      "msssim": 0.9963336393502885
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.046245765459680926,
+      "msssim": 0.9959974654815626
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.04376557460728301,
+      "msssim": 0.9951548753082746
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.039062620982054784,
+      "msssim": 0.9929542089324763
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.03243202214575919,
+      "msssim": 0.9871583206798799
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.03421317195982082,
+      "msssim": 0.7456763620572313
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.03594262951250182,
+      "msssim": 0.8506573842823246
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.034995133886934246,
+      "msssim": 0.9242019685016855
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.03267104378265396,
+      "msssim": 0.9593290276458571
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.028947936453769495,
+      "msssim": 0.9674182479051892
+    },
+    "scan": "levaya_shcheka1_frame250.png",
+    "series": "Female/1950-1960/Cheek/levaya_shcheka1"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.042354299625738,
+      "msssim": 0.9924598046051369
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.04088617853164299,
+      "msssim": 0.9920042321215249
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.038259203158005725,
+      "msssim": 0.9898031417027442
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.03372938675318975,
+      "msssim": 0.9844427402996836
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.028383623527268694,
+      "msssim": 0.980695340930501
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.027509349052226906,
+      "msssim": 0.7902701786061805
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.030276277368708294,
+      "msssim": 0.8754071377605716
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.03056022069726135,
+      "msssim": 0.930555082741855
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.02898761411986172,
+      "msssim": 0.9589777928091922
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.025677049689509353,
+      "msssim": 0.9659209005924023
+    },
+    "scan": "Lev_ugol_glaza_frame250.png",
+    "series": "Female/1950-1960/Eye_corner/Lev_ugol_glaza"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.03942455638253106,
+      "msssim": 0.9926373643556886
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.037702616665079465,
+      "msssim": 0.9909600431501742
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.035220412347031195,
+      "msssim": 0.9880915306910905
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.030667951188189553,
+      "msssim": 0.9829822228564796
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.025844093465505907,
+      "msssim": 0.9806956497198095
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.023062166285013463,
+      "msssim": 0.8065316258773818
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.026118954588298337,
+      "msssim": 0.8802544042055402
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.02652505521524922,
+      "msssim": 0.926513831227064
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.025592154923610565,
+      "msssim": 0.9519653393925386
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.023140032478610177,
+      "msssim": 0.9612058073549665
+    },
+    "scan": "l__ugol_glaza_frame250.png",
+    "series": "Female/1950-1960/Eye_corner/l__ugol_glaza"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04303994670719259,
+      "msssim": 0.9947093141257723
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.04155271689396985,
+      "msssim": 0.9942134890210884
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.039235471824560116,
+      "msssim": 0.9933885178571635
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.035035604378583676,
+      "msssim": 0.9909828659310389
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.02941022738870902,
+      "msssim": 0.9852197458900694
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.02966841084526798,
+      "msssim": 0.7946104017785859
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.031989614150807845,
+      "msssim": 0.882128708798607
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.030898561103011514,
+      "msssim": 0.9360764455905508
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.029194443361301992,
+      "msssim": 0.9587074022097832
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.02627620783819296,
+      "msssim": 0.9659395714965779
+    },
+    "scan": "lev_ugol1960_frame250.png",
+    "series": "Female/1950-1960/Eye_corner/lev_ugol1960"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.043343577833883186,
+      "msssim": 0.9939663728602948
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.041584867202572935,
+      "msssim": 0.9925197303933894
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.038961577334464426,
+      "msssim": 0.9898315029664594
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.03482567624316933,
+      "msssim": 0.9867297567967208
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.02952643729151259,
+      "msssim": 0.9822317800023954
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.029172059681012833,
+      "msssim": 0.7790837554816081
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.03342655403890514,
+      "msssim": 0.8720817797814717
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.0323273576855843,
+      "msssim": 0.9314189274223347
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.03002659682728944,
+      "msssim": 0.9545153593836734
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.027164029643857408,
+      "msssim": 0.9621939916404647
+    },
+    "scan": "levyy_ugol_glaza_frame250.png",
+    "series": "Female/1950-1960/Eye_corner/levyy_ugol_glaza"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04574207058976851,
+      "msssim": 0.9969677670359774
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.044230991325420736,
+      "msssim": 0.996701183443652
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.04165840410379603,
+      "msssim": 0.9957770929980513
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.036815484528011366,
+      "msssim": 0.9929786523058034
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.030057782400583027,
+      "msssim": 0.9869783106317227
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.03103063786623231,
+      "msssim": 0.7508245443940755
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.03339100911740303,
+      "msssim": 0.8513443101066666
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.03264607451215122,
+      "msssim": 0.924291184993275
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.030346926588718622,
+      "msssim": 0.9586488505554531
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.026724096121565503,
+      "msssim": 0.9665299643166835
+    },
+    "scan": "levyy_ugol_glaza1_frame250.png",
+    "series": "Female/1950-1960/Eye_corner/levyy_ugol_glaza1"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.043636864922093004,
+      "msssim": 0.9970146076908935
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.042172891779179524,
+      "msssim": 0.9966285544741443
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.03960283962063877,
+      "msssim": 0.9954468736410607
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.034678921449368336,
+      "msssim": 0.9918566209758307
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.028249240573474117,
+      "msssim": 0.9862603774784904
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.025234921560084445,
+      "msssim": 0.7796701945823099
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.028947880619716784,
+      "msssim": 0.8641598561312244
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.029392819971813013,
+      "msssim": 0.9214001523183485
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.028212036442354895,
+      "msssim": 0.9529709785995454
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.02508072049525762,
+      "msssim": 0.9612775056238221
+    },
+    "scan": "1levaya_shcheka_frame250.png",
+    "series": "Female/1990-2000/Cheek/1levaya_shcheka"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04709738653383454,
+      "msssim": 0.9963447140495197
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.04558147793742829,
+      "msssim": 0.9957980423148355
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.04288539848879419,
+      "msssim": 0.9940379177817088
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.037980384464386945,
+      "msssim": 0.9909552450442228
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.031076929883267355,
+      "msssim": 0.9849983282097887
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.03154784838986721,
+      "msssim": 0.7520495762696681
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.033774384656660196,
+      "msssim": 0.8508855801627195
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.03292331569873893,
+      "msssim": 0.9202420933173908
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.030862526731468436,
+      "msssim": 0.9528496786381226
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.027409829967203106,
+      "msssim": 0.9609445222601468
+    },
+    "scan": "2lev_shcheka_frame250.png",
+    "series": "Female/1990-2000/Cheek/2lev_shcheka"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04730688314547658,
+      "msssim": 0.996083182423753
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.04567627601522162,
+      "msssim": 0.9951424462199615
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.043070228227921496,
+      "msssim": 0.9939159466134425
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.03807611953708322,
+      "msssim": 0.9901115867352581
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.031415808180116585,
+      "msssim": 0.9856149385949221
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.02975377897459843,
+      "msssim": 0.7585028864879344
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.03482049365695601,
+      "msssim": 0.8499831520486174
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.03433339967655685,
+      "msssim": 0.9196215676066138
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.03216781032956663,
+      "msssim": 0.952855356872844
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.028422284313129594,
+      "msssim": 0.9612445226454329
+    },
+    "scan": "3shcheka_levaya_frame250.png",
+    "series": "Female/1990-2000/Cheek/3shcheka_levaya"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04459585022532571,
+      "msssim": 0.9932822293324703
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.04294221589918515,
+      "msssim": 0.9924671751863183
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.04052213643553064,
+      "msssim": 0.9910436181603234
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.03599336232154852,
+      "msssim": 0.9883182372301081
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.030005459209891713,
+      "msssim": 0.982442221540848
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.027131862494270815,
+      "msssim": 0.7858320984215417
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.030479087943170842,
+      "msssim": 0.8669429905015267
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.031021892260149543,
+      "msssim": 0.9189045158005518
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.029981554090789522,
+      "msssim": 0.9472021179369614
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.026933025647495203,
+      "msssim": 0.9547585135229023
+    },
+    "scan": "4levaya_shcheka_frame250.png",
+    "series": "Female/1990-2000/Cheek/4levaya_shcheka"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04500829711958039,
+      "msssim": 0.9936610205087857
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.04329503670637451,
+      "msssim": 0.991935651855133
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.040745974116149004,
+      "msssim": 0.9896772911835026
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.0361112722030545,
+      "msssim": 0.9860860635979098
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.030060982964842258,
+      "msssim": 0.9821689090220272
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.027954676549652654,
+      "msssim": 0.7804577572160437
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.033331888706177815,
+      "msssim": 0.861900878189312
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.032993126430501105,
+      "msssim": 0.9267777517991993
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.030859648266835984,
+      "msssim": 0.9570067613553394
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.027390062454999493,
+      "msssim": 0.9645305258442028
+    },
+    "scan": "5lev_shcheka_frame250.png",
+    "series": "Female/1990-2000/Cheek/5lev_shcheka"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04800654073010384,
+      "msssim": 0.9959627225716243
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.04635141681998024,
+      "msssim": 0.9954389294420238
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.0434595815028624,
+      "msssim": 0.9913738891087133
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.03853018173527354,
+      "msssim": 0.9886926904373057
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.03194912474055205,
+      "msssim": 0.9853122734630884
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.02923586736296832,
+      "msssim": 0.7680008282620998
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.03321639825506821,
+      "msssim": 0.8572193778229196
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.03349947560879733,
+      "msssim": 0.9224292081971619
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.031705059803257454,
+      "msssim": 0.9552358206041278
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.028234014996263792,
+      "msssim": 0.9629809707015193
+    },
+    "scan": "2lev_ugol_glaza_frame250.png",
+    "series": "Female/1990-2000/Eye_corner/2lev_ugol_glaza"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04975439673368081,
+      "msssim": 0.9960047383357314
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.048110184266520986,
+      "msssim": 0.9952979022304134
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.04552587079952737,
+      "msssim": 0.9942300473337548
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.04071013735979744,
+      "msssim": 0.9917562329827941
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.033967372644305105,
+      "msssim": 0.9868972582815657
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.03430055818159351,
+      "msssim": 0.7477593142537133
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.03838787579734659,
+      "msssim": 0.8433033255766657
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.03821768904458737,
+      "msssim": 0.91716299844746
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.03545976443193608,
+      "msssim": 0.9553665411964569
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.03127994704581432,
+      "msssim": 0.9647301868851266
+    },
+    "scan": "3ugol_glaza_levyy_frame250.png",
+    "series": "Female/1990-2000/Eye_corner/3ugol_glaza_levyy"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.049824671516935606,
+      "msssim": 0.9951812500521431
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.04818493554154221,
+      "msssim": 0.9945698436469443
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.045588419506334445,
+      "msssim": 0.9936771888902493
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.040710666841168336,
+      "msssim": 0.9908550084639941
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.03391030676768801,
+      "msssim": 0.9851887530944763
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.033119163250947506,
+      "msssim": 0.7540279337254261
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.036558890841211084,
+      "msssim": 0.8518442053555668
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.03800836899389669,
+      "msssim": 0.9200026655888427
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.03513969120281755,
+      "msssim": 0.9568974786983565
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.03092199471749803,
+      "msssim": 0.9654339782122229
+    },
+    "scan": "3ugol_glaza_levyy_1_norm_frame250.png",
+    "series": "Female/1990-2000/Eye_corner/3ugol_glaza_levyy_1_norm"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04461266230116104,
+      "msssim": 0.9915655525081025
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.04287659218213172,
+      "msssim": 0.9905964372016703
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.04025368020419628,
+      "msssim": 0.9886345901373285
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.035933480296851436,
+      "msssim": 0.9860561585793963
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.030094287431914654,
+      "msssim": 0.9806360246542426
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.02786752655233285,
+      "msssim": 0.7867604941834763
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.03177499593708469,
+      "msssim": 0.8689887672016667
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.031483383828700404,
+      "msssim": 0.9225009630248772
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.029723329287323092,
+      "msssim": 0.947066722075643
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.026992148194059217,
+      "msssim": 0.9577933149888582
+    },
+    "scan": "4levyy_ugol_glaza_frame250.png",
+    "series": "Female/1990-2000/Eye_corner/4levyy_ugol_glaza"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04785288919078854,
+      "msssim": 0.9956797267284313
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.04618296199415892,
+      "msssim": 0.9950982980168719
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.043571524355896785,
+      "msssim": 0.9936960799667178
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.038909949606402476,
+      "msssim": 0.9904179282624059
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.03283348296233583,
+      "msssim": 0.9848783128249801
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.030636757334899685,
+      "msssim": 0.779549213845699
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.03590028722568656,
+      "msssim": 0.8643257662395549
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.03665999749358615,
+      "msssim": 0.927113857886446
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.033998513939387576,
+      "msssim": 0.9566422693009703
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.030185433998130968,
+      "msssim": 0.962490443252319
+    },
+    "scan": "5lev_ugol_glaza_frame250.png",
+    "series": "Female/1990-2000/Eye_corner/5lev_ugol_glaza"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.046925671292660016,
+      "msssim": 0.9978365292429356
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.045433957842993054,
+      "msssim": 0.9970084296052054
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.04276505720845826,
+      "msssim": 0.9953225085718492
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.037524696856657054,
+      "msssim": 0.9925666568397062
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.03053734911641713,
+      "msssim": 0.9856883135484663
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.02742848306699593,
+      "msssim": 0.7648573592799096
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.03182334505598055,
+      "msssim": 0.8576290383940661
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.0319593567501577,
+      "msssim": 0.9230900574155706
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.03017966629880638,
+      "msssim": 0.9553970076662488
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.026834322334664325,
+      "msssim": 0.9635399166292116
+    },
+    "scan": "lev_shcheka1960_frame250.png",
+    "series": "Male/1950-1960/Cheek/lev_shcheka1960"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.039874180621083485,
+      "msssim": 0.9961263561787095
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.038414161630722345,
+      "msssim": 0.995660279777588
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.0359337785324133,
+      "msssim": 0.9941451421002435
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.03171700853089431,
+      "msssim": 0.9914124018340441
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.02629419808515209,
+      "msssim": 0.9862145361487261
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.02795760345165703,
+      "msssim": 0.777319452704337
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.030794532932815342,
+      "msssim": 0.8652982722441421
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.02936027866525781,
+      "msssim": 0.9355288412325401
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.02693837978668701,
+      "msssim": 0.9645141683949872
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.023710959277194094,
+      "msssim": 0.970839664117888
+    },
+    "scan": "levaya_shcheka_frame250.png",
+    "series": "Male/1950-1960/Cheek/levaya_shcheka"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.047528491900273286,
+      "msssim": 0.9944988179848101
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.0457952786604875,
+      "msssim": 0.9925996119983913
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.043160303099814994,
+      "msssim": 0.9896668955026615
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.038558514229475246,
+      "msssim": 0.9859871873961423
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.032558606475019285,
+      "msssim": 0.9828238193631452
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.028356457919182412,
+      "msssim": 0.7800110334107055
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.03352732129966922,
+      "msssim": 0.8651084429968128
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.034214701552127816,
+      "msssim": 0.9239762605560868
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.03197553678120082,
+      "msssim": 0.9491681689065831
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.028869474350828782,
+      "msssim": 0.9568511203844925
+    },
+    "scan": "levaya_shcheka1960_frame250.png",
+    "series": "Male/1950-1960/Cheek/levaya_shcheka1960"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04557285393578447,
+      "msssim": 0.9968125382638056
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.044075788184207924,
+      "msssim": 0.9961521439647868
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.04149858479746916,
+      "msssim": 0.9948966049431398
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.03645665290389672,
+      "msssim": 0.9915846190478829
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.0297026837712475,
+      "msssim": 0.9829495767872978
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.036755239044815084,
+      "msssim": 0.6930575807270981
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.03700208646545213,
+      "msssim": 0.8264596855071342
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.034366848746151785,
+      "msssim": 0.91825378982317
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.03081741757925802,
+      "msssim": 0.9556312162700048
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.02681446035183326,
+      "msssim": 0.9594960858693574
+    },
+    "scan": "prav_shcheka1960_frame250.png",
+    "series": "Male/1950-1960/Cheek/prav_shcheka1960"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.040820655183773584,
+      "msssim": 0.9963597136788342
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.039361440171754,
+      "msssim": 0.9962140623606185
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.03703524336059067,
+      "msssim": 0.9954396764045119
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.032951821134562645,
+      "msssim": 0.992634070634364
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.027358826151758636,
+      "msssim": 0.9879350560391047
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.03185204311198312,
+      "msssim": 0.7480372885374276
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.03216574513764341,
+      "msssim": 0.8654257247412108
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.03111368606972136,
+      "msssim": 0.9340379251820747
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.028687504980951142,
+      "msssim": 0.9626666018154396
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.02531401650527698,
+      "msssim": 0.9668385758527862
+    },
+    "scan": "pravaya_shcheka_frame250.png",
+    "series": "Male/1950-1960/Cheek/pravaya_shcheka"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04678272368658723,
+      "msssim": 0.997058366827158
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.04517074438933824,
+      "msssim": 0.9965202309285195
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.04257431881340503,
+      "msssim": 0.995198992706327
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.03750181875832951,
+      "msssim": 0.9924474075535133
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.030672721156854956,
+      "msssim": 0.9867368900831467
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.028339509215503614,
+      "msssim": 0.7640703357380567
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.03138729712245403,
+      "msssim": 0.8588675248100879
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.03202075883363711,
+      "msssim": 0.9237109461297066
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.030585436838657002,
+      "msssim": 0.9596254945620799
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.026842266721900307,
+      "msssim": 0.9654022736296436
+    },
+    "scan": "lev_ugol_gl_frame250.png",
+    "series": "Male/1950-1960/Eye_corner/lev_ugol_gl"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04566038227372569,
+      "msssim": 0.9952147894619423
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.04409359512305663,
+      "msssim": 0.994562937306924
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.041637569876648246,
+      "msssim": 0.9934639619125545
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.03676460018725914,
+      "msssim": 0.9905507536089204
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.030105137575286798,
+      "msssim": 0.9848373077169258
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.02974992349318127,
+      "msssim": 0.7602188184455982
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.03207018007401058,
+      "msssim": 0.8569671540348371
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.03267139012544427,
+      "msssim": 0.9245590694459238
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.030534358021582737,
+      "msssim": 0.9587932567629383
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.026744789263681533,
+      "msssim": 0.9665902002022038
+    },
+    "scan": "levyy_ugol_frame250.png",
+    "series": "Male/1950-1960/Eye_corner/levyy_ugol"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.040382805492233234,
+      "msssim": 0.9940607486377645
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.03883714611819169,
+      "msssim": 0.9929453932324813
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.03641083067684602,
+      "msssim": 0.9914956146922432
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.03214576531099968,
+      "msssim": 0.9881096019689701
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.02667958894058782,
+      "msssim": 0.9816373242131676
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.02498561832809465,
+      "msssim": 0.7947902382713593
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.029616398775723134,
+      "msssim": 0.8750783255213729
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.028746184285808815,
+      "msssim": 0.932114113513769
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.027275490387883492,
+      "msssim": 0.957946804773457
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.02428318455476197,
+      "msssim": 0.9634780871991164
+    },
+    "scan": "levyy_ugol_glaza1950_frame250.png",
+    "series": "Male/1950-1960/Eye_corner/levyy_ugol_glaza1950"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04761305793751099,
+      "msssim": 0.9959686583418275
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.04605333850202478,
+      "msssim": 0.9953924507700403
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.04348749249633832,
+      "msssim": 0.9942280578831982
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.038827549320656685,
+      "msssim": 0.9920564366020831
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.03243137659505005,
+      "msssim": 0.9867152520957095
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.0338139492703032,
+      "msssim": 0.7556307971826102
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.03651002188226449,
+      "msssim": 0.8536055069750617
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.035754899600725955,
+      "msssim": 0.9246181559427803
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.03335646315899789,
+      "msssim": 0.9583081009842754
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.029510597078470802,
+      "msssim": 0.9662587397984366
+    },
+    "scan": "pravyy_ugol_frame250.png",
+    "series": "Male/1950-1960/Eye_corner/pravyy_ugol"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04055886821186685,
+      "msssim": 0.996688854729049
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.039058555411675015,
+      "msssim": 0.9962433129878647
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.03671505824317701,
+      "msssim": 0.9953293270629864
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.0322951138074105,
+      "msssim": 0.9920577344551301
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.02669487985124364,
+      "msssim": 0.9857462815024045
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.028121068988380175,
+      "msssim": 0.7781066148963542
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.029427739175155974,
+      "msssim": 0.8783161475517417
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.02899147869128557,
+      "msssim": 0.9359269091640612
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.027299212415840268,
+      "msssim": 0.9623979555553325
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.02422341657591355,
+      "msssim": 0.9687513884412747
+    },
+    "scan": "pravyy_ugolglaza1950_frame250.png",
+    "series": "Male/1950-1960/Eye_corner/pravyy_ugolglaza1950"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04470584584233009,
+      "msssim": 0.997454894183713
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.04307538354672949,
+      "msssim": 0.9962346202398572
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.040449771699445886,
+      "msssim": 0.9932463138870772
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.03600614927936415,
+      "msssim": 0.9895329035880338
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.030003866530206584,
+      "msssim": 0.9855405480346218
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.026269186577178263,
+      "msssim": 0.8062599418004703
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.031291728831544734,
+      "msssim": 0.8803780714599385
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.032007845757469615,
+      "msssim": 0.9315703664223798
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.030572796533697207,
+      "msssim": 0.9565674905824152
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.027402114426447785,
+      "msssim": 0.9617276927800088
+    },
+    "scan": "1lev_shcheka_frame250.png",
+    "series": "Male/1990-2000/Cheek/1lev_shcheka"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04205390582265195,
+      "msssim": 0.9943669814804647
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.0405736888324064,
+      "msssim": 0.9939446096592123
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.038009762669500784,
+      "msssim": 0.9915983187257925
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.033486809273383586,
+      "msssim": 0.9882502863985426
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.027746956651260885,
+      "msssim": 0.981784289105047
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.024762256942299526,
+      "msssim": 0.8025371633067655
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.027702497559492063,
+      "msssim": 0.8752557944573389
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.028650914457587905,
+      "msssim": 0.9246160408282964
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.028028281400304025,
+      "msssim": 0.955476521455414
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.024788627881336116,
+      "msssim": 0.9577730869488462
+    },
+    "scan": "2levaya_shcheka_frame250.png",
+    "series": "Male/1990-2000/Cheek/2levaya_shcheka"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.042136337299465844,
+      "msssim": 0.9934355309530133
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.040478321440017964,
+      "msssim": 0.9920499933246567
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.03788849242266991,
+      "msssim": 0.9895192193716507
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.0336717368002949,
+      "msssim": 0.9877678249512563
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.028037028943295468,
+      "msssim": 0.9820762367491505
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.026035382876803095,
+      "msssim": 0.7991251299920396
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.028715650766152172,
+      "msssim": 0.8784872284341085
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.0290887399051936,
+      "msssim": 0.9286661038928065
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.027697915192248186,
+      "msssim": 0.9520547724472846
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.025176919873423652,
+      "msssim": 0.9627702214073833
+    },
+    "scan": "2pravaya_shcheka_frame250.png",
+    "series": "Male/1990-2000/Cheek/2pravaya_shcheka"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04759677566781989,
+      "msssim": 0.9962065964649011
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.04596238036802324,
+      "msssim": 0.9951614146821408
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.04335471446321308,
+      "msssim": 0.9929206005051583
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.03859773467553893,
+      "msssim": 0.989449515539349
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.03232216657930425,
+      "msssim": 0.983088638961001
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.02943955029378536,
+      "msssim": 0.7800235645918725
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.03421452474332294,
+      "msssim": 0.8655717775637961
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.034703622937580315,
+      "msssim": 0.926479865307671
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.03281651010414013,
+      "msssim": 0.9546025349731986
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.029486065366877034,
+      "msssim": 0.9632573297280068
+    },
+    "scan": "levaya_shcheka_frame250.png",
+    "series": "Male/1990-2000/Cheek/levaya_shcheka"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04413381567942075,
+      "msssim": 0.995321059423525
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.04253298011936769,
+      "msssim": 0.9943809967239642
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.03988326986743916,
+      "msssim": 0.9923466584093908
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.03472245039130571,
+      "msssim": 0.9853114586146764
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.028880287043338334,
+      "msssim": 0.9834644548094855
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.025468565931711755,
+      "msssim": 0.783481340521696
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.030899417846333623,
+      "msssim": 0.865862414118466
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.030738613694370677,
+      "msssim": 0.925032536178746
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.02912313974657198,
+      "msssim": 0.9535709587845475
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.026034601303449624,
+      "msssim": 0.9620949044058456
+    },
+    "scan": "shcheka_lev_frame250.png",
+    "series": "Male/1990-2000/Cheek/shcheka_lev"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.045226332602617256,
+      "msssim": 0.9940007491399125
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.04360335469809109,
+      "msssim": 0.9931115876928032
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.04105693349967311,
+      "msssim": 0.991099330214858
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.03669410375904596,
+      "msssim": 0.9870654614883374
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.031051171734828468,
+      "msssim": 0.9822725230865107
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.03121045823119494,
+      "msssim": 0.7860209239081658
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.034305659657522546,
+      "msssim": 0.8762013668091925
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.0340731008664016,
+      "msssim": 0.9328366430894484
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.0319608581514016,
+      "msssim": 0.9585748887294586
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.02847160240587809,
+      "msssim": 0.9646751220085064
+    },
+    "scan": "2levyy_ugol_glaza_frame250.png",
+    "series": "Male/1990-2000/Eye_corner/2levyy_ugol_glaza"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.046054281628762364,
+      "msssim": 0.9928729504637378
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.044156004732360025,
+      "msssim": 0.9910589278882114
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.04144008751486037,
+      "msssim": 0.9879054528671025
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.03707642134926728,
+      "msssim": 0.9843971495805911
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.03169536856145008,
+      "msssim": 0.979886670278019
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.03312122380590092,
+      "msssim": 0.7771112831117493
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.035147630783530746,
+      "msssim": 0.873112230285656
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.034028652659021656,
+      "msssim": 0.9289795497821992
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.03211231875730021,
+      "msssim": 0.9518060225039325
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.028965175163933835,
+      "msssim": 0.9601383592581338
+    },
+    "scan": "2pravyy_ugol_glaza_frame250.png",
+    "series": "Male/1990-2000/Eye_corner/2pravyy_ugol_glaza"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04568944831883336,
+      "msssim": 0.9962967806619459
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.04403098783743311,
+      "msssim": 0.9950123552847998
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.04112819510063957,
+      "msssim": 0.9890487286821088
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.03698459662541982,
+      "msssim": 0.9871366670077832
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.031516261398087955,
+      "msssim": 0.9844470128386416
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.026639272471596902,
+      "msssim": 0.804703887009238
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.030254060721380573,
+      "msssim": 0.8732456584497083
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.032807788487433605,
+      "msssim": 0.9289172993644085
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.031304112544433334,
+      "msssim": 0.9501677650547373
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.028256258765781868,
+      "msssim": 0.955647031074736
+    },
+    "scan": "lev_ugol_glaza_frame250.png",
+    "series": "Male/1990-2000/Eye_corner/lev_ugol_glaza"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04822590799915404,
+      "msssim": 0.995955670772949
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.04655722232536707,
+      "msssim": 0.99499601313141
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.04398990412628794,
+      "msssim": 0.9928842157256359
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.039329699803329725,
+      "msssim": 0.9904261987834628
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.032877956501669074,
+      "msssim": 0.9851970975128279
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.030648018385858743,
+      "msssim": 0.7712454372173628
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.034015429154918675,
+      "msssim": 0.8640915903983895
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.034147100458516225,
+      "msssim": 0.9235365804841966
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.03243572127084138,
+      "msssim": 0.9537068403584235
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.02888481022706934,
+      "msssim": 0.9611629516539786
+    },
+    "scan": "levyy_ugol_glaza_frame250.png",
+    "series": "Male/1990-2000/Eye_corner/levyy_ugol_glaza"
+  },
+  {
+    "current_alphaL_0.02": {
+      "lateral_roughness": 0.04675162925583088,
+      "msssim": 0.9948467532651857
+    },
+    "current_alphaL_0.05": {
+      "lateral_roughness": 0.045091755843195476,
+      "msssim": 0.993885064940873
+    },
+    "current_alphaL_0.1": {
+      "lateral_roughness": 0.04245508388426032,
+      "msssim": 0.9918767585389389
+    },
+    "current_alphaL_0.2": {
+      "lateral_roughness": 0.037609450192352505,
+      "msssim": 0.9870393077390948
+    },
+    "current_alphaL_0.4": {
+      "lateral_roughness": 0.03174625127198942,
+      "msssim": 0.9841157661308555
+    },
+    "earlier_alphaL_0.02": {
+      "lateral_roughness": 0.03326800928039113,
+      "msssim": 0.760593249174889
+    },
+    "earlier_alphaL_0.05": {
+      "lateral_roughness": 0.035959952548149925,
+      "msssim": 0.8582832749879742
+    },
+    "earlier_alphaL_0.1": {
+      "lateral_roughness": 0.03481969537695026,
+      "msssim": 0.9269531213659824
+    },
+    "earlier_alphaL_0.2": {
+      "lateral_roughness": 0.032552356161374287,
+      "msssim": 0.958449039759059
+    },
+    "earlier_alphaL_0.4": {
+      "lateral_roughness": 0.02899996740326116,
+      "msssim": 0.966122687574417
+    },
+    "scan": "ugol_gl_lev_frame250.png",
+    "series": "Male/1990-2000/Eye_corner/ugol_gl_lev"
+  }
+]
