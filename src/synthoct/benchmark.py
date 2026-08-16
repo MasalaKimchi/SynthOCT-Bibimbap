@@ -25,6 +25,8 @@ from .phantom import ExperimentConfig
 from .provenance import dependency_versions, git_provenance
 from .scanners import render_reference_scanner
 
+LOCAL_EVIDENCE_SOURCE = "local_published_forward_model"
+
 
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
@@ -147,7 +149,7 @@ def run_local_benchmark(
                 "reference": str(reference.relative_to(input_root)),
                 "reference_sha256": _sha256(reference),
                 "method": method,
-                "evidence_source": "source_equivalent_local_scanner",
+                "evidence_source": LOCAL_EVIDENCE_SOURCE,
                 "generation_seconds": generation_seconds,
                 "render_seconds": render_seconds,
             }
@@ -174,7 +176,7 @@ def run_local_benchmark(
 
     summary: dict[str, object] = {
         "method": method,
-        "evidence_source": "source_equivalent_local_scanner",
+        "evidence_source": LOCAL_EVIDENCE_SOURCE,
         "official_or_hidden_score": False,
         "created_at_utc": datetime.now(UTC).isoformat(),
         "n": len(rows),

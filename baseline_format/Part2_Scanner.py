@@ -1,11 +1,11 @@
-"""Part2 (Scanner) — the FIXED imaging device, wired to the hosted true scanner.
+"""Part2 (Scanner) — the FIXED imaging device, accessed through the organizer service.
 
 Baseline role (``Part2_Scanner.exe``): a compiled, physics-based coherent
 scanner.  Phantom ``.txt`` -> raw OCT B-scan ``.png`` (51 dB), driven as
 ``Part2_Scanner.exe <Configuration.ini> <Scatterers.txt> <Output.png>``.
 
 You are not meant to modify Part2.  The organizers' binary is Windows-only, so
-this submission renders through the **hosted true scanner** at synthoct.com
+this submission renders through the **organizer-hosted challenge service** at synthoct.com
 (the same engine, exposed as an HTTP endpoint).  This file is a thin façade over
 ``synthoct.scanners`` that keeps the fixed-scanner contract: it writes the
 scanner ``Configuration.ini`` and posts the phantom, returning the rendered PNG.
@@ -58,7 +58,7 @@ def scan(
     endpoint: str = SCANNER_ENDPOINT,
     result_base_url: str = RESULT_BASE_URL,
 ) -> ScanResult:
-    """Render ``phantom_path`` through the hosted true scanner.
+    """Render ``phantom_path`` through the organizer-hosted challenge service.
 
     Mirrors ``Part2_Scanner.exe <Configuration.ini> <Scatterers.txt> <Output.png>``:
     a ``Configuration.ini`` is written (next to the output unless ``config_path``
@@ -93,7 +93,7 @@ def scan(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="Part2_Scanner",
-        description="Render a digital phantom through the hosted SynthOCT true scanner.",
+        description="Render a digital phantom through the organizer-hosted SynthOCT service.",
     )
     parser.add_argument("phantom", type=Path, help="Digital phantom .txt (X Y Z Energy%%).")
     parser.add_argument("out", type=Path, help="Output raw B-scan PNG path.")

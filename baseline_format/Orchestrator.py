@@ -9,7 +9,7 @@ defaults to that Challenge mode and keeps the self-consistency check as an optio
 Pipeline (Challenge mode), per reference OCT B-scan:
 
     Part1  generate_from_reference  ->  digital phantom .txt   (phase-pair inverse)
-    Part2  scan (hosted true scanner) ->  synthetic B-scan .png
+    Part2  scan (organizer-hosted service) ->  synthetic B-scan .png
     Part3  generate_maps            ->  Struct / OAC / SC / RSC  (both ref & synth)
     metrics: synthetic vs real, per map  (the ``synthoct`` evaluation stack)
 
@@ -213,7 +213,7 @@ def run_challenge(args: argparse.Namespace) -> int:
         )
 
         render = renders_dir / f"{name}.png"
-        print("Scanning phantom (Part2: hosted true scanner)...")
+        print("Scanning phantom (Part2: organizer-hosted service)...")
         scan_result = Scanner.scan(
             phantom,
             render,
@@ -292,7 +292,7 @@ def _scan_and_map(generator_data, name: str, out_dir: Path, args: argparse.Names
         Generator.ExperimentConfig(scatterers_count=args.scatterers_count)
     ).save_to_file(generator_data, phantom)
     scan = out_dir / f"Scan_{name}.png"
-    print(f"Scanning {name} (hosted true scanner)...")
+    print(f"Scanning {name} (organizer-hosted service)...")
     result = Scanner.scan(
         phantom,
         scan,

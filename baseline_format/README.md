@@ -61,7 +61,7 @@ cd baseline_format
 python Part1_Generator.py --input /path/to/reference.png --out phantom.txt --diagnostics diag.json
 ```
 
-Render a phantom through the hosted true scanner (Part2 only):
+Render a phantom through the organizer-hosted challenge service (Part2 only):
 
 ```bash
 python Part2_Scanner.py phantom.txt synthetic.png --api-key-file ~/.synthoct_key

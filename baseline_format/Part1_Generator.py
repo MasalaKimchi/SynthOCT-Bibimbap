@@ -120,9 +120,10 @@ class ExperimentConfig:
     def write_ini(self, path: str | Path | None = None) -> Path:
         """Write the hosted-scanner ``Configuration.ini``.
 
-        Part2 in this submission is the hosted true scanner, so the config that
-        is actually sent is the one ``synthoct`` posts to the API.  Delegating
-        keeps this file byte-identical to the real request payload.
+        Part2 in this submission is the organizer-hosted challenge service, so
+        the config that is actually sent is the one ``synthoct`` posts to the
+        API. Delegating keeps this file byte-identical to the real request
+        payload.
         """
         from synthoct.scanners import write_api_config
 
