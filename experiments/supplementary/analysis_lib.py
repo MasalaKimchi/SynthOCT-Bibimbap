@@ -44,7 +44,7 @@ from synthoct.phantom import ExperimentConfig  # noqa: E402
 from synthoct.scanners.reference import render_reference_array  # noqa: E402
 
 DATASET = REPO / "DATASET" / "DATASET_PNG"
-OUT = SCRIPT_DIR / "results"
+OUT = REPO / "outputs" / "experiments" / "supplementary"
 
 
 def scan_paths() -> list[Path]:

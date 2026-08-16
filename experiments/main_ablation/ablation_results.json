@@ -1,7 +1,7 @@
 {
   "analysis_date": "2026-07-13",
   "purpose": "full-public fixed-regularization 2x2 phase-selection by phase-encoding ablation",
-  "evidence_source": "source_equivalent_local_scanner",
+  "evidence_source": "local_published_forward_model",
   "official_or_hidden_score": false,
   "reference_root": "DATASET/DATASET_PNG",
   "dataset_manifest_sha256": "7a245393fcbce95601bfe20b575364f0a489364022ff7413b96d50552f8ee55b",
@@ -32,11 +32,6 @@
         "median": 0.8269911627222225,
         "min": 0.7517810695017955,
         "max": 0.8562031154321316
-      },
-      "generation_seconds": {
-        "mean": 0.5806039861249246,
-        "median": 0.5571202285000254,
-        "max": 3.5595756670008996
       }
     },
     "momentum50_single": {
@@ -47,11 +42,6 @@
         "median": 0.9375981927295283,
         "min": 0.9246482764531858,
         "max": 0.9475818123130137
-      },
-      "generation_seconds": {
-        "mean": 3.1362322968500242,
-        "median": 3.125129541500428,
-        "max": 3.8745688750004774
       }
     },
     "zero_pair": {
@@ -62,11 +52,6 @@
         "median": 0.9815249612065386,
         "min": 0.9699391225742415,
         "max": 0.9889970720963407
-      },
-      "generation_seconds": {
-        "mean": 0.5555650340000132,
-        "median": 0.5538271875002465,
-        "max": 0.6964244169994345
       }
     },
     "momentum50_pair": {
@@ -77,11 +62,6 @@
         "median": 0.9938983121137694,
         "min": 0.984185575525862,
         "max": 0.9974983091281278
-      },
-      "generation_seconds": {
-        "mean": 2.5581763375084394,
-        "median": 2.296203875000174,
-        "max": 3.922715042001073
       }
     }
   },

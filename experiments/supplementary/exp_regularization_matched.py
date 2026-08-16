@@ -1,8 +1,9 @@
 """Matched-regularization diagnostic for Reviewer 2, Comment 2.
 
 This analysis holds axial regularization fixed and crosses phase
-selection with scatterer encoding at every lateral-regularization value.  It
-writes only to the path supplied with ``--output``.
+selection with scatterer encoding at every lateral-regularization value. Raw
+per-scan output and a stable compact summary are written beneath the ignored
+experiment-output directory by default.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ from pathlib import Path
 import numpy as np
 
 from analysis_lib import (
+    OUT,
     encode,
     one_frame_per_series,
     operators,
@@ -48,7 +50,11 @@ def lateral_mode_fraction(
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int)
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=OUT / "regularization_matched_factorial.json",
+    )
     args = parser.parse_args()
 
     paths = one_frame_per_series()
@@ -149,6 +155,13 @@ def main() -> None:
         json.dumps({"summary": summary, "rows": rows}, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+    stable_summary = {key: value for key, value in summary.items() if key != "elapsed_seconds"}
+    summary_path = args.output.with_name("regularization_matched_summary.json")
+    summary_path.write_text(
+        json.dumps(stable_summary, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    print(f"Wrote {args.output} and {summary_path}", flush=True)
     print(json.dumps(summary, indent=2, sort_keys=True), flush=True)
 
 

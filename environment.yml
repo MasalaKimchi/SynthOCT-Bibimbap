@@ -4,11 +4,12 @@ channels:
 dependencies:
   - python=3.12.12
   - pip
-  - numpy
-  - scipy
-  - scikit-image
-  - matplotlib
+  - numpy=1.26.4
+  - scipy=1.13.1
+  - numba=0.60.0
+  - scikit-image=0.24.0
+  - matplotlib=3.9.2
   - pytest
   - pip:
-      - sewar>=0.4.6
+      - sewar==0.4.6
       - -e .

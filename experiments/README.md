@@ -1,18 +1,18 @@
-# Experiments and evidence
+# Experiments
 
-This directory publishes the numerical evidence used by the camera-ready
-manuscript and supplement. The two bundles have deliberately different scopes:
+This directory contains the Python runners and compact published summaries for
+the camera-ready paper:
 
-- [`main_ablation/`](main_ablation/) contains the primary fixed-regularization
-  2 x 2 ablation on all 120 public B-scans.
-- [`supplementary/`](supplementary/) contains post-review sensitivity analyses
-  supporting Supplementary Sections and Tables S1--S4.
+- [`main_ablation/`](main_ablation/) reproduces the all-120 fixed-regularization
+  2 x 2 ablation.
+- [`supplementary/`](supplementary/) reproduces the local S1--S4 diagnostic
+  experiments.
 
-All scores in these bundles were computed with this repository's local
-implementation of the published forward model. They are not hidden-test,
-leaderboard, or organizer-issued scores. The supplement's Figure S1 uses
-separate organizer-hosted renders and is therefore not reproduced by these
-local diagnostic scripts.
+Download the public dataset as described in [`../docs/DATA.md`](../docs/DATA.md)
+and place it at `DATASET/DATASET_PNG/`. Generated per-scan CSV/JSON files are
+written under `outputs/experiments/`; that directory is ignored by Git. Only
+small summaries used in the manuscript are retained here.
 
-The raw dataset is intentionally not tracked. See [`../docs/DATA.md`](../docs/DATA.md)
-for download, checksum, and extraction instructions.
+All scores are local-model public-data evidence, not organizer-issued,
+leaderboard, or hidden-test scores. Supplementary Figure S1 uses separate
+organizer-hosted renders and is not reproduced by these local runners.

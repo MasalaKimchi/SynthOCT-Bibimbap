@@ -17,10 +17,17 @@ challenge_assets/
 *.bin
 
 # Generated runs and scratch space
+# Experiment runners write raw/per-scan results below outputs/experiments/.
 outputs/
 output/
 runs/
 tmp/
+
+# Raw experiment evidence; compact published summaries remain tracked.
+experiments/main_ablation/evidence/
+experiments/supplementary/results/*_study.json
+experiments/supplementary/results/*_full.json
+experiments/supplementary/results/regularization_matched_factorial.json
 
 # Manuscript working tree and camera-ready delivery artifacts
 paper/
