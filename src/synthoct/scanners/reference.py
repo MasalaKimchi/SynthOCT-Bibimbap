@@ -112,7 +112,7 @@ def render_reference_scanner(
     *,
     config: ExperimentConfig | None = None,
 ) -> Path:
-    """Render and save a grayscale PNG with the recovered fixed scanner model."""
+    """Render and save a grayscale PNG with the local published forward model."""
     phantom = load_phantom(phantom_path)
     image = render_reference_array(phantom, config=config)
     output_png = Path(output_png)

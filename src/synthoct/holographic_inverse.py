@@ -126,7 +126,7 @@ def _solve_complex_coefficients(
     scanner: ExperimentConfig,
     inverse: HolographicInverseConfig,
 ) -> tuple[np.ndarray, float]:
-    """Find a scanner-feasible field phase before solving voxel coefficients.
+    """Find a phase favored by the regularized local forward model.
 
     OCT intensity fixes field magnitude but leaves its complex phase free.  The
     original inverse forced every target pixel to zero phase, which needlessly

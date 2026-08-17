@@ -115,7 +115,7 @@ def summary(rows: list[dict[str, object]]) -> dict[str, object]:
         "schema_version": RUNNER_SCHEMA_VERSION,
         "created_at_utc": utc_now(),
         "n": len(rows),
-        "evidence_source": "hosted_synthoct_api",
+        "evidence_source": "organizer_hosted_challenge_service",
         "official_or_hidden_score": False,
         "map_mode": ORGANIZER_MAP_MODE,
         "competition_formula_estimate": score,

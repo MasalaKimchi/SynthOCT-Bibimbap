@@ -1,7 +1,8 @@
-"""Reproduce the main-paper fixed-regularization 2 x 2 ablation.
+"""Reproduce the camera-ready main-paper local-model comparisons.
 
-The four benchmark runs and their per-scan outputs are written below
-``outputs/experiments/main_ablation`` by default, which is ignored by Git.
+By default this runs the four-cell fixed-regularization ablation and the
+earlier-method versus final-method comparison. Per-scan outputs are written
+below ``outputs/experiments/main_ablation``, which is ignored by Git.
 """
 
 from __future__ import annotations
@@ -11,6 +12,7 @@ import csv
 import json
 import re
 import sys
+from dataclasses import asdict
 from pathlib import Path
 
 import numpy as np
@@ -38,7 +40,7 @@ from synthoct.benchmark import run_local_benchmark  # noqa: E402
 from synthoct.holographic_inverse import HolographicInverseConfig  # noqa: E402
 
 
-CONFIGURATIONS = {
+ABLATION_CONFIGURATIONS = {
     "zero_single": HolographicInverseConfig(
         phase_iterations=0,
         phase_encoding="single",
@@ -57,6 +59,23 @@ CONFIGURATIONS = {
     ),
 }
 
+FULL_COMPARISON_CONFIGURATIONS = {
+    "earlier_zero_single": HolographicInverseConfig(
+        axial_regularization=0.03,
+        lateral_regularization=0.20,
+        phase_iterations=0,
+        phase_momentum=0.0,
+        phase_encoding="single",
+    ),
+    "final200_pair": HolographicInverseConfig(
+        axial_regularization=0.02,
+        lateral_regularization=0.05,
+        phase_iterations=200,
+        phase_momentum=1.0,
+        phase_encoding="dispersion-canceling-pair",
+    ),
+}
+
 CONTRASTS = {
     "phase_at_single": ("momentum50_single", "zero_single"),
     "pair_at_zero": ("zero_pair", "zero_single"),
@@ -65,7 +84,11 @@ CONTRASTS = {
     "combined_vs_zero_single": ("momentum50_pair", "zero_single"),
 }
 
-BOOTSTRAP_SEED = 20260713
+ABLATION_BOOTSTRAP_SEED = 20260713
+FULL_COMPARISON_BOOTSTRAP_SEED = 20260711
+PUBLISHED_PUBLIC_MANIFEST_SHA256 = (
+    "7a245393fcbce95601bfe20b575364f0a489364022ff7413b96d50552f8ee55b"
+)
 
 
 def _series_key(reference: str) -> str:
@@ -73,12 +96,12 @@ def _series_key(reference: str) -> str:
     return re.sub(r"_frame(?:50|250|450)$", "", stem)
 
 
-def _load_scores(path: Path) -> dict[str, float]:
+def _load_rows(path: Path) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8") as handle:
         rows = list(csv.DictReader(handle))
     if not rows:
         raise ValueError(f"no rows found in {path}")
-    return {row["reference"]: float(row["Struct_MS-SSIM"]) for row in rows}
+    return rows
 
 
 def _metric_summary(values: np.ndarray) -> dict[str, float]:
@@ -88,6 +111,37 @@ def _metric_summary(values: np.ndarray) -> dict[str, float]:
         "min": float(np.min(values)),
         "max": float(np.max(values)),
     }
+
+
+def _timing_summary(rows: list[dict[str, str]]) -> dict[str, float]:
+    values = np.asarray([float(row["generation_seconds"]) for row in rows])
+    return {
+        "mean": float(np.mean(values)),
+        "median": float(np.median(values)),
+        "min": float(np.min(values)),
+        "max": float(np.max(values)),
+    }
+
+
+def _portable_reference_root(value: str) -> str:
+    """Avoid embedding a contributor's absolute checkout path in summaries."""
+    path = Path(value).expanduser()
+    if not path.is_absolute():
+        return path.as_posix()
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(REPO.resolve()).as_posix()
+    except ValueError:
+        return resolved.name
+
+
+def _scope(n_images: int, manifest_hash: str, study: str) -> tuple[str, str, bool]:
+    matches_published_set = (
+        n_images == 120 and manifest_hash == PUBLISHED_PUBLIC_MANIFEST_SHA256
+    )
+    if matches_published_set:
+        return "full_public_120", f"full-public {study}", True
+    return "development_or_external_set", f"development/external-set {study}", False
 
 
 def _cluster_bootstrap_ci(
@@ -119,6 +173,7 @@ def _contrast_summary(
     baseline: dict[str, float],
     *,
     bootstrap_replicates: int,
+    bootstrap_seed: int,
 ) -> dict[str, object]:
     if positive.keys() != baseline.keys():
         raise ValueError("configuration reference sets do not match")
@@ -147,20 +202,28 @@ def _contrast_summary(
         "series_cluster_bootstrap_ci95": _cluster_bootstrap_ci(
             series_differences,
             replicates=bootstrap_replicates,
-            seed=BOOTSTRAP_SEED,
+            seed=bootstrap_seed,
         ),
         "one_sided_exact_wilcoxon_p": float(p_value),
     }
 
 
-def build_summary(
+def _study_inputs(
     output_dir: Path,
-    *,
-    bootstrap_replicates: int = 200_000,
-) -> dict[str, object]:
+    configurations: dict[str, HolographicInverseConfig],
+) -> tuple[
+    dict[str, dict[str, float]],
+    dict[str, list[dict[str, str]]],
+    dict[str, dict[str, object]],
+    list[str],
+    str,
+]:
+    rows = {
+        name: _load_rows(output_dir / name / "detail.csv") for name in configurations
+    }
     scores = {
-        name: _load_scores(output_dir / name / "detail.csv")
-        for name in CONFIGURATIONS
+        name: {row["reference"]: float(row["Struct_MS-SSIM"]) for row in current_rows}
+        for name, current_rows in rows.items()
     }
     reference_sets = [set(values) for values in scores.values()]
     if any(current != reference_sets[0] for current in reference_sets[1:]):
@@ -168,18 +231,34 @@ def build_summary(
 
     run_summaries = {
         name: json.loads((output_dir / name / "summary.json").read_text())
-        for name in CONFIGURATIONS
+        for name in configurations
     }
     manifest_hashes = {
         summary["dataset_manifest_sha256"] for summary in run_summaries.values()
     }
     if len(manifest_hashes) != 1:
         raise ValueError("configuration dataset manifests do not match")
+    references = sorted(reference_sets[0])
+    return scores, rows, run_summaries, references, manifest_hashes.pop()
 
-    first_references = sorted(reference_sets[0])
+
+def build_ablation_summary(
+    output_dir: Path,
+    *,
+    bootstrap_replicates: int = 200_000,
+) -> dict[str, object]:
+    scores, _, run_summaries, first_references, manifest_hash = _study_inputs(
+        output_dir,
+        ABLATION_CONFIGURATIONS,
+    )
     n_series = len({_series_key(reference) for reference in first_references})
+    result_scope, purpose, matches_published_set = _scope(
+        len(first_references),
+        manifest_hash,
+        "fixed-regularization 2x2 phase-selection by phase-encoding ablation",
+    )
     configurations = {}
-    for name, inverse in CONFIGURATIONS.items():
+    for name, inverse in ABLATION_CONFIGURATIONS.items():
         values = np.asarray([scores[name][key] for key in first_references])
         configurations[name] = {
             "phase_iterations": inverse.phase_iterations,
@@ -188,11 +267,15 @@ def build_summary(
         }
 
     return {
-        "purpose": "full-public fixed-regularization 2x2 phase-selection by phase-encoding ablation",
+        "purpose": purpose,
+        "result_scope": result_scope,
         "evidence_source": "local_published_forward_model",
         "official_or_hidden_score": False,
-        "reference_root": str(run_summaries["zero_single"]["input_root"]),
-        "dataset_manifest_sha256": manifest_hashes.pop(),
+        "reference_root": _portable_reference_root(
+            str(run_summaries["zero_single"]["input_root"])
+        ),
+        "dataset_manifest_sha256": manifest_hash,
+        "dataset_matches_published_public_set": matches_published_set,
         "n_images": len(first_references),
         "n_filename_defined_series": n_series,
         "parameters_fixed": {
@@ -208,18 +291,83 @@ def build_summary(
                 scores[positive],
                 scores[baseline],
                 bootstrap_replicates=bootstrap_replicates,
+                bootstrap_seed=ABLATION_BOOTSTRAP_SEED,
             )
             for label, (positive, baseline) in CONTRASTS.items()
         },
         "inference": {
             "unit": "mean of the three frames in each filename-defined acquisition series",
             "bootstrap_replicates": bootstrap_replicates,
-            "bootstrap_seed": BOOTSTRAP_SEED,
+            "bootstrap_seed": ABLATION_BOOTSTRAP_SEED,
             "interval": "two-sided percentile 95% confidence interval",
             "test": "one-sided exact Wilcoxon signed-rank test on series means",
         },
         "environment": run_summaries["zero_single"]["environment"],
     }
+
+
+def build_full_comparison_summary(
+    output_dir: Path,
+    *,
+    bootstrap_replicates: int = 200_000,
+) -> dict[str, object]:
+    scores, rows, run_summaries, references, manifest_hash = _study_inputs(
+        output_dir,
+        FULL_COMPARISON_CONFIGURATIONS,
+    )
+    n_series = len({_series_key(reference) for reference in references})
+    result_scope, purpose, matches_published_set = _scope(
+        len(references),
+        manifest_hash,
+        "earlier-method versus final-method comparison",
+    )
+    configurations = {}
+    for name, inverse in FULL_COMPARISON_CONFIGURATIONS.items():
+        values = np.asarray([scores[name][key] for key in references])
+        configurations[name] = {
+            "parameters": asdict(inverse),
+            "struct_ms_ssim": _metric_summary(values),
+            "generation_seconds": _timing_summary(rows[name]),
+        }
+
+    return {
+        "purpose": purpose,
+        "result_scope": result_scope,
+        "evidence_source": "local_published_forward_model",
+        "official_or_hidden_score": False,
+        "reference_root": _portable_reference_root(
+            str(run_summaries["earlier_zero_single"]["input_root"])
+        ),
+        "dataset_manifest_sha256": manifest_hash,
+        "dataset_matches_published_public_set": matches_published_set,
+        "n_images": len(references),
+        "n_filename_defined_series": n_series,
+        "configurations": configurations,
+        "paired_comparison": _contrast_summary(
+            scores["final200_pair"],
+            scores["earlier_zero_single"],
+            bootstrap_replicates=bootstrap_replicates,
+            bootstrap_seed=FULL_COMPARISON_BOOTSTRAP_SEED,
+        ),
+        "inference": {
+            "unit": "mean of the three frames in each filename-defined acquisition series",
+            "bootstrap_replicates": bootstrap_replicates,
+            "bootstrap_seed": FULL_COMPARISON_BOOTSTRAP_SEED,
+            "interval": "two-sided percentile 95% confidence interval",
+            "test": "one-sided exact Wilcoxon signed-rank test on series means",
+        },
+        "environment": run_summaries["earlier_zero_single"]["environment"],
+    }
+
+
+def _selected_configurations(
+    study: str,
+) -> dict[str, HolographicInverseConfig]:
+    if study == "ablation":
+        return ABLATION_CONFIGURATIONS
+    if study == "full-comparison":
+        return FULL_COMPARISON_CONFIGURATIONS
+    return {**ABLATION_CONFIGURATIONS, **FULL_COMPARISON_CONFIGURATIONS}
 
 
 def main() -> None:
@@ -234,8 +382,16 @@ def main() -> None:
         type=Path,
         default=REPO / "outputs" / "experiments" / "main_ablation",
     )
-    parser.add_argument("--limit", type=int, help="Development subset; omit for all 120 scans.")
+    parser.add_argument(
+        "--limit", type=int, help="Development subset; omit for all 120 scans."
+    )
     parser.add_argument("--bootstrap-replicates", type=int, default=200_000)
+    parser.add_argument(
+        "--study",
+        choices=("all", "ablation", "full-comparison"),
+        default="all",
+        help="Select a paper study; default reproduces both local studies.",
+    )
     parser.add_argument(
         "--summarize-only",
         action="store_true",
@@ -244,7 +400,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if not args.summarize_only:
-        for name, inverse in CONFIGURATIONS.items():
+        for name, inverse in _selected_configurations(args.study).items():
             print(f"\n=== {name} ===", flush=True)
             run_local_benchmark(
                 args.dataset,
@@ -255,17 +411,23 @@ def main() -> None:
                 limit=args.limit,
             )
 
-    result = build_summary(
-        args.output_dir,
-        bootstrap_replicates=args.bootstrap_replicates,
-    )
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    summary_path = args.output_dir / "ablation_results.json"
-    summary_path.write_text(
-        json.dumps(result, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-    print(f"\nWrote {summary_path}")
+    builders = []
+    if args.study in {"all", "ablation"}:
+        builders.append(("ablation_results.json", build_ablation_summary))
+    if args.study in {"all", "full-comparison"}:
+        builders.append(("full_method_comparison.json", build_full_comparison_summary))
+    for filename, builder in builders:
+        result = builder(
+            args.output_dir,
+            bootstrap_replicates=args.bootstrap_replicates,
+        )
+        summary_path = args.output_dir / filename
+        summary_path.write_text(
+            json.dumps(result, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        print(f"\nWrote {summary_path}")
 
 
 if __name__ == "__main__":

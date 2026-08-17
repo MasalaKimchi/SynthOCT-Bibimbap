@@ -235,7 +235,7 @@ def run_challenge(args: argparse.Namespace) -> int:
             "index": index,
             "reference": rel,
             "method": method,
-            "evidence_source": "hosted_true_scanner",
+            "evidence_source": "organizer_hosted_challenge_service",
             "request_id": scan_result.request_id,
             **row,
         }
@@ -257,7 +257,7 @@ def run_challenge(args: argparse.Namespace) -> int:
     summary: dict = {
         "mode": "challenge",
         "method": method,
-        "evidence_source": "hosted_true_scanner",
+        "evidence_source": "organizer_hosted_challenge_service",
         "official_or_hidden_score": False,
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "n": len(rows),

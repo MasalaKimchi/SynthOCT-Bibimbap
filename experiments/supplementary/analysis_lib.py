@@ -1,7 +1,8 @@
-"""Reviewer-response analyses for the SynthOCT camera-ready revision.
+"""Camera-ready supplementary analyses for SynthOCT.
 
-Everything here reuses the shipped pipeline operators so the numbers agree with
-Tables 1-3 of the manuscript.  Nothing in this module writes into ``src/``.
+Everything here reuses the repository pipeline operators so the generated evidence
+corresponds to Supplementary Sections S1--S4. Nothing in this module writes into
+``src/``.
 """
 
 from __future__ import annotations
@@ -47,8 +48,35 @@ DATASET = REPO / "DATASET" / "DATASET_PNG"
 OUT = REPO / "outputs" / "experiments" / "supplementary"
 
 
+def configure_paths(
+    *, dataset: str | Path | None = None, output_dir: str | Path | None = None
+) -> None:
+    """Set input/output roots for a command-line experiment run."""
+    global DATASET, OUT
+
+    if dataset is not None:
+        DATASET = Path(dataset).expanduser().resolve()
+    if output_dir is not None:
+        OUT = Path(output_dir).expanduser().resolve()
+
+
 def scan_paths() -> list[Path]:
     return sorted(DATASET.rglob("*.png"))
+
+
+def require_scans(paths: list[Path]) -> list[Path]:
+    """Return ``paths`` or stop with an actionable dataset error."""
+    if not paths:
+        raise SystemExit(
+            f"error: no PNG scans found under {DATASET}; "
+            "pass the dataset root with --dataset"
+        )
+    return paths
+
+
+def scan_label(path: Path) -> str:
+    """Stable dataset-relative identifier, including the dataset directory."""
+    return str(path.relative_to(DATASET.parent))
 
 
 def series_key(path: Path) -> str:
@@ -106,16 +134,16 @@ def operators(scanner: ExperimentConfig, inverse: HolographicInverseConfig):
 
 
 # --------------------------------------------------------------------------
-# phase initialisation (Reviewer 3, comment 1)
+# phase initialisation (Supplement S1)
 # --------------------------------------------------------------------------
 
 
 def initial_phase(kind: str, magnitude: np.ndarray, seed: int = 0) -> np.ndarray:
     """Initial field phase for the alternating-projection iteration.
 
-    ``zero``      the shipped neutral start.
+    ``zero``      the standardized empirical start.
     ``hilbert``   argument of the axial analytic signal of the field magnitude,
-                  i.e. the reviewer's literal suggestion.
+                  used as an initialization sensitivity test.
     ``minphase``  minus the axial Hilbert transform of log-magnitude, i.e. the
                   Kramers-Kronig / minimum-phase construction, which is the
                   physically meaningful form of the same idea.
@@ -182,7 +210,7 @@ def solve_with_trace(
 
 
 # --------------------------------------------------------------------------
-# nonnegative encodings (Reviewer 3, comment 4)
+# nonnegative encodings (Supplement S4)
 # --------------------------------------------------------------------------
 
 
@@ -194,7 +222,9 @@ class EncodedPhantom:
 
 
 def _voxel_centres(scanner: ExperimentConfig):
-    x = (np.arange(scanner.n_lateral, dtype=np.float64) - scanner.n_lateral / 2.0) * scanner.pixel_size_x
+    x = (
+        np.arange(scanner.n_lateral, dtype=np.float64) - scanner.n_lateral / 2.0
+    ) * scanner.pixel_size_x
     z = (np.arange(scanner.n_depth, dtype=np.float64) + 0.5) * scanner.pixel_size_z
     return np.tile(x, scanner.n_depth), np.repeat(z, scanner.n_lateral)
 
@@ -218,7 +248,7 @@ def encode(
 ) -> EncodedPhantom:
     """Nonnegative encodings of the complex grid.
 
-    ``pair``          shipped analytic phase pair with free amplitudes.
+    ``pair``          reference analytic phase pair with free amplitudes.
     ``single``        one amplitude/depth-adjusted scatterer per coefficient.
     ``pair_equal``    both pair members forced to amplitude a/2 at d0 and d1.
     ``pair_quantized``pair amplitudes rounded to ``levels`` log-spaced values.
@@ -318,7 +348,9 @@ def _encode_equal_count(
             )
         )
     stacked = np.vstack(rows)
-    return EncodedPhantom(_scale_rows(stacked, max_amplitude), len(stacked), "equal_count")
+    return EncodedPhantom(
+        _scale_rows(stacked, max_amplitude), len(stacked), "equal_count"
+    )
 
 
 # --------------------------------------------------------------------------
@@ -326,13 +358,17 @@ def _encode_equal_count(
 # --------------------------------------------------------------------------
 
 
-def render_and_score(rows: np.ndarray, reference: np.ndarray) -> tuple[float, np.ndarray]:
+def render_and_score(
+    rows: np.ndarray, reference: np.ndarray
+) -> tuple[float, np.ndarray]:
     from sewar.full_ref import msssim
 
     config = ExperimentConfig(scatterers_count=len(rows))
     image = render_reference_array(rows, config=config)
     score = float(
-        np.real(msssim((reference * 255).astype(np.uint8), (image * 255).astype(np.uint8)))
+        np.real(
+            msssim((reference * 255).astype(np.uint8), (image * 255).astype(np.uint8))
+        )
     )
     return score, image
 

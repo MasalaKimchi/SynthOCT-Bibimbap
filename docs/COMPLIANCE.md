@@ -71,7 +71,8 @@ Within the published technical task, the method performs the requested per-scan
 inverse construction:
 
 1. The supplied B-scan is the input to a fixed, deterministic algorithm.
-2. RAP chooses a scanner-supported complex field; phase-pair encoding converts
+2. RAP chooses a complex-field phase favored by the regularized scanner model;
+   phase-pair encoding converts
    its coefficients to nonnegative scatterer energies.
 3. The output is a distinct physical-parameter list for each input and is
    evaluated only after passing through the scanner.

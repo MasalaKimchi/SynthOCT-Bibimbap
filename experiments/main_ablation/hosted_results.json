@@ -1,0 +1,77 @@
+{
+  "purpose": "camera-ready Table 2 organizer-hosted evaluation of the final method",
+  "result_scope": "full_public_120",
+  "evidence_source": "organizer_hosted_challenge_service",
+  "official_or_hidden_score": false,
+  "reference_root": "DATASET/DATASET_PNG",
+  "dataset_manifest_sha256": "7a245393fcbce95601bfe20b575364f0a489364022ff7413b96d50552f8ee55b",
+  "dataset_matches_published_public_set": true,
+  "n_images": 120,
+  "configuration": {
+    "axial_regularization": 0.02,
+    "lateral_regularization": 0.05,
+    "max_reflection_amplitude": 0.001,
+    "dynamic_range_db": 51.0,
+    "phase_iterations": 200,
+    "phase_momentum": 1.0,
+    "phase_encoding": "dispersion-canceling-pair"
+  },
+  "map_mode": "organizer-compatible-v1",
+  "metrics": {
+    "structural": {
+      "ms_ssim": {
+        "mean": 0.9942843141,
+        "median": 0.9945532174,
+        "min": 0.9857009208,
+        "max": 0.99828
+      },
+      "lpips": {
+        "mean": 0.02243,
+        "median": 0.022610764
+      }
+    },
+    "oac_derived_view": {
+      "ms_ssim": {
+        "mean": 0.99965,
+        "median": 0.99966
+      },
+      "lpips": {
+        "mean": 0.00112,
+        "median": 0.00106
+      }
+    },
+    "sc_derived_view": {
+      "ms_ssim": {
+        "mean": 0.99801,
+        "median": 0.99817
+      },
+      "lpips": {
+        "mean": 0.00839,
+        "median": 0.00786
+      }
+    },
+    "rsc_derived_view": {
+      "ms_ssim": {
+        "mean": 0.99817,
+        "median": 0.99831
+      },
+      "lpips": {
+        "mean": 0.00739,
+        "median": 0.00653
+      }
+    }
+  },
+  "competition_formula_estimate": 0.9940789428,
+  "reported_precision": {
+    "structural": "Mean, median, and minimum MS-SSIM and median LPIPS are retained at the available analysis precision; the remaining values are at camera-ready table precision.",
+    "derived_views": "OAC, SC, and RSC aggregates are retained at camera-ready table precision.",
+    "competition_formula_estimate": "Retained at the available aggregate-analysis precision."
+  },
+  "derived_view_note": "OAC, SC, and RSC are organizer-defined views derived from the structural B-scan, not independently calibrated ground truth.",
+  "reproduction": {
+    "runner": "tools/run_hosted_api_public120.py",
+    "credentials": "A fresh run requires SYNTHOCT_API_KEY and access to the external organizer service.",
+    "outputs": "The runner regenerates request state, raw and grayscale renders, feature maps, detail.csv, and summary.json below outputs/; outputs/ is ignored by Git.",
+    "historical_evidence_limit": "Historical per-request state, request IDs, and raw hosted outputs were not retained in the public repository. A rerun creates new request IDs, so this compact camera-ready aggregate cannot authenticate a historical request ledger."
+  }
+}

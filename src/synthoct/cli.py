@@ -71,7 +71,10 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--reference", type=Path)
     scan.add_argument("--generator-diagnostics", type=Path)
 
-    reference = commands.add_parser("render-reference", help="Render with the recovered exact scanner locally.")
+    reference = commands.add_parser(
+        "render-reference",
+        help="Render with the local implementation of the published forward model.",
+    )
     reference.add_argument("--phantom", required=True, type=Path)
     reference.add_argument("--out", required=True, type=Path)
 

@@ -2,39 +2,34 @@
 
 This document covers the phase-pair holographic-inversion algorithm, its mapping
 to the challenge baseline, the Struct/OAC/SC/RSC feature-map audit, and the
-experiment history behind the fixed method.
+final evidence behind the fixed method.
 
 **Scope note on numbers.** Scores from different scopes or metric backends are not
 interchangeable. Results labeled *local* use this repository's implementation of
 the published forward model; results labeled *hosted* use the organizer's
 challenge service. Both use public data and are **never** organizer-leaderboard
 or hidden-test results.
-Some v1/v3-50 aggregates were computed with an older float32 metric loader and some with the
-official float64 loader; such comparisons are flagged as mixed-precision.
 
 ---
 
 ## 1. Phase-Pair Holographic Inversion (core method)
 
-The fixed virtual scanner is a **coherent linear field operator** followed by magnitude, log
-compression, and clipping. The method recovers a 300,000-scatterer phantom whose scanner render
-matches a real B-scan by choosing a *scanner-feasible complex field* and encoding each field
-coefficient as a dispersion-canceling pair of sub-resolution scatterers.
+The local published forward model is a **low-reflectivity coherent linear-field
+approximation** followed by magnitude, log compression, and clipping. The method
+recovers a 300,000-row phantom whose scanner render matches a real B-scan by
+choosing a phase favored by the regularized model and encoding each field
+coefficient as a dispersion-canceling pair of sub-resolution rows.
 
-### 1.1 Why v1 stalled
+### 1.1 Why the earlier method stalled
 
-v1 inverted a real, zero-phase target field and encoded each complex coefficient with a single
-sub-wavelength depth shift. Two effects limited it:
+The earlier method inverted a real, zero-phase target field and encoded each
+complex coefficient with a single sub-wavelength depth shift. Two effects
+limited it:
 
 - The axial Hanning window leaves the 256×256 operator at **rank 254**, so forcing zero phase
   excites poorly conditioned modes and creates axial ringing.
 - A single depth shift has the desired coefficient phase only at the center wavenumber; its phase
   drifts across the scanner bandwidth.
-
-The hosted/local-model mismatch was **not** the bottleneck: raw hosted PNGs agree with their
-corresponding local-model renders at MS-SSIM `0.999676` (v1), `0.999677` (v3-50), and `0.999672`
-(selected v3-200). (The older v1 value `0.999313` came from a secondary grayscale copy and is not
-used.)
 
 ### 1.2 Momentum phase retrieval
 
@@ -49,13 +44,15 @@ q_target = q + beta * wrapped(q - q_previous)
 F = M * exp(i * q_target)
 ```
 
-This preserves the measured magnitude while choosing a scanner-feasible phase. **Fixed settings:**
+This preserves the measured magnitude while choosing a phase favored by the
+regularized model; it is not a hard feasible-set projection. **Fixed settings:**
 200 iterations, `beta = 1`, Tikhonov regularization `alpha_z = 0.02`, `alpha_x = 0.05`.
 
 ### 1.3 Dispersion-canceling pair
 
-For coefficient `C = |C| exp(i·phi)`, v1 used depth offset `d0 = -phi·lambda/(4·pi)`. v3 adds a
-carrier-equivalent companion half a wavelength away on the opposite side:
+For coefficient `C = |C| exp(i·phi)`, the single-row encoding used depth offset
+`d0 = -phi·lambda/(4·pi)`. The final encoding adds a carrier-equivalent
+companion half a wavelength away on the opposite side:
 
 ```text
 d1 = d0 - sign(d0) * lambda/2
@@ -79,49 +76,23 @@ capped at `0.001`.
 At 256×512 the pair requires **262,144 active rows** and leaves **37,856 zero-energy fillers** in
 the 300,000-row contract. Active depths remain within bounds, approximately **2.35 to 1533.65 µm**.
 
-### 1.5 Measured effect (v1 → v3-200)
+### 1.5 Measured effect (earlier method → final method)
 
-On the retained hosted reference, organizer-compatible metrics changed:
+The authoritative all-public local-model comparison used the current float64
+metric loader on 120 paired scans:
 
-| Metric | v1 | v3-200 | Delta |
-|---|---:|---:|---:|
-| Struct MS-SSIM | 0.962757 | 0.996817 | +0.034059 |
-| Struct LPIPS | 0.134742 | 0.013080 | -0.121662 |
-| OAC MS-SSIM | 0.992656 | 0.999701 | +0.007045 |
-| SC MS-SSIM | 0.982782 | 0.998844 | +0.016062 |
-| RSC MS-SSIM | 0.983875 | 0.999193 | +0.015318 |
-| Eight-term local estimate | 0.958343 | 0.996514 | +0.038170 |
-
-The same fixed method improved all eight metric components on all four independent local strata.
-The panel's local eight-term estimate rose from v1 `0.955140` → v3-50 `0.993074` → v3-200
-`0.993781`. Detailed run artifacts are reproducible and intentionally excluded from the final
-repository; aggregate and selected-case evidence remains summarized in this document.
-
-The subsequent fixed **all-public local-model** evaluation (n=120):
-
-| Public Structural MS-SSIM (n=120) | v1 | v3-200 |
+| Structural MS-SSIM | Earlier zero-phase single | Final 200-iteration pair |
 |---|---:|---:|
-| Mean | 0.955942 | 0.994588 |
-| Median | 0.956044 | 0.994849 |
-| Minimum | 0.933871 | 0.985133 |
-| Maximum | 0.967150 | 0.998175 |
+| Mean | 0.955954 | 0.994588 |
+| Median | 0.956021 | 0.994849 |
+| Minimum | 0.933827 | 0.985133 |
 
-v3-200 won all 120 paired comparisons against both v3-50 and v1. Versus v1, mean paired gain was
-`+0.038646` (smallest `+0.029806`). Versus v3-50, mean gain was `+0.001070` (smallest `+0.000299`),
-and mean remaining error to one fell by `16.51%`. Every v3-200 gain exceeds the observed
-`0.000015` float32/float64 precision difference; no global correction was applied. These are
-strong public/development results, **not** hidden-test proof.
-
-### 1.6 Remaining opportunities
-
-- Use the 37,856 filler rows as sparse second-order correction atoms at surface/high-gradient
-  residuals.
-- The checkpoint sweep selected a fixed global budget of **200 iterations**. At 300 iterations the
-  extra local gain was only about `+0.000052` on the same exploratory metric path, and generation
-  time was anomalously `61.6 s`; the 300 checkpoint was not rescored with the official-aligned loader.
-- Test larger physical reflection scales with transmission compensation.
-- Seek organizer clarification that sub-resolution coherent pairs and very low energies satisfy the
-  intended scientific-phantom interpretation.
+The final method improved all 120 scans and all 40 filename-defined acquisition
+series. Its mean paired gain was `0.038634`; the 200,000-replicate series-cluster
+95% CI was `[0.037530, 0.039790]`, and the one-sided exact Wilcoxon signed-rank
+test gave `p=9.095e-13`. These are public-development results, not hidden-test
+proof. The exact configurations, runner, and compact result are under
+[`experiments/main_ablation/`](../experiments/main_ablation/).
 
 ---
 
@@ -219,13 +190,13 @@ normalization, and metric-region issues:
   and no competition formula (rejects LPIPS, since masked float parameter arrays are not
   natural-image inputs).
 
-Phantom **generation** always runs at 51 dB. Existing v3-200 phantoms do not need regeneration
+Phantom **generation** always runs at 51 dB. Existing final-method phantoms do not need regeneration
 because of the Part3 contradiction.
 
 ### 3.2 Folder semantics
 
-The all-120 hosted run was generated at `outputs/hosted_api_public120_v3_200/`. Its directory
-structure was:
+A hosted reproduction writes beneath the selected `--out-dir` (the documented
+example uses `outputs/experiments/main_hosted/evaluation/`) with this structure:
 
 - `raw/` — PNG payload returned by the hosted virtual-scanner API (some stored as color/RGBA even
   though the signal is grayscale).
@@ -237,8 +208,10 @@ structure was:
 
 Thus `maps/reference/` was **not** an independent parametric ground-truth dataset. Unusual terminal
 rows, borders, saturated regions, and contrast differences were products of the map processor. The
-large generated run was removed during final repository cleanup; the commands, aggregate results,
-and paper figures remain reproducible from the documented dataset.
+large generated run was removed during final repository cleanup. The hosted runner can regenerate
+the raw outputs and metrics, while the compact aggregate is tracked under
+[`experiments/main_ablation/`](../experiments/main_ablation/). The assembled
+manuscript figure itself is supplied separately with the paper.
 
 ### 3.3 All-120 integrity checks
 
@@ -317,107 +290,31 @@ independently calibrated raw signals and independent property measurements.
 
 ---
 
-## 4. Experiment Log & Results
+## 4. Final Evidence Map
 
-Every row is *local* unless a hosted request ID is given. A `local` row is never an organizer
-leaderboard result.
+Only evidence used by the camera-ready manuscript is part of the release:
 
-### 4.1 Chronological ledger
+| Claim | Scope | Reproduction entrypoint | Compact record |
+|---|---|---|---|
+| Fixed 0/50 phase × encoding ablation | Local model, 120 public scans | `experiments/main_ablation/run.py` | `experiments/main_ablation/ablation_results.json` |
+| Earlier method vs final 200-iteration method | Local model, 120 public scans | `experiments/main_ablation/run.py` | `experiments/main_ablation/full_method_comparison.json` |
+| Final method, organizer-hosted rendering | Hosted service, 120 public scans | `tools/run_hosted_api_public120.py` | `experiments/main_ablation/hosted_results.json` |
+| Supplementary Tables S1--S4 | Local model, defined 14/40-scan subsets | `experiments/supplementary/` | `experiments/supplementary/results/` |
 
-**2026-07-11 — Float64-aligned v1 comparison rerun.** Reran the exact retained v1 config
-(`alpha_z=0.03`, `alpha_x=0.20`, zero-phase iterations, momentum 0, single scatterer) through the
-current local scanner/evaluator implementation. The run was generated at
-`outputs/holographic_inverse_v1_current_public120/`.
-Structural MS-SSIM: mean `0.955953650`, median `0.956020936`, minimum `0.933827016` (120 paired
-references). Against unchanged v3-200 rows, mean gain `0.038634109`; all 120 images and all 40
-filename-defined series improve. A 200,000-replicate series-cluster bootstrap gives 95% CI
-`[0.037530, 0.039790]`; the one-sided exact Wilcoxon signed-rank p-value is `9.095e-13`. This
-supersedes the legacy-precision v1 aggregate for the paper comparison; the mean shift was only
-`+1.15e-5`, so the conclusion is unchanged.
+Generated per-scan CSV/JSON files, phantoms, hosted request state, and rendered
+images live below ignored `outputs/`. The compact hosted record contains the
+reported aggregate, while a rerun creates new service request IDs and a new
+content-bound job manifest.
 
-**2026-07-10 — Coherent v1 baseline audit.** Hypothesis: exact inversion of the recovered coherent
-scanner can exceed older statistical learned-prior methods. Method: zero-phase target, Tikhonov
-`alpha_z=0.03`, `alpha_x=0.20`, one shifted scatterer per voxel, 131,072 active rows. Hosted
-request `d5a0d2b8`. Corrected organizer-compatible single-case result: Struct MS-SSIM `0.962757`,
-real LPIPS `0.134742`, eight-term local formula estimate `0.958343`. Lesson: the approach is real
-and generalizes locally, but the retained `official_score` label was too strong and the evidence
-scope was only `n=1`.
-
-**2026-07-10 — Lateral regularization sweep.** Hypothesis: stronger lateral regularization
-suppresses ringing. Tested `alpha_z ∈ {.001,.005,.015,.03}`, `alpha_x ∈ {.005,.02,.07,.20,.50}` on
-the retained reference. Zero-phase single-scatterer MS-SSIM improved from `0.962712` at `.03/.20`
-to `0.969989` at `.03/.50`. Lesson: operator conditioning matters, but regularization alone leaves
-a large phase-representation error.
-
-**2026-07-10 — Three-phase conic encoding.** Hypothesis: two nonnegative weights from a
-0/+120/−120° basis reduce the maximum depth shift. Result: `0.962712 → 0.962854` MS-SSIM without
-phase retrieval; after phase retrieval it underperformed the single-scatterer encoding.
-**Rejected** — reducing offset magnitude does not cancel broadband phase slope.
-
-**2026-07-10 — Momentum phase retrieval.** Hypothesis: OCT intensity leaves phase free, so
-alternating projections can avoid the axial null space. Single-scatterer retained-reference: plain
-200 iterations `0.980110`; circular momentum `beta=1` reached `0.981525` in 50 iterations. Four
-independent strata: v1 mean `0.952667`; momentum-50 mean `0.977167`. Lesson: phase freedom is a
-high-value optimization dimension; 50 momentum iterations capture nearly all of the 100-iteration
-gain for the single-scatterer branch.
-
-**2026-07-10 — Dispersion-canceling phase pair (initial 50-iteration promotion → v3).** Hypothesis:
-two carrier-equivalent depths with zero weighted mean offset cancel first-order broadband phase
-error. Fixed method: `alpha_z=0.02`, `alpha_x=0.05`, 50 momentum iterations, two rows per voxel,
-max reflection amplitude `0.001`. Serialized full local retained reference: Struct MS-SSIM
-`0.995988`. Four independent serialized local strata: Struct mean `0.993497`, minimum `0.990091`;
-every Struct/OAC/SC/RSC MS-SSIM and real-LPIPS component improved; the retained panel's local
-formula estimate rose `0.955140 → 0.993074`. Fixed all-120 local structural comparison: v1
-mean/median/min `0.955942/0.956044/0.933871`; v3-50 `0.993518/0.993899/0.984114`; v3 won `120/120`,
-mean paired delta `+0.037576`, minimum delta `+0.029060`. Hosted request `b166d529`: Struct MS-SSIM
-`0.996075`, Struct LPIPS `0.015910`, eight-term local estimate `0.995898`. **Promoted as v3** —
-hosted output confirms the local prediction rather than exposing a surrogate gap.
-
-**2026-07-10 — Iteration-budget refinement (200 iterations promoted).** Hypothesis: the phase-pair
-encoder keeps benefiting from phase retrieval past the 50-iteration single-scatterer plateau. On the
-same exploratory metric path, retained-reference checkpoints were ≈ `50: 0.995988`, `100: 0.996549`,
-`150: 0.996756`, `200: 0.996841`, `300: 0.996894`; the selected 200 checkpoint rescored at
-`0.996854` under the official-aligned loader (300 not rescored). **Decision:** fixed global budget of
-200 — the same-path exploratory gain at 300 was only ≈ `+0.000052` while its generation time was
-anomalously `61.6 s`. All-120 official-real-reference local: mean/median/min/max Structural MS-SSIM
-`0.994588/0.994849/0.985133/0.998175`; v3-200 beat v3-50 and v1 on `120/120`, mean delta vs v3-50
-`+0.001070`, cutting mean remaining error by `16.51%`. Four-case real-LPIPS/map panel: all eight
-metrics improved on every case vs both v3-50 and v1; local formula estimate rose v3-50 `0.993074` →
-v3-200 `0.993781`. Hosted request `69bc223f`: Struct MS-SSIM `0.996817`, Struct LPIPS `0.013080`,
-eight-term local estimate `0.996514` (`+0.000615` over the v3-50 hosted result). Rejected outer
-target correction: `eta=1` degraded; `eta=0.1` improved three of four cases but regressed one by
-`0.000021` — no robust selection rule, not promoted. Precision note: this run uses the official
-float64 `img_as_float` metric path; retained v1/v3-50 CSVs use the older, slightly conservative
-float32 loader, so comparisons are labeled mixed precision with no blanket correction.
-
-### 4.2 Prior families not to repeat (without a new rationale)
-
-- H0–H70 density/depth/OAC/layer scalar sweeps and invalid offline-render ranks.
-- P06–P09 visual recipes; P120/P140/P160/t32/sigma one-knob variants.
-- Neural density blends and e05–e60 energy blends.
-- Texture smoothing, coordinate jitter, scatterer injection, y-beam reshaping,
-  gamma/high-frequency corrections.
-- Learned-surrogate inversion, anchored surrogate, and direct lattice: preview/surrogate gains did
-  not transfer to organizer-hosted rendering.
-- Public positive-only flow/energy patching as a hidden-general solution.
-
-Historical best before coherent inversion was the full-public **P140-t32** family: official-style
-public aggregate ≈ `0.68479`; public oracle rescue layers reached ≈ `0.693998` but were
-selection-leaky for hidden evaluation.
-
-The regularization, conic-encoding, and early-momentum ablations are session-recorded lessons; their
-raw scratch outputs were not retained. Aggregate V1/v3 hosted evidence, the all-120 comparison, and
-selected cases from the real-LPIPS panel remain in this document; bulky CSV/PNG run directories
-were removed because the CLI and dataset provenance make them reproducible.
-
-### 4.3 Evidence rules
+### 4.1 Evidence rules
 
 - Use SEWAR MS-SSIM and real AlexNet LPIPS; never substitute a fallback MS-SSIM or `LPIPS_PROXY` in
   a competition claim.
 - Generate OAC/SC/RSC maps with the organizer's Matplotlib encoding and score the raw scanner PNG,
   not a secondary rounded grayscale copy.
 - Call the eight-median aggregation a `competition_formula_estimate` unless the organizer issued it.
-- Preserve request IDs, content hashes, dependency versions, git state, scope, and failure rows for
-  every hosted experiment.
+- New hosted runs preserve request IDs, content hashes, dependency versions,
+  git state, scope, and failure rows. Historical request state predating this
+  release was not retained; only its reported aggregate is published.
 - Include tracked and untracked source/config files in the source-tree digest; batch summaries
   retain all effective controls, scanner constants, dependency versions, and environment provenance.

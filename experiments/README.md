@@ -3,8 +3,8 @@
 This directory contains the Python runners and compact published summaries for
 the camera-ready paper:
 
-- [`main_ablation/`](main_ablation/) reproduces the all-120 fixed-regularization
-  2 x 2 ablation.
+- [`main_ablation/`](main_ablation/) reproduces both all-120 local-model
+  comparisons and records the organizer-hosted final-method aggregate.
 - [`supplementary/`](supplementary/) reproduces the local S1--S4 diagnostic
   experiments.
 
@@ -13,6 +13,7 @@ and place it at `DATASET/DATASET_PNG/`. Generated per-scan CSV/JSON files are
 written under `outputs/experiments/`; that directory is ignored by Git. Only
 small summaries used in the manuscript are retained here.
 
-All scores are local-model public-data evidence, not organizer-issued,
-leaderboard, or hidden-test scores. Supplementary Figure S1 uses separate
-organizer-hosted renders and is not reproduced by these local runners.
+Evidence scope is labeled in each compact result. Local-model comparisons are
+not organizer-issued, leaderboard, or hidden-test scores. Hosted reruns require
+challenge-service credentials and create new request IDs; Supplementary Figure
+S1 uses those external organizer-hosted renders.

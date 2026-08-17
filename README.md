@@ -6,7 +6,7 @@ challenge-format digital phantom: exactly 300,000 rows of `X Y Z Energy` values
 for rendering by the fixed virtual scanner.
 
 The method, **phase-pair holographic inversion**, has two stages. Regularized
-alternating projections (RAP) select a phase supported by the scanner model,
+alternating projections (RAP) select a phase favored by the regularized scanner model,
 and a closed-form phase pair represents each complex coefficient with two
 nonnegative-energy entries half a wavelength apart. One fixed configuration is
 applied to every scan; there is no per-image parameter tuning.
@@ -17,11 +17,15 @@ In the camera-ready evaluation, a fixed-regularization 2×2 ablation used the
 local implementation of the published forward model on all 120 public scans.
 The zero-phase, single-scatterer baseline reached mean MS-SSIM 0.82558; combining
 50 RAP iterations with phase-pair encoding reached 0.99351. Every nonbaseline
-cell improved all 120 scans.
+cell improved all 120 scans. The tracked
+[`ablation_results.json`](experiments/main_ablation/ablation_results.json)
+records the full configuration and paired contrasts.
 
 The final 200-iteration method was then rendered through the organizer's
 challenge service for the same complete public set. It achieved mean structural
-MS-SSIM 0.99428 and median structural LPIPS 0.02261.
+MS-SSIM 0.99428 and median structural LPIPS 0.02261. The tracked
+[`hosted_results.json`](experiments/main_ablation/hosted_results.json) records
+the aggregate and its historical-evidence limitation.
 
 > These are descriptive results on the public dataset, not a leaderboard or
 > hidden-test score. Local rendering is used for controlled configuration
@@ -128,10 +132,11 @@ ignored by Git.
 
 ## Reproduce the published analyses
 
-[experiments/](experiments/) contains compact numerical evidence and scripts for
-the main-paper fixed-regularization ablation and the post-review supplementary
-diagnostics. The raw dataset remains external. The organizer-hosted renders in
-the qualitative figure are separate from these local-model experiments.
+[experiments/](experiments/) contains the original Python runners and compact
+numerical evidence for the main-paper comparisons and Supplementary Tables
+S1--S4. Long per-scan records, generated phantoms, and rendered images are
+written under ignored `outputs/` directories when the commands run. The raw
+dataset and authenticated organizer-hosted service remain external.
 
 ## Feature-map modes
 
@@ -151,6 +156,21 @@ independent optical-property ground truth. Details are in
 
 | Document | Contents |
 |---|---|
-| [docs/METHODS.md](docs/METHODS.md) | Algorithm, challenge-baseline mapping, feature-map audit, and experiment history. |
+| [docs/METHODS.md](docs/METHODS.md) | Algorithm, challenge-baseline mapping, feature-map audit, and final evidence map. |
 | [docs/DATA.md](docs/DATA.md) | Dataset version, checksums, structure, and evaluation pairing. |
 | [docs/COMPLIANCE.md](docs/COMPLIANCE.md) | Technical compliance and the scientific validity boundary. |
+
+## Citation
+
+If this software supports your work, cite:
+
+> Justin Namuk Kim. “Phase-Pair Holographic Inversion for OCT Digital Phantom
+> Synthesis.” SynthOCT Challenge, SASHIMI at MICCAI 2026.
+
+Machine-readable software citation metadata is provided in [CITATION.cff](CITATION.cff).
+
+## License
+
+No open-source software license has been selected for this release. The code is
+public for reproducibility, but reuse or redistribution requires permission from
+the author.

@@ -2,7 +2,7 @@ name: synthoct-py312
 channels:
   - conda-forge
 dependencies:
-  - python=3.12.12
+  - python=3.12
   - pip
   - numpy=1.26.4
   - scipy=1.13.1

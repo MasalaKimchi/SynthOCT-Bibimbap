@@ -1,23 +1,25 @@
-"""Amplitude-constraint study (Reviewer 3, comment 4).
+"""Amplitude-constraint study (Supplement S4).
 
-The reviewer asks whether the problem is solvable only because every scatterer
-amplitude may vary freely, and what a strict biological constraint -- one common
-amplitude, or a small discrete set -- would cost.  Each variant reuses the same
-200-iteration complex field, so the comparison isolates the encoding.
+Tests the cost of stricter amplitude constraints: one common amplitude or a
+small discrete set. Each variant reuses the same 200-iteration complex field,
+so the comparison isolates the encoding.
 """
 
 from __future__ import annotations
 
-import sys
+import argparse
+from pathlib import Path
 import time
 
 import numpy as np
 
 from analysis_lib import (
+    configure_paths,
     dump,
     encode,
     one_frame_per_series,
     render_and_score,
+    require_scans,
     scan_paths,
     series_key,
     target_magnitude,
@@ -64,9 +66,42 @@ def equal_amplitude_condition() -> dict:
     }
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--dataset",
+        type=Path,
+        help="PNG dataset root (default: repository DATASET/DATASET_PNG)",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        help="generated-result directory (default: outputs/experiments/supplementary)",
+    )
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="use every frame instead of one frame per acquisition series",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        metavar="N",
+        help="run only the first N scans after subset selection",
+    )
+    args = parser.parse_args()
+    if args.limit is not None and args.limit < 1:
+        parser.error("--limit must be at least 1")
+    return args
+
+
 def main() -> None:
-    full = "--full" in sys.argv
-    paths = scan_paths() if full else one_frame_per_series()
+    args = parse_args()
+    configure_paths(dataset=args.dataset, output_dir=args.output_dir)
+    paths = scan_paths() if args.full else one_frame_per_series()
+    if args.limit is not None:
+        paths = paths[: args.limit]
+    paths = require_scans(paths)
     scanner = ExperimentConfig(scatterers_count=300_000)
     inverse = HolographicInverseConfig(phase_iterations=200)
 
@@ -84,15 +119,13 @@ def main() -> None:
         print(
             f"[{n}/{len(paths)}] {path.name} "
             + " ".join(
-                f"{k}={v['msssim']:.5f}"
-                for k, v in row.items()
-                if isinstance(v, dict)
+                f"{k}={v['msssim']:.5f}" for k, v in row.items() if isinstance(v, dict)
             )
-            + f"  ({(time.time()-started)/n:.1f} s/scan)",
+            + f"  ({(time.time() - started) / n:.1f} s/scan)",
             flush=True,
         )
 
-    dump("encoding_study_full.json" if full else "encoding_study.json", records)
+    dump("encoding_study_full.json" if args.full else "encoding_study.json", records)
 
     labels = [k for k, v in records[0].items() if isinstance(v, dict)]
     summary = {"equal_amplitude_condition": equal_amplitude_condition(), "variants": {}}
@@ -107,7 +140,9 @@ def main() -> None:
             "delta_vs_pair_mean": float((values - reference).mean()),
             "rows": int(records[0][label]["rows"]),
         }
-    dump("encoding_summary_full.json" if full else "encoding_summary.json", summary)
+    dump(
+        "encoding_summary_full.json" if args.full else "encoding_summary.json", summary
+    )
     print("\n" + "\n".join(f"{k}: {v}" for k, v in summary["variants"].items()))
     print("\nequal-amplitude condition:", summary["equal_amplitude_condition"])
 

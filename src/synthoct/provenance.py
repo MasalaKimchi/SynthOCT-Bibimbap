@@ -16,13 +16,16 @@ DEPENDENCY_PACKAGES = (
 )
 SOURCE_TREE_PATHS = (
     ".gitignore",
+    "CITATION.cff",
     "README.md",
+    "baseline_format",
     "docs",
     "environment.yml",
+    "experiments",
     "pyproject.toml",
-    "requirements.txt",
     "src",
     "tests",
+    "tools",
 )
 
 

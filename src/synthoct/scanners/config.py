@@ -5,16 +5,6 @@ from pathlib import Path
 from synthoct.phantom import ExperimentConfig
 
 
-def write_scanner_config(
-    path: str | Path,
-    scatterers_path: str | Path,
-    output_path: str | Path,
-    config: ExperimentConfig = ExperimentConfig(),
-) -> Path:
-    """Write a scanner Configuration.ini file for a specific phantom/output pair."""
-    return config.write_ini(path, scatterers_path, output_path)
-
-
 def write_api_config(path: str | Path, scatterers_count: int = 300_000) -> Path:
     """Write the hosted SynthOCT API Configuration.ini payload."""
     config = ExperimentConfig(scatterers_count=scatterers_count)

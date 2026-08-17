@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the associated paper."
+title: "SynthOCT-Bibimbap: Phase-Pair Holographic Inversion"
+type: software
+authors:
+  - family-names: Kim
+    given-names: Justin Namuk
+repository-code: "https://github.com/MasalaKimchi/SynthOCT-Bibimbap"
+version: 0.1.0
+date-released: 2026-08-16

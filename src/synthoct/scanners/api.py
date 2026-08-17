@@ -10,16 +10,6 @@ import requests
 
 
 @dataclass(frozen=True)
-class ApiRenderResult:
-    request_id: str
-    synthetic_png: Path
-    synthetic_gray_png: Path
-    reference_png: Path
-    elapsed_seconds: float
-    poll_count: int
-
-
-@dataclass(frozen=True)
 class ApiRenderRequest:
     """Prepared hosted scanner request metadata with secret-safe representation."""
 
@@ -115,40 +105,6 @@ def _request_with_retries(method: str, url: str, attempts: int = 3, **kwargs) ->
                 break
             time.sleep(2.0 * attempt)
     raise last_error or RuntimeError(f"Request failed: {method} {url}")
-
-
-class HostedApiScanner:
-    """Hosted SynthOCT scanner backend, the default renderer for macOS workflows."""
-
-    def __init__(
-        self,
-        api_key: str | None = None,
-        api_key_file: str | Path | None = None,
-        endpoint: str = "https://synthoct.com/process_oct",
-        result_base_url: str = "https://synthoct.com/results",
-        poll_interval_seconds: float = 10.0,
-        max_polls: int = 60,
-    ) -> None:
-        self.api_key = api_key
-        self.api_key_file = api_key_file
-        self.endpoint = endpoint
-        self.result_base_url = result_base_url
-        self.poll_interval_seconds = poll_interval_seconds
-        self.max_polls = max_polls
-
-    def render(self, phantom_path: str | Path, config_path: str | Path, output_png: str | Path) -> Path:
-        _request_id, out_png, _elapsed, _polls = render_with_api(
-            phantom_path,
-            config_path,
-            output_png,
-            api_key=self.api_key,
-            api_key_file=self.api_key_file,
-            endpoint=self.endpoint,
-            result_base_url=self.result_base_url,
-            poll_interval_seconds=self.poll_interval_seconds,
-            max_polls=self.max_polls,
-        )
-        return out_png
 
 
 def submit_api_render(

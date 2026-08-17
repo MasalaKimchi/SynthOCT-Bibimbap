@@ -8,8 +8,9 @@ Coherence Tomography (OCT) Dataset for Classification Benchmarking and Digital
 Phantom Generation* (CC BY 4.0).
 
 The record contains 120 in-vivo human-skin B-scans at 256×512 pixels, 6 µm per
-pixel, approximately 51 dB dynamic range, 1.3 µm center wavelength, and 20 µm
-beam FWHM. The scans form 40 three-frame acquisition series; filenames identify
+pixel, approximately 51 dB dynamic range, 1.3 µm center wavelength, and a 10 µm
+configured beam radius (20 µm nominal diameter). The scans form 40 three-frame
+acquisition series; filenames identify
 frames 50, 250, and 450. They are therefore 120 scans, not 120 independent
 subjects.
 

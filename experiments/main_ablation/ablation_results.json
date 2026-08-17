@@ -1,10 +1,12 @@
 {
   "analysis_date": "2026-07-13",
   "purpose": "full-public fixed-regularization 2x2 phase-selection by phase-encoding ablation",
+  "result_scope": "full_public_120",
   "evidence_source": "local_published_forward_model",
   "official_or_hidden_score": false,
   "reference_root": "DATASET/DATASET_PNG",
   "dataset_manifest_sha256": "7a245393fcbce95601bfe20b575364f0a489364022ff7413b96d50552f8ee55b",
+  "dataset_matches_published_public_set": true,
   "n_images": 120,
   "n_filename_defined_series": 40,
   "parameters_fixed": {

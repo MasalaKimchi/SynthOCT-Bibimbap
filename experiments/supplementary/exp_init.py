@@ -1,25 +1,27 @@
-"""Phase initialisation study (Reviewer 3, comment 1).
+"""Phase initialisation study (Supplement S1).
 
-Compares the shipped zero-phase start against the reviewer's suggested axial
-Hilbert transform and against the minimum-phase (Kramers-Kronig) construction,
-which is the physically meaningful form of the same idea for a magnitude-only
-input.  Reports both the alternating-projection residual trace and the end-to-end
-MS-SSIM of the rendered phantom, so the question "would this reduce the number
-of required iterations?" is answered with measurements.
+Compares the standardized zero-phase start with axial analytic-signal and
+minimum-phase (Kramers-Kronig) initializations for a magnitude-only input.
+Reports both the alternating-projection residual trace and the end-to-end
+MS-SSIM of the rendered phantom at fixed iteration checkpoints.
 """
 
 from __future__ import annotations
 
-import sys
+import argparse
+from pathlib import Path
 import time
 
 import numpy as np
 
 from analysis_lib import (
+    configure_paths,
     dump,
     encode,
     one_frame_per_series,
     render_and_score,
+    require_scans,
+    scan_label,
     scan_paths,
     series_key,
     solve_with_trace,
@@ -32,9 +34,42 @@ INITS = ("zero", "minphase", "hilbert")
 CHECKPOINTS = (0, 10, 25, 50, 200)
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--dataset",
+        type=Path,
+        help="PNG dataset root (default: repository DATASET/DATASET_PNG)",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        help="generated-result directory (default: outputs/experiments/supplementary)",
+    )
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="use every frame instead of the default sparse one-frame-per-series subset",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        metavar="N",
+        help="run only the first N scans after subset selection",
+    )
+    args = parser.parse_args()
+    if args.limit is not None and args.limit < 1:
+        parser.error("--limit must be at least 1")
+    return args
+
+
 def main() -> None:
-    full = "--full" in sys.argv
-    paths = scan_paths() if full else one_frame_per_series()[::3]
+    args = parse_args()
+    configure_paths(dataset=args.dataset, output_dir=args.output_dir)
+    paths = scan_paths() if args.full else one_frame_per_series()[::3]
+    if args.limit is not None:
+        paths = paths[: args.limit]
+    paths = require_scans(paths)
     scanner = ExperimentConfig(scatterers_count=300_000)
     inverse = HolographicInverseConfig(phase_iterations=200)
 
@@ -53,7 +88,7 @@ def main() -> None:
                 scores[step], _ = render_and_score(rows, scan)
             records.append(
                 {
-                    "scan": str(path.relative_to(path.parents[4])),
+                    "scan": scan_label(path),
                     "series": series_key(path),
                     "init": init,
                     "residual_trace": residuals.tolist(),
@@ -66,11 +101,11 @@ def main() -> None:
             f"[{n}/{len(paths)}] {path.name} "
             f"zero@200={records[-3]['msssim_by_iteration'][200]:.5f} "
             f"minphase@200={records[-2]['msssim_by_iteration'][200]:.5f} "
-            f"({elapsed/n:.1f} s/scan)",
+            f"({elapsed / n:.1f} s/scan)",
             flush=True,
         )
 
-    dump("init_study_full.json" if full else "init_study.json", records)
+    dump("init_study_full.json" if args.full else "init_study.json", records)
 
     # --- aggregate --------------------------------------------------------
     summary = {}
@@ -79,7 +114,9 @@ def main() -> None:
         summary[init] = {
             "n": len(subset),
             "msssim_mean": {
-                str(step): float(np.mean([r["msssim_by_iteration"][step] for r in subset]))
+                str(step): float(
+                    np.mean([r["msssim_by_iteration"][step] for r in subset])
+                )
                 for step in CHECKPOINTS
             },
             "residual_mean": {
@@ -88,13 +125,15 @@ def main() -> None:
             },
         }
 
-    # Iterations each initialisation needs to reach the quality that the shipped
+    # Iterations each initialisation needs to reach the quality that the baseline
     # zero-phase start reaches at 200 iterations, per scan.
-    zero_by_series = {r["series"]: r["msssim_by_iteration"][200] for r in records if r["init"] == "zero"}
+    zero_by_scan = {
+        r["scan"]: r["msssim_by_iteration"][200] for r in records if r["init"] == "zero"
+    }
     for init in INITS:
         needed = []
         for r in (x for x in records if x["init"] == init):
-            goal = zero_by_series[r["series"]]
+            goal = zero_by_scan[r["scan"]]
             hit = [s for s in CHECKPOINTS if r["msssim_by_iteration"][s] >= goal]
             needed.append(min(hit) if hit else None)
         reached = [x for x in needed if x is not None]
@@ -104,8 +143,96 @@ def main() -> None:
             "max": float(np.max(reached)) if reached else None,
         }
 
-    dump("init_summary_full.json" if full else "init_summary.json", summary)
-    for init, block in summary.items():
+    records_by_init = {
+        init: {r["scan"]: r for r in records if r["init"] == init} for init in INITS
+    }
+    zero_records = records_by_init["zero"]
+    summary["study"] = {
+        "selection": {
+            "description": (
+                "all PNG scans in lexicographic path order"
+                if args.full
+                else (
+                    "prefer filename-labeled frame250 within each acquisition "
+                    "series, sort series keys, then select every third series"
+                )
+            ),
+            "full": args.full,
+            "limit": args.limit,
+            "n_scans": len(paths),
+        },
+        "checkpoints": list(CHECKPOINTS),
+    }
+    summary["pairwise_vs_zero"] = {}
+    for init in INITS[1:]:
+        paired = [
+            (records_by_init[init][scan], zero) for scan, zero in zero_records.items()
+        ]
+        summary["pairwise_vs_zero"][init] = {
+            "n_pairs": len(paired),
+            "msssim_higher_count": {
+                str(step): sum(
+                    candidate["msssim_by_iteration"][step]
+                    > zero["msssim_by_iteration"][step]
+                    for candidate, zero in paired
+                )
+                for step in CHECKPOINTS
+            },
+            "residual_lower_count": {
+                str(step): sum(
+                    candidate["residual_trace"][step] < zero["residual_trace"][step]
+                    for candidate, zero in paired
+                )
+                for step in CHECKPOINTS
+            },
+            "mean_delta_at_200": {
+                "msssim": float(
+                    np.mean(
+                        [
+                            candidate["msssim_by_iteration"][200]
+                            - zero["msssim_by_iteration"][200]
+                            for candidate, zero in paired
+                        ]
+                    )
+                ),
+                "residual": float(
+                    np.mean(
+                        [
+                            candidate["residual_trace"][200]
+                            - zero["residual_trace"][200]
+                            for candidate, zero in paired
+                        ]
+                    )
+                ),
+            },
+        }
+    summary["mean_residual_199_to_200"] = {
+        init: {
+            "at_199": float(
+                np.mean(
+                    [r["residual_trace"][199] for r in records_by_init[init].values()]
+                )
+            ),
+            "at_200": float(
+                np.mean(
+                    [r["residual_trace"][200] for r in records_by_init[init].values()]
+                )
+            ),
+            "change_200_minus_199": float(
+                np.mean(
+                    [
+                        r["residual_trace"][200] - r["residual_trace"][199]
+                        for r in records_by_init[init].values()
+                    ]
+                )
+            ),
+        }
+        for init in INITS
+    }
+
+    dump("init_summary_full.json" if args.full else "init_summary.json", summary)
+    for init in INITS:
+        block = summary[init]
         print(f"\n{init}: {block['msssim_mean']}")
         print(f"   match-zero@200: {block['iterations_to_match_zero_at_200']}")
 

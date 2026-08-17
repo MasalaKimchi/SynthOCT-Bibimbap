@@ -1,18 +1,30 @@
 """Operator geometry, conditioning, and effective degrees of freedom.
 
-Answers Reviewer 1 comment 2 (ill-posedness), Reviewer 2 comment 3 (how many
-scatterers share a resolution element), and Reviewer 3 comment 3 (what the
-regularized scanner actually constrains).
+Supports Supplement S3 by quantifying ill-posedness, resolution-element
+occupancy, and what the regularized scanner constrains.
 """
 
 from __future__ import annotations
 
+import argparse
+from pathlib import Path
+
 import numpy as np
 
-from analysis_lib import dump, operators
+from analysis_lib import configure_paths, dump, operators
 from synthoct.holographic_inverse import HolographicInverseConfig
 from synthoct.phantom import ExperimentConfig
 from synthoct.scanners.reference import scanner_wavenumbers
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        help="generated-result directory (default: outputs/experiments/supplementary)",
+    )
+    return parser.parse_args()
 
 
 def fwhm_samples(profile: np.ndarray, spacing: float) -> float:
@@ -37,6 +49,8 @@ def fwhm_samples(profile: np.ndarray, spacing: float) -> float:
 
 
 def main() -> None:
+    args = parse_args()
+    configure_paths(output_dir=args.output_dir)
     scanner = ExperimentConfig(scatterers_count=300_000)
     inverse = HolographicInverseConfig()
     axial, lateral, axial_inv, lateral_inv = operators(scanner, inverse)
@@ -93,7 +107,9 @@ def main() -> None:
                 "max": float(sv_lateral.max()),
                 "min": float(sv_lateral.min()),
                 "median": float(np.median(sv_lateral)),
-                "condition_number": float(sv_lateral.max() / max(sv_lateral.min(), 1e-300)),
+                "condition_number": float(
+                    sv_lateral.max() / max(sv_lateral.min(), 1e-300)
+                ),
                 "n_below_alpha_005": int(np.sum(sv_lateral < 0.05)),
                 "n_below_alpha_020": int(np.sum(sv_lateral < 0.20)),
             },
@@ -147,12 +163,20 @@ def main() -> None:
     }
     path = dump("operators.json", payload)
     print(f"wrote {path}")
-    for key in ("singular_values", "effective_dof", "lateral_geometry", "axial_geometry",
-                "resolution_element_occupancy", "carrier"):
+    for key in (
+        "singular_values",
+        "effective_dof",
+        "lateral_geometry",
+        "axial_geometry",
+        "resolution_element_occupancy",
+        "carrier",
+    ):
         print(f"\n== {key} ==")
         print(
             "\n".join(
-                f"  {k}: {v}" for k, v in payload[key].items() if not isinstance(v, dict)
+                f"  {k}: {v}"
+                for k, v in payload[key].items()
+                if not isinstance(v, dict)
             )
             or ""
         )

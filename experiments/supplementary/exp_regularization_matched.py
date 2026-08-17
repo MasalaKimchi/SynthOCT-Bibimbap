@@ -1,4 +1,4 @@
-"""Matched-regularization diagnostic for Reviewer 2, Comment 2.
+"""Matched-regularization diagnostic for Supplement S2.
 
 This analysis holds axial regularization fixed and crosses phase
 selection with scatterer encoding at every lateral-regularization value. Raw
@@ -15,12 +15,14 @@ from pathlib import Path
 
 import numpy as np
 
+import analysis_lib
 from analysis_lib import (
-    OUT,
+    configure_paths,
     encode,
     one_frame_per_series,
     operators,
     render_and_score,
+    require_scans,
     series_key,
     target_magnitude,
 )
@@ -48,18 +50,38 @@ def lateral_mode_fraction(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--limit", type=int)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--dataset",
+        type=Path,
+        help="PNG dataset root (default: repository DATASET/DATASET_PNG)",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        help="generated-result directory (default: outputs/experiments/supplementary)",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        metavar="N",
+        help="run only the first N frame250 series representatives",
+    )
     parser.add_argument(
         "--output",
         type=Path,
-        default=OUT / "regularization_matched_factorial.json",
+        help="raw factorial JSON path (overrides --output-dir)",
     )
     args = parser.parse_args()
+    if args.limit is not None and args.limit < 1:
+        parser.error("--limit must be at least 1")
+    configure_paths(dataset=args.dataset, output_dir=args.output_dir)
+    output = args.output or analysis_lib.OUT / "regularization_matched_factorial.json"
 
     paths = one_frame_per_series()
     if args.limit is not None:
         paths = paths[: args.limit]
+    paths = require_scans(paths)
 
     scanner = ExperimentConfig(scatterers_count=300_000)
     _, lateral, _, _ = operators(scanner, HolographicInverseConfig())
@@ -150,18 +172,20 @@ def main() -> None:
                     "max": float(np.max(values)),
                 }
 
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
         json.dumps({"summary": summary, "rows": rows}, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    stable_summary = {key: value for key, value in summary.items() if key != "elapsed_seconds"}
-    summary_path = args.output.with_name("regularization_matched_summary.json")
+    stable_summary = {
+        key: value for key, value in summary.items() if key != "elapsed_seconds"
+    }
+    summary_path = output.with_name("regularization_matched_summary.json")
     summary_path.write_text(
         json.dumps(stable_summary, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    print(f"Wrote {args.output} and {summary_path}", flush=True)
+    print(f"Wrote {output} and {summary_path}", flush=True)
     print(json.dumps(summary, indent=2, sort_keys=True), flush=True)
 
 

@@ -7,6 +7,7 @@ name = "synthoct-bibimbap"
 version = "0.1.0"
 description = "Coherent holographic inversion for scanner-compatible SynthOCT phantoms."
 readme = "README.md"
+authors = [{ name = "Justin Namuk Kim" }]
 requires-python = ">=3.12,<3.13"
 dependencies = [
   "numpy>=1.26",
@@ -21,6 +22,10 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.8"]
 lpips = ["lpips>=0.1.4", "torch>=2.6", "torchvision>=0.21"]
+
+[project.urls]
+Repository = "https://github.com/MasalaKimchi/SynthOCT-Bibimbap"
+Challenge = "https://synthoct.com/"
 
 [project.scripts]
 synthoct = "synthoct.cli:main"

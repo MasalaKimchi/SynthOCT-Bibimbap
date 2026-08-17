@@ -16,7 +16,7 @@ identical to the `synthoct` CLI. Nothing here reimplements the method.
 | Baseline file | This folder | Delegates to (`synthoct` …) | Role |
 | :--- | :--- | :--- | :--- |
 | `Part1_Generator.py` (Editable) | `Part1_Generator.py` | `holographic_inverse.holographic_inverse_phantom` | **The model.** `ScattererGenerator.generate_from_reference()` inverts the fixed scanner against a reference B-scan (phase-pair holographic inversion). Byte-identical to `synthoct baseline holographic-inverse`. |
-| `Part2_Scanner.exe` (Fixed) | `Part2_Scanner.py` | `scanners.render_with_api` + `scanners.write_api_config` | **Fixed scanner.** Renders a phantom through the hosted **true** scanner at synthoct.com (the organizers' binary is Windows-only). |
+| `Part2_Scanner.exe` (Fixed) | `Part2_Scanner.py` | `scanners.render_with_api` + `scanners.write_api_config` | **Fixed scanner.** Renders a phantom through the organizer-hosted challenge service at synthoct.com (the organizers' binary is Windows-only). |
 | `Part3_Processor.py` (Fixed) | `Part3_Processor.py` | `features.extraction.generate_maps` (`organizer-compatible-v1`) | **Fixed maps.** OAC / SC / RSC, 40 dB linearization, byte-for-byte the published Part3. Same `{Struct, OAC, SC, RSC}` return + `_OAC/_SC/_RSC.png` filenames. |
 | `Orchestrator.py` (Manager) | `Orchestrator.py` | `evaluation.*` (mirrors `benchmark.py`) | **Manager.** Default **Challenge mode** (synthetic-vs-real). Self-consistency check retained as `--mode self-consistency`. |
 | — | `_bootstrap.py` | — | Puts `../src` on `sys.path` if `synthoct` isn't installed, so `python Orchestrator.py` just works. |

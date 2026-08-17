@@ -64,5 +64,81 @@
       "25": 0.0009866732572150281,
       "50": 0.000777956252397736
     }
+  },
+  "study": {
+    "selection": {
+      "description": "prefer filename-labeled frame250 within each acquisition series, sort series keys, then select every third series",
+      "full": false,
+      "limit": null,
+      "n_scans": 14
+    },
+    "checkpoints": [
+      0,
+      10,
+      25,
+      50,
+      200
+    ]
+  },
+  "pairwise_vs_zero": {
+    "minphase": {
+      "n_pairs": 14,
+      "msssim_higher_count": {
+        "0": 0,
+        "10": 10,
+        "25": 9,
+        "50": 6,
+        "200": 3
+      },
+      "residual_lower_count": {
+        "0": 0,
+        "10": 11,
+        "25": 12,
+        "50": 10,
+        "200": 8
+      },
+      "mean_delta_at_200": {
+        "msssim": -0.00023881000179826195,
+        "residual": 2.0462880031094506e-06
+      }
+    },
+    "hilbert": {
+      "n_pairs": 14,
+      "msssim_higher_count": {
+        "0": 0,
+        "10": 14,
+        "25": 14,
+        "50": 11,
+        "200": 4
+      },
+      "residual_lower_count": {
+        "0": 0,
+        "10": 14,
+        "25": 14,
+        "50": 14,
+        "200": 13
+      },
+      "mean_delta_at_200": {
+        "msssim": -9.60583715138376e-05,
+        "residual": -2.0156615207045944e-06
+      }
+    }
+  },
+  "mean_residual_199_to_200": {
+    "zero": {
+      "at_199": 0.0006281186495116672,
+      "at_200": 0.0006278974304630205,
+      "change_200_minus_199": -2.2121904864672906e-07
+    },
+    "minphase": {
+      "at_199": 0.0006301656142860925,
+      "at_200": 0.00062994371846613,
+      "change_200_minus_199": -2.2189581996261477e-07
+    },
+    "hilbert": {
+      "at_199": 0.0006260535750599929,
+      "at_200": 0.0006258817689423159,
+      "change_200_minus_199": -1.7180611767707187e-07
+    }
   }
 }

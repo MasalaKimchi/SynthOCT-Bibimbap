@@ -1,0 +1,30 @@
+{
+  "purpose": "shared provenance for compact camera-ready Supplementary Tables S1-S4",
+  "evidence_source": "local_published_forward_model",
+  "official_or_hidden_score": false,
+  "dataset": {
+    "record": "Zenodo 18095266",
+    "version": 1,
+    "reference_representation": "PNG",
+    "n_public_scans": 120,
+    "n_filename_defined_series": 40,
+    "manifest_sha256": "7a245393fcbce95601bfe20b575364f0a489364022ff7413b96d50552f8ee55b"
+  },
+  "study_selection": {
+    "initialization": "every third item from the sorted 40 frame250 series representatives (14 scans)",
+    "regularization": "the frame250 representative from all 40 series",
+    "density": "the frame250 representative from all 40 series",
+    "encoding": "the frame250 representative from all 40 series",
+    "operators": "analytic scanner-operator diagnostic; no image subset"
+  },
+  "reference_numerical_environment": {
+    "python": "3.12.2",
+    "numpy": "1.26.4",
+    "scipy": "1.13.1",
+    "scikit_image": "0.24.0"
+  },
+  "reproducibility": {
+    "policy": "published values should reproduce within floating-point tolerance, not necessarily as identical JSON bytes",
+    "raw_outputs": "generated beneath ignored outputs/experiments/supplementary by the tracked runners"
+  }
+}

@@ -1,4 +1,4 @@
-"""Exact local scanner and hosted SynthOCT API rendering helpers."""
+"""Local published-forward-model and hosted SynthOCT rendering helpers."""
 
 from .api import render_with_api, resolve_api_key
 from .config import write_api_config

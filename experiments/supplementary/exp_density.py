@@ -1,28 +1,30 @@
-"""How many coefficient sites contribute within a resolution element.
+"""Finite-resolution overlap and artifact-band study (Supplement S3).
 
-Reviewer 2, comment 3.  The geometric count follows from the point-spread
-widths; the participation ratio accounts for unequal modeled contributions.
-For the field
+The geometric count follows from the point-spread widths; the participation
+ratio accounts for unequal modeled contributions. For the field
 F = A C L^T the per-pixel contributions have magnitude
 |A[z,z']| |C[z',x']| L[x,x'], so both the sum and the sum of squares are matrix
 products and the participation ratio is exact, not sampled.
 
-Also reports the artifact-band energy for Reviewer 2, comment 4.
+The study also reports artifact-band energy and its local-rendering ablation.
 """
 
 from __future__ import annotations
 
-import sys
+import argparse
+from pathlib import Path
 import time
 
 import numpy as np
 
 from analysis_lib import (
+    configure_paths,
     dump,
     encode,
     one_frame_per_series,
     operators,
     render_and_score,
+    require_scans,
     scan_paths,
     series_key,
     target_magnitude,
@@ -41,7 +43,9 @@ def participation_ratio(coefficients: np.ndarray, axial_abs, lateral_abs):
     squared = (axial_abs**2) @ (magnitude**2) @ (lateral_abs**2).T
     with np.errstate(divide="ignore", invalid="ignore"):
         ratio = np.where(squared > 0, total**2 / squared, np.nan)
-    self_share = np.where(total > 0, magnitude * 1.0 / np.maximum(total, 1e-300), np.nan)
+    self_share = np.where(
+        total > 0, magnitude * 1.0 / np.maximum(total, 1e-300), np.nan
+    )
     return ratio, self_share
 
 
@@ -63,9 +67,42 @@ def artifact_band(scan: np.ndarray, coefficients: np.ndarray, half_width: int = 
     }
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--dataset",
+        type=Path,
+        help="PNG dataset root (default: repository DATASET/DATASET_PNG)",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        help="generated-result directory (default: outputs/experiments/supplementary)",
+    )
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="use every frame instead of one frame per acquisition series",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        metavar="N",
+        help="run only the first N scans after subset selection",
+    )
+    args = parser.parse_args()
+    if args.limit is not None and args.limit < 1:
+        parser.error("--limit must be at least 1")
+    return args
+
+
 def main() -> None:
-    full = "--full" in sys.argv
-    paths = scan_paths() if full else one_frame_per_series()
+    args = parse_args()
+    configure_paths(dataset=args.dataset, output_dir=args.output_dir)
+    paths = scan_paths() if args.full else one_frame_per_series()
+    if args.limit is not None:
+        paths = paths[: args.limit]
+    paths = require_scans(paths)
     scanner = ExperimentConfig(scatterers_count=300_000)
     inverse = HolographicInverseConfig(phase_iterations=200)
     axial, lateral, _, _ = operators(scanner, inverse)
@@ -118,11 +155,11 @@ def main() -> None:
             f"[{n}/{len(paths)}] {path.name} "
             f"PR={records[-1]['voxels_per_pixel']['brightness_weighted_mean']:.2f} "
             f"band={band['band_row']} drop={records[-1]['artifact']['msssim_drop']:.4f} "
-            f"({(time.time()-started)/n:.1f} s/scan)",
+            f"({(time.time() - started) / n:.1f} s/scan)",
             flush=True,
         )
 
-    dump("density_study_full.json" if full else "density_study.json", records)
+    dump("density_study_full.json" if args.full else "density_study.json", records)
 
     def agg(path_fn):
         values = np.array([path_fn(r) for r in records])
@@ -142,10 +179,12 @@ def main() -> None:
             lambda r: r["voxels_per_pixel"]["median"]
         ),
         "artifact_band_row": agg(lambda r: r["artifact"]["band_row"]),
-        "artifact_energy_fraction": agg(lambda r: r["artifact"]["energy_fraction_in_band"]),
+        "artifact_energy_fraction": agg(
+            lambda r: r["artifact"]["energy_fraction_in_band"]
+        ),
         "artifact_msssim_drop": agg(lambda r: r["artifact"]["msssim_drop"]),
     }
-    dump("density_summary_full.json" if full else "density_summary.json", summary)
+    dump("density_summary_full.json" if args.full else "density_summary.json", summary)
     print("\n" + "\n".join(f"{k}: {v}" for k, v in summary.items()))
 
 
